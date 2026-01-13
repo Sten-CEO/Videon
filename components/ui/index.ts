@@ -5,4 +5,5 @@ export { Card, CardHeader, CardTitle, CardDescription, CardContent } from './Car
 export { Badge, StatusBadge } from './Badge'
 export { VideoPreview } from './VideoPreview'
 export { RemotionPreview } from './RemotionPreview'
+export { CreativePreview } from './CreativePreview'
 export { Logo } from './Logo'
