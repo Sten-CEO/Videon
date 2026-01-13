@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Button, Textarea, Card, CreativePreview } from '@/components/ui'
 import type { ChatMessage } from '@/lib/types'
 import type { SceneSpec, VideoSpec, ImageIntent } from '@/lib/creative'
+import { retrieveImages } from '@/lib/imageStore'
 
 type GenerationPhase = 'idle' | 'analyzing' | 'generating_strategy' | 'rendering_video' | 'complete' | 'error'
 
@@ -29,18 +30,11 @@ function ConversationContent() {
   const isGenerating = phase !== 'idle' && phase !== 'complete' && phase !== 'error'
   const videoReady = phase === 'complete' && videoUrl !== null
 
-  // Load images from sessionStorage on mount
+  // Load images from memory store on mount
   useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem('videon_images')
-      if (stored) {
-        const images = JSON.parse(stored) as ImageIntent[]
-        setProvidedImages(images)
-        // Clear after reading
-        sessionStorage.removeItem('videon_images')
-      }
-    } catch (err) {
-      console.warn('Failed to load images from sessionStorage:', err)
+    const images = retrieveImages()
+    if (images.length > 0) {
+      setProvidedImages(images)
     }
   }, [])
 
