@@ -167,12 +167,16 @@ COPY RULES:
 OUTPUT FORMAT (STRICT JSON):
 
 {
+  "concept": "One sentence summarizing the creative concept/approach",
   "strategy": {
     "audienceState": "What the viewer is thinking/feeling before watching",
     "coreProblem": "The specific pain point",
     "mainTension": "The psychological tension that maintains attention",
     "conversionTrigger": "What emotionally pushes them to act"
   },
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
   "scenes": [
     {
       "sceneType": "HOOK | PROBLEM | SOLUTION | PROOF | CTA",

@@ -2,41 +2,11 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Button, Textarea, Card, RemotionPreview } from '@/components/ui'
+import { Button, Textarea, Card, CreativePreview } from '@/components/ui'
 import type { ChatMessage } from '@/lib/types'
+import type { SceneSpec, VideoSpec } from '@/lib/creative'
 
 type GenerationPhase = 'idle' | 'analyzing' | 'generating_strategy' | 'rendering_video' | 'complete' | 'error'
-
-// AI response structure (matches /lib/video/aiSystemPrompt.ts)
-interface VideoStrategy {
-  attention_strategy: {
-    audience_state: string
-    core_problem: string
-    main_tension: string
-    surprise_element: string
-    conversion_trigger: string
-  }
-  shots: Array<{
-    shot_type: string
-    goal: string
-    copy: string
-    energy: 'low' | 'medium' | 'high'
-    recommended_effects: string[]
-    recommended_fonts: string[]
-  }>
-}
-
-// Map shot types to colors for visual distinction (from Shot Library)
-const SHOT_COLORS: Record<string, string> = {
-  AGGRESSIVE_HOOK: '#ef4444',    // Red - stop the scroll
-  PATTERN_INTERRUPT: '#f59e0b',  // Amber - reset attention
-  PROBLEM_PRESSURE: '#dc2626',   // Dark red - amplify pain
-  PROBLEM_CLARITY: '#6b7280',    // Gray - clear articulation
-  SOLUTION_REVEAL: '#10b981',    // Green - transformation
-  VALUE_PROOF: '#6366f1',        // Primary - credibility
-  POWER_STAT: '#8b5cf6',         // Purple - impact
-  CTA_DIRECT: '#f59e0b',         // Amber - action
-}
 
 // Main conversation content component
 function ConversationContent() {
@@ -48,23 +18,9 @@ function ConversationContent() {
   const [phase, setPhase] = useState<GenerationPhase>('idle')
   const [videoProgress, setVideoProgress] = useState(0)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
-  const [strategy, setStrategy] = useState<VideoStrategy | null>(null)
+  const [videoSpec, setVideoSpec] = useState<VideoSpec | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [previewScenes, setPreviewScenes] = useState<Array<{
-    headline: string
-    subtext?: string
-    backgroundColor?: string
-    textColor?: string
-    shotType?: string
-    energy?: 'low' | 'medium' | 'high'
-    recommendedEffect?: string
-    recommendedFont?: string
-  }>>([])
-  const [previewBrand] = useState({
-    primaryColor: '#6366f1',
-    secondaryColor: '#8b5cf6',
-    fontFamily: 'Inter',
-  })
+  const [previewScenes, setPreviewScenes] = useState<SceneSpec[]>([])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const hasInitialized = useRef(false)
@@ -99,7 +55,7 @@ function ConversationContent() {
     setPhase('analyzing')
     setVideoProgress(0)
     setVideoUrl(null)
-    setStrategy(null)
+    setVideoSpec(null)
     setError(null)
     setPreviewScenes([])
 
@@ -107,66 +63,48 @@ function ConversationContent() {
     addMessage('user', prompt)
 
     try {
-      // Phase 1: Generate AI Strategy
+      // Phase 1: Generate AI Creative Direction
       setPhase('generating_strategy')
-      addMessage('assistant', 'Analyzing audience psychology and designing attention strategy...')
+      addMessage('assistant', 'AI Creative Director is analyzing your brief and designing the video...')
 
-      const strategyResponse = await fetch('/api/ai-test', {
+      const creativeResponse = await fetch('/api/creative', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: prompt }),
       })
 
-      if (!strategyResponse.ok) {
-        const errorData = await strategyResponse.json()
-        throw new Error(errorData.error || 'Failed to generate strategy')
+      if (!creativeResponse.ok) {
+        const errorData = await creativeResponse.json()
+        throw new Error(errorData.error || 'Failed to generate creative direction')
       }
 
-      const responseData = await strategyResponse.json()
-      const strategyData: VideoStrategy = responseData.data
-      setStrategy(strategyData)
+      const responseData = await creativeResponse.json()
+      const spec: VideoSpec = responseData.data
+      setVideoSpec(spec)
       setVideoProgress(30)
 
-      // Create preview scenes immediately for real-time preview
-      const scenes = strategyData.shots.map((shot) => ({
-        headline: shot.copy,
-        subtext: shot.goal,
-        backgroundColor: SHOT_COLORS[shot.shot_type] || '#6366f1',
-        textColor: '#ffffff',
-        shotType: shot.shot_type,
-        energy: shot.energy,
-        recommendedEffect: shot.recommended_effects?.[0] || undefined,
-        recommendedFont: shot.recommended_fonts?.[0] || undefined,
-      }))
-      setPreviewScenes(scenes)
+      // Set preview scenes directly from AI's complete visual specs
+      setPreviewScenes(spec.scenes)
 
-      // Show the strategic AI response
-      const strategyMessage = `**Attention Strategy Designed**
+      // Show the creative direction summary
+      const creativeMessage = `**Creative Direction Complete**
 
-**Core Problem:** ${strategyData.attention_strategy.core_problem}
+**Concept:** ${spec.concept || 'Marketing video'}
 
-**Main Tension:** ${strategyData.attention_strategy.main_tension}
-
-**Conversion Trigger:** ${strategyData.attention_strategy.conversion_trigger}
-
-**Shots (${strategyData.shots.length}):**
-${strategyData.shots.map((shot, i) =>
-  `${i + 1}. [${shot.shot_type}] "${shot.copy}" → ${shot.recommended_effects[0] || 'default'}`
+**Scenes (${spec.scenes.length}):**
+${spec.scenes.map((scene, i) =>
+  `${i + 1}. [${scene.sceneType}] "${scene.headline}"
+     → Layout: ${scene.layout} | Entry: ${scene.motion?.entry || 'fade_in'}
+     → Background: ${scene.background?.type || 'solid'} ${scene.background?.texture ? `+ ${scene.background.texture}` : ''}`
 ).join('\n')}
 
-Now rendering your video...`
+Now rendering your video with full visual direction...`
 
-      addMessage('assistant', strategyMessage)
+      addMessage('assistant', creativeMessage)
 
-      // Phase 2: Render Video (attempt server-side render, but don't fail if unavailable)
+      // Phase 2: Render Video (attempt server-side render)
       setPhase('rendering_video')
       setVideoProgress(40)
-
-      // Map shots to Remotion scenes with AI data
-      const renderScenes = scenes.map((scene, index) => ({
-        id: `shot-${index + 1}`,
-        ...scene,
-      }))
 
       // Attempt MP4 render (may fail without Chromium)
       try {
@@ -174,7 +112,14 @@ Now rendering your video...`
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            scenes: renderScenes,
+            scenes: spec.scenes.map((scene, index) => ({
+              id: `scene-${index + 1}`,
+              headline: scene.headline,
+              subtext: scene.subtext,
+              backgroundColor: scene.background?.color || '#000',
+              textColor: scene.typography?.headlineColor || '#fff',
+              shotType: scene.sceneType,
+            })),
             brand: {
               primaryColor: '#6366f1',
               secondaryColor: '#8b5cf6',
@@ -196,7 +141,7 @@ Now rendering your video...`
       setVideoProgress(100)
       setPhase('complete')
 
-      addMessage('assistant', `Your video is ready! Use the player on the right to preview. ${videoUrl ? 'Download the MP4 when satisfied.' : 'MP4 export requires additional server setup.'} Want changes? Just describe what you'd like different.`)
+      addMessage('assistant', `Your video is ready! Use the player on the right to preview. Each scene has unique layouts, backgrounds, and animations. Want changes? Just describe what you'd like different.`)
 
     } catch (err) {
       console.error('Generation error:', err)
@@ -336,11 +281,10 @@ Now rendering your video...`
 
       {/* Video Preview Section */}
       <div className="w-[480px] flex flex-col gap-4 overflow-y-auto">
-        {/* Video player - Use Remotion for real-time preview */}
+        {/* Video player - Use Creative Preview for full visual specs */}
         {previewScenes.length > 0 ? (
-          <RemotionPreview
+          <CreativePreview
             scenes={previewScenes}
-            brand={previewBrand}
             className="border border-border"
           />
         ) : (
@@ -416,15 +360,15 @@ Now rendering your video...`
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-foreground-muted">Duration</span>
-              <span>~{strategy ? strategy.shots.length * 2.5 : 10}s</span>
+              <span>~{videoSpec ? Math.round(videoSpec.scenes.reduce((sum, s) => sum + (s.durationFrames || 75), 0) / 30) : 10}s</span>
             </div>
             <div className="flex justify-between">
               <span className="text-foreground-muted">Resolution</span>
               <span>1080x1920 (9:16)</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-foreground-muted">Shots</span>
-              <span>{strategy?.shots.length || '-'}</span>
+              <span className="text-foreground-muted">Scenes</span>
+              <span>{videoSpec?.scenes.length || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-foreground-muted">Status</span>
@@ -435,54 +379,46 @@ Now rendering your video...`
           </div>
         </Card>
 
-        {/* Attention Strategy */}
-        {strategy && (
+        {/* Creative Concept */}
+        {videoSpec && (
           <Card padding="md">
-            <h3 className="font-semibold mb-3">Attention Strategy</h3>
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="text-xs uppercase tracking-wide text-foreground-subtle">Core Problem</span>
-                <p className="mt-1 text-foreground-muted">{strategy.attention_strategy.core_problem}</p>
-              </div>
-              <div>
-                <span className="text-xs uppercase tracking-wide text-foreground-subtle">Main Tension</span>
-                <p className="mt-1 text-foreground-muted">{strategy.attention_strategy.main_tension}</p>
-              </div>
-              <div>
-                <span className="text-xs uppercase tracking-wide text-foreground-subtle">Conversion Trigger</span>
-                <p className="mt-1 text-foreground-muted">{strategy.attention_strategy.conversion_trigger}</p>
-              </div>
-            </div>
+            <h3 className="font-semibold mb-3">Creative Concept</h3>
+            <p className="text-sm text-foreground-muted">{videoSpec.concept || 'Marketing video'}</p>
           </Card>
         )}
 
-        {/* Shots breakdown */}
-        {strategy && (
+        {/* Scene breakdown */}
+        {videoSpec && (
           <Card padding="md">
-            <h3 className="font-semibold mb-3">Shot Sequence</h3>
+            <h3 className="font-semibold mb-3">Scene Sequence</h3>
             <div className="space-y-2">
-              {strategy.shots.map((shot, index) => (
+              {videoSpec.scenes.map((scene, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-2 p-2 rounded-lg bg-background-tertiary"
+                  className="p-3 rounded-lg bg-background-tertiary"
                 >
-                  <div
-                    className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-                    style={{ backgroundColor: SHOT_COLORS[shot.shot_type] }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-medium text-foreground-subtle">
-                        {shot.shot_type.replace(/_/g, ' ')}
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-primary">
+                      {scene.sceneType}
+                    </span>
+                    <span className="text-xs text-foreground-subtle">•</span>
+                    <span className="text-xs text-foreground-subtle">{scene.layout}</span>
+                  </div>
+                  <p className="text-sm font-medium">{scene.headline}</p>
+                  {scene.subtext && (
+                    <p className="text-xs text-foreground-muted mt-1">{scene.subtext}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="text-xs px-2 py-0.5 rounded bg-background-secondary text-foreground-subtle">
+                      {scene.motion?.entry || 'fade_in'}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-background-secondary text-foreground-subtle">
+                      {scene.background?.type || 'solid'}
+                    </span>
+                    {scene.background?.texture && scene.background.texture !== 'none' && (
+                      <span className="text-xs px-2 py-0.5 rounded bg-background-secondary text-foreground-subtle">
+                        {scene.background.texture}
                       </span>
-                      <span className="text-xs text-foreground-subtle">•</span>
-                      <span className="text-xs text-foreground-subtle">{shot.energy}</span>
-                    </div>
-                    <p className="text-sm font-medium truncate">{shot.copy}</p>
-                    {shot.recommended_effects && shot.recommended_effects.length > 0 && (
-                      <p className="text-xs text-foreground-subtle mt-1">
-                        Effect: {shot.recommended_effects[0].replace(/_/g, ' ').toLowerCase()}
-                      </p>
                     )}
                   </div>
                 </div>
