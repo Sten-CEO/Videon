@@ -135,14 +135,33 @@ Now rendering your video with full visual direction...`
 
       // Attempt MP4 render (may fail without Chromium)
       // IMPORTANT: Pass FULL AI SceneSpec - no stripping, no defaults
+      // Use spec.providedImages (from API response) to ensure consistency
+      const imagesToRender = spec.providedImages || images
+
+      // Debug: Log what we're sending to render
+      console.log('[Generate] === RENDER DEBUG START ===')
+      console.log('[Generate] Scenes to render:', spec.scenes.length)
+      spec.scenes.forEach((scene, i) => {
+        if (scene.images && scene.images.length > 0) {
+          console.log(`[Generate] Scene ${i} (${scene.sceneType}) has ${scene.images.length} images:`, scene.images.map(img => img.imageId))
+        } else {
+          console.log(`[Generate] Scene ${i} (${scene.sceneType}): NO images in scene.images`)
+        }
+      })
+      console.log('[Generate] ProvidedImages to render:', imagesToRender?.length || 0)
+      if (imagesToRender && imagesToRender.length > 0) {
+        console.log('[Generate] ProvidedImage IDs:', imagesToRender.map(i => i.id))
+        console.log('[Generate] ProvidedImage URL lengths:', imagesToRender.map(i => ({ id: i.id, urlLen: i.url?.length || 0 })))
+      }
+      console.log('[Generate] === RENDER DEBUG END ===')
+
       try {
-        console.log('[Generate] Rendering with images:', images.length)
         const renderResponse = await fetch('/api/video/render', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             scenes: spec.scenes,  // Pass complete SceneSpec array as-is
-            providedImages: images.length > 0 ? images : undefined,
+            providedImages: imagesToRender,
           }),
         })
 
