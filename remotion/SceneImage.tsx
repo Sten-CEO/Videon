@@ -1,17 +1,15 @@
 /**
- * Scene Image Renderer
+ * Scene Image Renderer - DEBUG MODE
  *
- * Renders an image within a scene according to the AI's ImageSpec decisions.
- * Handles all positioning, treatment, and animation as specified.
+ * BRUTAL TEST: Fixed position, no animation, red background
  */
 
 import React from 'react'
-import { Img, useCurrentFrame, useVideoConfig } from 'remotion'
+import { Img, useCurrentFrame } from 'remotion'
 import type { ImageSpec, VideoSpec } from '../lib/creative'
-import {
-  getImageStyles,
-  getImageZIndex,
-} from '../lib/creative'
+
+// TEST: Use a public placeholder image to test if base64 is the issue
+const TEST_PUBLIC_URL = 'https://via.placeholder.com/400x300/ff0000/ffffff?text=TEST'
 
 interface SceneImageProps {
   spec: ImageSpec
@@ -22,85 +20,102 @@ interface SceneImageProps {
 export const SceneImage: React.FC<SceneImageProps> = ({
   spec,
   providedImages,
-  sceneDuration,
 }) => {
   const frame = useCurrentFrame()
-  const { fps } = useVideoConfig()
 
   // Find the actual image URL from providedImages
   const imageData = providedImages?.find(img => img.id === spec.imageId)
 
-  // Debug logging (only first frame to avoid spam)
-  if (frame === 0) {
-    console.log(`[SceneImage] === RENDERING IMAGE "${spec.imageId}" ===`)
-    console.log(`[SceneImage] ImageData found:`, !!imageData)
-    if (imageData) {
-      console.log(`[SceneImage] URL type:`, imageData.url?.substring(0, 50) + '...')
-      console.log(`[SceneImage] URL length:`, imageData.url?.length)
-    }
-    console.log(`[SceneImage] Spec position:`, JSON.stringify(spec.position))
-    console.log(`[SceneImage] Spec size:`, JSON.stringify(spec.size))
-    console.log(`[SceneImage] Spec effect:`, JSON.stringify(spec.effect))
-    console.log(`[SceneImage] Spec treatment:`, JSON.stringify(spec.treatment))
-    console.log(`[SceneImage] Spec importance:`, spec.importance)
-    console.log(`[SceneImage] Scene duration:`, sceneDuration)
-  }
+  // Log every frame for debugging
+  console.log(`[SceneImage] Frame ${frame} - imageId: ${spec.imageId}, found: ${!!imageData}`)
 
-  // If image not found, render nothing
   if (!imageData) {
     console.warn(`[SceneImage] Image not found: ${spec.imageId}`)
+    console.warn(`[SceneImage] Available IDs:`, providedImages?.map(i => i.id))
     return null
   }
 
-  // Get all combined styles for this frame
-  const styles = getImageStyles(spec, frame, sceneDuration, fps)
-  const zIndex = getImageZIndex(spec.importance)
-
-  // Debug computed styles (only first few frames)
-  if (frame === 0 || frame === 15 || frame === 30) {
-    console.log(`[SceneImage] Frame ${frame} computed styles:`, JSON.stringify(styles, null, 2))
-    console.log(`[SceneImage] Frame ${frame} zIndex:`, zIndex)
-  }
-
-  // Ensure minimum dimensions for visibility
-  const finalStyles: React.CSSProperties = {
-    ...styles,
-    display: 'block',
-    // Ensure image has minimum visible size if no explicit size set
-    minWidth: styles.width ? undefined : '200px',
-    minHeight: styles.height ? undefined : '200px',
-  }
-
-  // Debug: Log the URL type for base64 debugging
+  // Log URL info
   if (frame === 0) {
-    const isBase64 = imageData.url?.startsWith('data:')
-    console.log(`[SceneImage] "${spec.imageId}" URL is base64:`, isBase64)
-    if (isBase64) {
-      console.log(`[SceneImage] Base64 data type:`, imageData.url?.substring(0, 30))
-    }
+    console.log(`[SceneImage] URL length: ${imageData.url?.length}`)
+    console.log(`[SceneImage] URL starts with: ${imageData.url?.substring(0, 50)}`)
   }
+
+  // ================================================================
+  // BRUTAL TEST: No animation, fixed styles, maximum visibility
+  // ================================================================
+  const brutalStyles: React.CSSProperties = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '400px',
+    height: '300px',
+    objectFit: 'contain',
+    opacity: 1,
+    backgroundColor: 'red', // Red background to see container
+    border: '5px solid yellow', // Yellow border to see bounds
+    zIndex: 9999,
+  }
+
+  console.log(`[SceneImage] Frame ${frame} - Rendering with brutal styles`)
 
   return (
     <div
       style={{
         position: 'absolute',
         inset: 0,
-        zIndex,
+        zIndex: 9999,
+        backgroundColor: 'rgba(0, 255, 0, 0.3)', // Green overlay to see container
         pointerEvents: 'none',
-        overflow: 'hidden',
       }}
     >
+      {/* Test 1: Render with actual base64 URL */}
       <Img
         src={imageData.url}
-        style={finalStyles}
-        alt={imageData.description || 'Scene image'}
+        style={brutalStyles}
+        alt="Test image"
         onError={(e) => {
-          console.error(`[SceneImage] Image load error for ${spec.imageId}:`, e)
+          console.error(`[SceneImage] ❌ IMAGE LOAD ERROR:`, e)
+          console.error(`[SceneImage] URL was:`, imageData.url?.substring(0, 100))
         }}
         onLoad={() => {
-          console.log(`[SceneImage] Image loaded: ${spec.imageId}`)
+          console.log(`[SceneImage] ✅ IMAGE LOADED SUCCESSFULLY: ${spec.imageId}`)
         }}
       />
+
+      {/* Test 2: Also render public URL to compare */}
+      <img
+        src={TEST_PUBLIC_URL}
+        style={{
+          position: 'absolute',
+          bottom: '20px',
+          right: '20px',
+          width: '100px',
+          height: '75px',
+          border: '3px solid blue',
+          zIndex: 10000,
+        }}
+        alt="Public test"
+        onLoad={() => console.log('[SceneImage] ✅ PUBLIC IMAGE LOADED')}
+        onError={() => console.error('[SceneImage] ❌ PUBLIC IMAGE FAILED')}
+      />
+
+      {/* Test 3: Simple colored div to confirm rendering works at all */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          width: '100px',
+          height: '100px',
+          backgroundColor: 'blue',
+          border: '3px solid white',
+          zIndex: 10000,
+        }}
+      >
+        <span style={{ color: 'white', fontSize: '12px' }}>DIV TEST</span>
+      </div>
     </div>
   )
 }
@@ -119,16 +134,22 @@ export const SceneImages: React.FC<SceneImagesProps> = ({
   providedImages,
   sceneDuration,
 }) => {
-  // Debug logging
-  console.log('[SceneImages] images array:', images?.length || 0, 'items')
-  console.log('[SceneImages] providedImages:', providedImages?.length || 0, 'available')
+  const frame = useCurrentFrame()
+
+  console.log(`[SceneImages] Frame ${frame} - images: ${images?.length || 0}, providedImages: ${providedImages?.length || 0}`)
 
   if (!images || images.length === 0) {
-    console.log('[SceneImages] No images to render for this scene')
+    console.log('[SceneImages] No images array in this scene')
     return null
   }
 
-  console.log('[SceneImages] Rendering', images.length, 'images:', images.map(i => i.imageId))
+  if (!providedImages || providedImages.length === 0) {
+    console.warn('[SceneImages] ⚠️ No providedImages available!')
+    return null
+  }
+
+  console.log('[SceneImages] Image IDs to render:', images.map(i => i.imageId))
+  console.log('[SceneImages] Available providedImages IDs:', providedImages.map(i => i.id))
 
   return (
     <>
