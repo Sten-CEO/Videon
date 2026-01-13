@@ -11,10 +11,11 @@ interface AIBlueprint {
   hook: string
   angle: string
   video_structure: Array<{
-    timestamp: string
-    visual: string
-    text_overlay: string
-    audio: string
+    scene: number
+    duration: string
+    purpose: string
+    content: string
+    text_overlay?: string
   }>
   reasoning: string
   visual_suggestions: string[]
@@ -81,17 +82,17 @@ function ConversationContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          product: prompt,
-          target_audience: 'general audience',
-          platform: 'TikTok/Instagram',
+          message: prompt,
         }),
       })
 
       if (!blueprintResponse.ok) {
-        throw new Error('Failed to generate blueprint')
+        const errorData = await blueprintResponse.json()
+        throw new Error(errorData.error || 'Failed to generate blueprint')
       }
 
-      const blueprintData = await blueprintResponse.json()
+      const responseData = await blueprintResponse.json()
+      const blueprintData = responseData.data
       setBlueprint(blueprintData)
       setVideoProgress(30)
 
@@ -103,8 +104,8 @@ function ConversationContent() {
 **Angle:** ${blueprintData.angle}
 
 **Video Structure:**
-${blueprintData.video_structure.map((scene: { timestamp: string; visual: string; text_overlay: string }) =>
-  `- ${scene.timestamp}: ${scene.visual}\n  Text: "${scene.text_overlay}"`
+${blueprintData.video_structure.map((scene: { scene: number; duration: string; content: string; text_overlay?: string }) =>
+  `- ${scene.duration}: ${scene.content}\n  Text: "${scene.text_overlay || ''}"`
 ).join('\n')}
 
 **Reasoning:** ${blueprintData.reasoning}
@@ -118,10 +119,10 @@ Now rendering your video...`
       setVideoProgress(40)
 
       // Prepare scenes for Remotion
-      const scenes = blueprintData.video_structure.map((scene: { timestamp: string; visual: string; text_overlay: string; audio: string }, index: number) => ({
+      const scenes = blueprintData.video_structure.map((scene: { scene: number; duration: string; content: string; text_overlay?: string }, index: number) => ({
         id: `scene-${index + 1}`,
-        headline: scene.text_overlay,
-        subtext: scene.visual,
+        headline: scene.text_overlay || '',
+        subtext: scene.content,
         backgroundColor: index === 0 ? '#6366f1' : index === 1 ? '#1e1e2e' : index === 2 ? '#10b981' : '#f59e0b',
         textColor: '#ffffff',
       }))
