@@ -322,6 +322,7 @@ Now rendering your video with full visual direction...`
         {previewScenes.length > 0 ? (
           <CreativePreview
             scenes={previewScenes}
+            providedImages={imagesRef.current}
             className="border border-border"
           />
         ) : (
