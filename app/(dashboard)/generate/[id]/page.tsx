@@ -133,13 +133,18 @@ Now rendering your video...`
       setPhase('rendering_video')
       setVideoProgress(40)
 
-      // Map shots to Remotion scenes
+      // Map shots to Remotion scenes with AI data
       const scenes = strategyData.shots.map((shot, index) => ({
         id: `shot-${index + 1}`,
         headline: shot.copy,
         subtext: shot.goal,
         backgroundColor: SHOT_COLORS[shot.shot_type] || '#6366f1',
         textColor: '#ffffff',
+        // Pass AI decisions to renderer
+        shotType: shot.shot_type,
+        energy: shot.energy,
+        recommendedEffect: shot.recommended_effects?.[0] || undefined,
+        recommendedFont: shot.recommended_fonts?.[0] || undefined,
       }))
 
       const renderResponse = await fetch('/api/video/render', {
