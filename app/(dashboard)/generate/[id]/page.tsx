@@ -9,6 +9,13 @@ import { retrieveImages } from '@/lib/imageStore'
 
 type GenerationPhase = 'idle' | 'analyzing' | 'generating_strategy' | 'rendering_video' | 'complete' | 'error'
 
+// Unique ID generator to avoid duplicate keys
+let messageCounter = 0
+function generateMessageId(role: string): string {
+  messageCounter++
+  return `${role}-${Date.now()}-${messageCounter}-${Math.random().toString(36).substring(2, 7)}`
+}
+
 // Main conversation content component
 function ConversationContent() {
   const searchParams = useSearchParams()
@@ -50,7 +57,7 @@ function ConversationContent() {
 
   function addMessage(role: 'user' | 'assistant', content: string) {
     const message: ChatMessage = {
-      id: `${role}-${Date.now()}`,
+      id: generateMessageId(role),
       role,
       content,
       timestamp: new Date().toISOString(),
