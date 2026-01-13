@@ -107,24 +107,13 @@ Now rendering your video with full visual direction...`
       setVideoProgress(40)
 
       // Attempt MP4 render (may fail without Chromium)
+      // IMPORTANT: Pass FULL AI SceneSpec - no stripping, no defaults
       try {
         const renderResponse = await fetch('/api/video/render', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            scenes: spec.scenes.map((scene, index) => ({
-              id: `scene-${index + 1}`,
-              headline: scene.headline,
-              subtext: scene.subtext,
-              backgroundColor: scene.background?.color || '#000',
-              textColor: scene.typography?.headlineColor || '#fff',
-              shotType: scene.sceneType,
-            })),
-            brand: {
-              primaryColor: '#6366f1',
-              secondaryColor: '#8b5cf6',
-              fontFamily: 'Inter',
-            },
+            scenes: spec.scenes,  // Pass complete SceneSpec array as-is
           }),
         })
 

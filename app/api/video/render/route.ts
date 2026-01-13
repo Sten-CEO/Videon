@@ -3,6 +3,9 @@
  *
  * Uses Remotion to render marketing videos server-side.
  * Bundles the composition, renders to MP4, returns download URL.
+ *
+ * IMPORTANT: This API expects SceneSpec[] from the AI Creative Director.
+ * The renderer executes EXACTLY what the AI specifies - NO DEFAULTS.
  */
 
 import { NextResponse } from 'next/server'
@@ -11,12 +14,11 @@ import { renderMedia, selectComposition } from '@remotion/renderer'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import { existsSync, mkdirSync, statSync } from 'fs'
-import type { Scene, Brand } from '@/remotion/types'
+import type { SceneSpec } from '@/lib/creative'
 
-// Request body type
+// Request body type - expects full AI SceneSpec
 interface RequestBody {
-  scenes: Scene[]
-  brand: Brand
+  scenes: SceneSpec[]
 }
 
 // Ensure renders directory exists
@@ -37,25 +39,29 @@ export async function POST(request: Request) {
   try {
     const body: RequestBody = await request.json()
 
-    // Validate input
-    if (!body.scenes || !Array.isArray(body.scenes)) {
-      console.error(`[Video Render] Invalid scenes`)
+    // Validate input - requires full SceneSpec array from AI
+    if (!body.scenes || !Array.isArray(body.scenes) || body.scenes.length === 0) {
+      console.error(`[Video Render] Invalid or empty scenes array`)
       return NextResponse.json(
-        { error: 'Missing or invalid "scenes" array' },
+        { error: 'Missing or invalid "scenes" array - must contain SceneSpec objects' },
         { status: 400 }
       )
     }
 
-    if (!body.brand || typeof body.brand !== 'object') {
-      console.error(`[Video Render] Invalid brand`)
-      return NextResponse.json(
-        { error: 'Missing or invalid "brand" object' },
-        { status: 400 }
-      )
+    // Validate each scene has required AI spec properties
+    for (let i = 0; i < body.scenes.length; i++) {
+      const scene = body.scenes[i]
+      if (!scene.layout || !scene.background || !scene.typography || !scene.motion) {
+        console.error(`[Video Render] Scene ${i} missing required AI specs`)
+        return NextResponse.json(
+          { error: `Scene ${i} missing required properties (layout, background, typography, motion). AI must specify all visual decisions.` },
+          { status: 400 }
+        )
+      }
     }
 
     console.log(`[Video Render] Scenes count: ${body.scenes.length}`)
-    console.log(`[Video Render] Scenes:`, body.scenes.map(s => s.headline || 'no headline'))
+    console.log(`[Video Render] Scenes:`, body.scenes.map(s => `${s.sceneType}: ${s.headline?.substring(0, 30) || 'no headline'}`))
 
     // Step 1: Bundle the Remotion project
     console.log(`[Video Render] Step 1: Bundling composition...`)
@@ -79,14 +85,13 @@ export async function POST(request: Request) {
     console.log(`[Video Render] Step 2: Selecting composition...`)
     const inputProps = {
       scenes: body.scenes,
-      brand: body.brand,
     } as Record<string, unknown>
 
     let composition
     try {
       composition = await selectComposition({
         serveUrl: bundleLocation,
-        id: 'MarketingVideo',
+        id: 'CreativeVideo',  // Uses the new AI-driven composition
         inputProps,
       })
       console.log(`[Video Render] Composition: ${composition.id}`)
