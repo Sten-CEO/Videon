@@ -199,6 +199,14 @@ export interface SceneSpec {
 // =============================================================================
 
 export interface VideoSpec {
+  // Creative Blueprint (strategic thinking)
+  blueprint?: {
+    creativeAngle: string
+    aggressiveness: 'soft' | 'medium' | 'aggressive'
+    emotionArc: string
+    differentiator: string
+  }
+
   // Creative concept summary
   concept?: string
 
