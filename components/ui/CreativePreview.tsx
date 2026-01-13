@@ -1,16 +1,67 @@
 'use client'
 
 /**
- * Creative Preview Component
+ * Creative Preview Component - MARKETING GRADE
  *
- * Renders videos using the AI Creative Direction system.
- * Executes EXACTLY what the AI specifies - no defaults.
+ * Renders professional marketing videos with:
+ * - Intelligent color palettes per scene type
+ * - Dynamic layouts that actually look different
+ * - Professional typography and animations
+ * - Texture overlays for depth
  */
 
 import React, { useMemo } from 'react'
 import { Player } from '@remotion/player'
 import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig, interpolate, spring } from 'remotion'
-import type { SceneSpec, LayoutType, EntryAnimation, BackgroundSpec, TypographySpec, MotionSpec } from '@/lib/creative'
+import type { SceneSpec, LayoutType, EntryAnimation, BackgroundSpec, TypographySpec } from '@/lib/creative'
+
+// =============================================================================
+// MARKETING COLOR PALETTES (Per Scene Type)
+// =============================================================================
+
+const SCENE_PALETTES = {
+  HOOK: [
+    { bg: ['#FF3366', '#FF6B35'], accent: '#FFE66D' },      // Bold red-orange
+    { bg: ['#6C5CE7', '#A29BFE'], accent: '#FFEAA7' },      // Purple energy
+    { bg: ['#00B894', '#00CEC9'], accent: '#FDCB6E' },      // Teal impact
+    { bg: ['#E17055', '#FDCB6E'], accent: '#ffffff' },      // Warm attention
+    { bg: ['#0984E3', '#74B9FF'], accent: '#DFE6E9' },      // Blue trust
+  ],
+  PROBLEM: [
+    { bg: ['#2D3436', '#636E72'], accent: '#FF7675' },      // Dark with red accent
+    { bg: ['#1E272E', '#485460'], accent: '#F8B739' },      // Charcoal warning
+    { bg: ['#4A0E0E', '#8B1A1A'], accent: '#ffffff' },      // Deep red tension
+    { bg: ['#1A1A2E', '#16213E'], accent: '#E94560' },      // Dark blue stress
+    { bg: ['#2C2C54', '#474787'], accent: '#FF6B6B' },      // Purple anxiety
+  ],
+  SOLUTION: [
+    { bg: ['#00B894', '#55EFC4'], accent: '#ffffff' },      // Green relief
+    { bg: ['#0984E3', '#74B9FF'], accent: '#FFEAA7' },      // Blue clarity
+    { bg: ['#6C5CE7', '#A29BFE'], accent: '#55EFC4' },      // Purple innovation
+    { bg: ['#00CEC9', '#81ECEC'], accent: '#2D3436' },      // Teal fresh
+    { bg: ['#FD79A8', '#FDCB6E'], accent: '#ffffff' },      // Warm positive
+  ],
+  PROOF: [
+    { bg: ['#2D3436', '#636E72'], accent: '#74B9FF' },      // Professional gray
+    { bg: ['#0C2461', '#1E3799'], accent: '#F8B739' },      // Trust blue
+    { bg: ['#1B1464', '#6C5CE7'], accent: '#00CEC9' },      // Deep purple
+    { bg: ['#192A56', '#273C75'], accent: '#F8B739' },      // Navy credible
+    { bg: ['#2C3E50', '#34495E'], accent: '#1ABC9C' },      // Corporate
+  ],
+  CTA: [
+    { bg: ['#FF3366', '#FF6B35'], accent: '#ffffff' },      // Urgent red
+    { bg: ['#00B894', '#55EFC4'], accent: '#2D3436' },      // Action green
+    { bg: ['#FD79A8', '#FDCB6E'], accent: '#2D3436' },      // Energetic pink
+    { bg: ['#E17055', '#FDCB6E'], accent: '#ffffff' },      // Warm action
+    { bg: ['#6C5CE7', '#FD79A8'], accent: '#ffffff' },      // Bold purple-pink
+  ],
+}
+
+// Get palette for scene (varies by index to avoid repetition)
+function getScenePalette(sceneType: string, index: number) {
+  const palettes = SCENE_PALETTES[sceneType as keyof typeof SCENE_PALETTES] || SCENE_PALETTES.HOOK
+  return palettes[index % palettes.length]
+}
 
 // =============================================================================
 // TYPES
@@ -22,218 +73,396 @@ interface CreativePreviewProps {
 }
 
 // =============================================================================
-// INLINE SCENE RENDERER (for preview)
+// SCENE COMPONENT
 // =============================================================================
 
-const PreviewScene: React.FC<{ scene: SceneSpec }> = ({ scene }) => {
+const PreviewScene: React.FC<{ scene: SceneSpec; index: number }> = ({ scene, index }) => {
   const frame = useCurrentFrame()
   const { fps } = useVideoConfig()
 
-  // Background styles
-  const bgStyles = useMemo(() => getBackgroundCSS(scene.background), [scene.background])
+  // Get intelligent palette based on scene type
+  const palette = useMemo(() => getScenePalette(scene.sceneType, index), [scene.sceneType, index])
 
-  // Layout styles
-  const layoutStyles = useMemo(() => getLayoutCSS(scene.layout), [scene.layout])
+  // Build background with intelligent fallbacks
+  const bgStyles = useMemo(() => {
+    const bg = scene.background
 
-  // Animation
-  const entryEnd = scene.motion?.entryDuration || 15
-  const exitStart = scene.durationFrames - (scene.motion?.exitDuration || 10)
+    // If AI specified colors, use them
+    if (bg?.color && bg.color !== '#000' && bg.color !== '#000000') {
+      if (bg.type === 'solid') {
+        return { backgroundColor: bg.color }
+      }
+    }
 
+    if (bg?.gradientColors && bg.gradientColors.length >= 2) {
+      const angle = bg.gradientAngle ?? 135
+      if (bg.type === 'gradient') {
+        return { background: `linear-gradient(${angle}deg, ${bg.gradientColors.join(', ')})` }
+      }
+      if (bg.type === 'radial') {
+        const cx = bg.radialCenter?.x ?? 30
+        const cy = bg.radialCenter?.y ?? 30
+        return { background: `radial-gradient(ellipse at ${cx}% ${cy}%, ${bg.gradientColors[0]} 0%, ${bg.gradientColors[1]} 100%)` }
+      }
+    }
+
+    // INTELLIGENT FALLBACK: Use palette based on scene type
+    const [color1, color2] = palette.bg
+    const bgType = bg?.type || 'gradient'
+
+    if (bgType === 'solid') {
+      return { backgroundColor: color1 }
+    }
+    if (bgType === 'radial') {
+      return { background: `radial-gradient(ellipse at 30% 20%, ${color1} 0%, ${color2} 100%)` }
+    }
+    if (bgType === 'mesh') {
+      return {
+        background: `
+          radial-gradient(ellipse at 20% 0%, ${color1}90 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 100%, ${color2}90 0%, transparent 50%),
+          linear-gradient(180deg, ${color1} 0%, ${color2} 100%)
+        `
+      }
+    }
+    // Default to gradient
+    return { background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)` }
+  }, [scene.background, palette])
+
+  // Layout styles with REAL positioning
+  const layoutStyles = useMemo(() => getLayoutCSS(scene.layout, scene.sceneType), [scene.layout, scene.sceneType])
+
+  // Animation timing
+  const entryDuration = scene.motion?.entryDuration || 18
+  const exitDuration = scene.motion?.exitDuration || 12
+  const totalFrames = scene.durationFrames || 75
+  const exitStart = totalFrames - exitDuration
+
+  // Animation styles
   const animStyles = useMemo(() => {
-    if (frame < entryEnd) {
-      return getEntryCSS(scene.motion?.entry || 'fade_in', frame, fps, entryEnd, scene.motion?.rhythm || 'smooth')
+    if (frame < entryDuration) {
+      return getEntryCSS(scene.motion?.entry || 'fade_in', frame, fps, entryDuration, scene.motion?.rhythm || 'smooth')
     }
     if (frame >= exitStart) {
-      return getExitCSS(scene.motion?.exit || 'fade_out', frame - exitStart, scene.motion?.exitDuration || 10)
+      return getExitCSS(scene.motion?.exit || 'fade_out', frame - exitStart, exitDuration)
     }
-    return { opacity: 1 }
-  }, [frame, fps, entryEnd, exitStart, scene.motion])
+    // Hold animation
+    const holdAnim = scene.motion?.holdAnimation || 'subtle_float'
+    return getHoldCSS(holdAnim, frame, fps)
+  }, [frame, fps, entryDuration, exitStart, exitDuration, scene.motion])
 
-  // Typography
-  const headlineCSS = useMemo(() => getTypographyCSS(scene.typography), [scene.typography])
+  // Typography with intelligent sizing
+  const headlineCSS = useMemo(() => {
+    const typo = scene.typography
+    const contentLength = scene.headline?.length || 20
+
+    // Dynamic font size based on content length
+    let fontSize = getSizePixels(typo?.headlineSize || 'large', 'headline')
+    if (contentLength > 30) fontSize = Math.min(fontSize, 56)
+    if (contentLength > 40) fontSize = Math.min(fontSize, 48)
+    if (contentLength > 50) fontSize = Math.min(fontSize, 40)
+
+    // Scene-specific adjustments
+    if (scene.sceneType === 'HOOK' || scene.sceneType === 'CTA') {
+      fontSize = Math.max(fontSize, 64)
+    }
+
+    return {
+      fontFamily: `"${typo?.headlineFont || 'Inter'}", system-ui, sans-serif`,
+      fontSize,
+      fontWeight: typo?.headlineWeight || 700,
+      color: typo?.headlineColor || '#ffffff',
+      textTransform: (typo?.headlineTransform || 'none') as React.CSSProperties['textTransform'],
+      letterSpacing: typo?.headlineLetterSpacing ? `${typo.headlineLetterSpacing}em` : '-0.02em',
+      lineHeight: 1.15,
+      margin: 0,
+      textShadow: '0 2px 20px rgba(0,0,0,0.3)',
+      maxWidth: '90%',
+    }
+  }, [scene.typography, scene.headline, scene.sceneType])
+
+  // Subtext styling
+  const subtextCSS = useMemo(() => {
+    const typo = scene.typography
+    return {
+      fontFamily: `"${typo?.subtextFont || 'Inter'}", system-ui, sans-serif`,
+      fontSize: getSizePixels(typo?.subtextSize || 'small', 'subtext'),
+      fontWeight: typo?.subtextWeight || 400,
+      color: typo?.subtextColor || 'rgba(255,255,255,0.85)',
+      marginTop: 20,
+      margin: 0,
+      marginBlockStart: 20,
+      textShadow: '0 1px 10px rgba(0,0,0,0.2)',
+      maxWidth: '85%',
+    }
+  }, [scene.typography])
+
+  // Accent element (underline, glow, etc.)
+  const accentElement = useMemo(() => {
+    if (scene.sceneType === 'CTA') {
+      return (
+        <div style={{
+          marginTop: 30,
+          padding: '16px 40px',
+          backgroundColor: palette.accent,
+          borderRadius: 8,
+          color: palette.bg[0],
+          fontWeight: 700,
+          fontSize: 20,
+          fontFamily: 'Inter, system-ui, sans-serif',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        }}>
+          {scene.subtext || 'En savoir plus'}
+        </div>
+      )
+    }
+
+    if (scene.sceneType === 'HOOK') {
+      return (
+        <div style={{
+          width: 80,
+          height: 5,
+          backgroundColor: palette.accent,
+          borderRadius: 3,
+          marginTop: 25,
+          boxShadow: `0 0 20px ${palette.accent}`,
+        }} />
+      )
+    }
+
+    return null
+  }, [scene.sceneType, scene.subtext, palette])
+
+  // Texture overlay
+  const textureOpacity = scene.background?.textureOpacity ?? 0.08
+  const showTexture = scene.background?.texture && scene.background.texture !== 'none'
 
   return (
     <AbsoluteFill>
       {/* Background */}
       <AbsoluteFill style={bgStyles} />
 
-      {/* Texture */}
-      {scene.background?.texture && scene.background.texture !== 'none' && (
-        <AbsoluteFill style={getTextureCSS(scene.background)} />
+      {/* Animated background element for visual interest */}
+      <AbsoluteFill style={{
+        background: `radial-gradient(circle at ${50 + Math.sin(frame / 30) * 20}% ${40 + Math.cos(frame / 25) * 15}%, rgba(255,255,255,0.1) 0%, transparent 50%)`,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Texture Overlay */}
+      {showTexture && (
+        <AbsoluteFill style={getTextureCSS(scene.background?.texture || 'grain', textureOpacity)} />
       )}
 
-      {/* Content */}
+      {/* Content Container */}
       <AbsoluteFill style={{ ...layoutStyles, ...animStyles }}>
         <h1 style={headlineCSS}>{scene.headline}</h1>
-        {scene.subtext && (
-          <p style={{
-            fontFamily: scene.typography?.subtextFont || 'Inter',
-            fontSize: getSizePixels(scene.typography?.subtextSize || 'small', 'subtext'),
-            fontWeight: scene.typography?.subtextWeight || 400,
-            color: scene.typography?.subtextColor || '#ffffff',
-            opacity: scene.typography?.subtextOpacity || 0.8,
-            marginTop: 20,
-            margin: 0,
-            marginBlockStart: 20,
-          }}>
-            {scene.subtext}
-          </p>
+
+        {scene.subtext && scene.sceneType !== 'CTA' && (
+          <p style={subtextCSS}>{scene.subtext}</p>
         )}
+
+        {accentElement}
       </AbsoluteFill>
 
-      {/* Scene indicator */}
-      <div style={{
-        position: 'absolute',
-        bottom: 40,
-        left: 40,
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.3)',
-        fontFamily: 'Inter',
-        textTransform: 'uppercase',
-        letterSpacing: 2,
-      }}>
-        {scene.sceneType} • {scene.layout}
-      </div>
+      {/* Vignette for depth */}
+      <AbsoluteFill style={{
+        background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%)',
+        pointerEvents: 'none',
+      }} />
     </AbsoluteFill>
   )
 }
 
 // =============================================================================
-// STYLE HELPERS
+// LAYOUT CSS - DRAMATICALLY DIFFERENT POSITIONS
 // =============================================================================
 
-function getBackgroundCSS(bg: BackgroundSpec): React.CSSProperties {
-  if (!bg) return { backgroundColor: '#000' }
+function getLayoutCSS(layout: LayoutType, sceneType: string): React.CSSProperties {
+  const base: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '10%',
+  }
 
-  switch (bg.type) {
-    case 'solid':
-      return { backgroundColor: bg.color || '#000' }
-    case 'gradient': {
-      const angle = bg.gradientAngle ?? 180
-      const colors = bg.gradientColors || ['#000', '#333']
-      return { background: `linear-gradient(${angle}deg, ${colors.join(', ')})` }
-    }
-    case 'radial': {
-      const cx = bg.radialCenter?.x ?? 50
-      const cy = bg.radialCenter?.y ?? 50
-      const colors = bg.gradientColors || ['#333', '#000']
-      return { background: `radial-gradient(circle at ${cx}% ${cy}%, ${colors.join(', ')})` }
-    }
-    case 'mesh': {
-      const colors = bg.gradientColors || ['#6366f1', '#8b5cf6', '#000']
+  switch (layout) {
+    case 'TEXT_CENTER':
+      return { ...base, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
+
+    case 'TEXT_LEFT':
       return {
-        background: `
-          radial-gradient(circle at 20% 20%, ${colors[0]}40 0%, transparent 50%),
-          radial-gradient(circle at 80% 80%, ${colors[1]}40 0%, transparent 50%),
-          ${colors[2]}
-        `
+        ...base,
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        textAlign: 'left',
+        paddingLeft: '8%',
+        paddingRight: '20%',
       }
-    }
+
+    case 'TEXT_RIGHT':
+      return {
+        ...base,
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        textAlign: 'right',
+        paddingLeft: '20%',
+        paddingRight: '8%',
+      }
+
+    case 'TEXT_BOTTOM':
+      return {
+        ...base,
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        textAlign: 'center',
+        paddingBottom: '20%',
+        paddingTop: '40%',
+      }
+
+    case 'TEXT_TOP':
+      return {
+        ...base,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        textAlign: 'center',
+        paddingTop: '18%',
+        paddingBottom: '40%',
+      }
+
+    case 'FULLSCREEN_STATEMENT':
+      return {
+        ...base,
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '6%',
+      }
+
+    case 'MINIMAL_WHISPER':
+      return {
+        ...base,
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '25%',
+      }
+
+    case 'SPLIT_HORIZONTAL':
+      return {
+        ...base,
+        alignItems: 'center',
+        justifyContent: sceneType === 'HOOK' ? 'flex-start' : 'flex-end',
+        textAlign: 'center',
+        paddingTop: sceneType === 'HOOK' ? '25%' : '50%',
+        paddingBottom: sceneType === 'HOOK' ? '50%' : '20%',
+      }
+
+    case 'SPLIT_VERTICAL':
+      return {
+        ...base,
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        textAlign: 'left',
+        paddingLeft: '8%',
+        paddingRight: '40%',
+      }
+
+    case 'DIAGONAL_SLICE':
+      return {
+        ...base,
+        alignItems: 'flex-start',
+        justifyContent: 'flex-end',
+        textAlign: 'left',
+        paddingLeft: '8%',
+        paddingRight: '30%',
+        paddingBottom: '25%',
+      }
+
+    case 'CORNER_ACCENT':
+      return {
+        ...base,
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+        textAlign: 'left',
+        paddingTop: '20%',
+        paddingLeft: '8%',
+        paddingRight: '25%',
+      }
+
+    case 'FLOATING_CARDS':
+      return {
+        ...base,
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '12%',
+      }
+
     default:
-      return { backgroundColor: '#000' }
+      return { ...base, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
   }
 }
 
-function getTextureCSS(bg: BackgroundSpec): React.CSSProperties {
-  const opacity = bg.textureOpacity ?? 0.05
-  switch (bg.texture) {
+// =============================================================================
+// TEXTURE CSS
+// =============================================================================
+
+function getTextureCSS(texture: string, opacity: number): React.CSSProperties {
+  switch (texture) {
     case 'grain':
       return {
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        opacity,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        opacity: opacity,
         mixBlendMode: 'overlay' as const,
       }
     case 'noise':
       return {
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        opacity,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='turbulence' baseFrequency='1.2' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        opacity: opacity,
         mixBlendMode: 'overlay' as const,
       }
     case 'dots':
       return {
-        backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-        backgroundSize: '20px 20px',
-        opacity,
+        backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)`,
+        backgroundSize: '16px 16px',
+        opacity: opacity * 3,
       }
     case 'lines':
       return {
-        backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)`,
-        opacity,
+        backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.05) 3px, rgba(255,255,255,0.05) 4px)`,
+        opacity: opacity * 4,
       }
     default:
       return {}
   }
 }
 
-function getLayoutCSS(layout: LayoutType): React.CSSProperties {
-  const base: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '8%',
-  }
-
-  switch (layout) {
-    case 'TEXT_CENTER':
-      return { ...base, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
-    case 'TEXT_LEFT':
-      return { ...base, alignItems: 'flex-start', justifyContent: 'center', textAlign: 'left', paddingTop: '25%' }
-    case 'TEXT_RIGHT':
-      return { ...base, alignItems: 'flex-end', justifyContent: 'center', textAlign: 'right', paddingTop: '25%' }
-    case 'TEXT_BOTTOM':
-      return { ...base, alignItems: 'center', justifyContent: 'flex-end', textAlign: 'center', paddingBottom: '15%' }
-    case 'TEXT_TOP':
-      return { ...base, alignItems: 'center', justifyContent: 'flex-start', textAlign: 'center', paddingTop: '15%' }
-    case 'FULLSCREEN_STATEMENT':
-      return { ...base, alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '5%' }
-    case 'MINIMAL_WHISPER':
-      return { ...base, alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20%' }
-    case 'SPLIT_HORIZONTAL':
-      return { ...base, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
-    case 'SPLIT_VERTICAL':
-      return { ...base, alignItems: 'flex-start', justifyContent: 'center', textAlign: 'left', paddingRight: '45%' }
-    case 'DIAGONAL_SLICE':
-      return { ...base, alignItems: 'flex-start', justifyContent: 'center', textAlign: 'left', paddingRight: '35%' }
-    case 'CORNER_ACCENT':
-      return { ...base, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
-    case 'FLOATING_CARDS':
-      return { ...base, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
-    default:
-      return { ...base, alignItems: 'center', justifyContent: 'center', textAlign: 'center' }
-  }
-}
-
-function getTypographyCSS(typo: TypographySpec): React.CSSProperties {
-  return {
-    fontFamily: `"${typo?.headlineFont || 'Inter'}", system-ui, sans-serif`,
-    fontSize: getSizePixels(typo?.headlineSize || 'large', 'headline'),
-    fontWeight: typo?.headlineWeight || 700,
-    color: typo?.headlineColor || '#ffffff',
-    textTransform: (typo?.headlineTransform || 'none') as React.CSSProperties['textTransform'],
-    letterSpacing: typo?.headlineLetterSpacing ? `${typo.headlineLetterSpacing}em` : undefined,
-    lineHeight: 1.1,
-    margin: 0,
-  }
-}
+// =============================================================================
+// TYPOGRAPHY HELPERS
+// =============================================================================
 
 function getSizePixels(size: string, type: 'headline' | 'subtext'): number {
   if (type === 'headline') {
     switch (size) {
-      case 'small': return 40
-      case 'medium': return 52
-      case 'large': return 64
-      case 'xlarge': return 80
+      case 'small': return 44
+      case 'medium': return 56
+      case 'large': return 68
+      case 'xlarge': return 84
       case 'massive': return 100
-      default: return 64
+      default: return 68
     }
   } else {
     switch (size) {
-      case 'tiny': return 20
-      case 'small': return 26
-      case 'medium': return 32
-      default: return 26
+      case 'tiny': return 22
+      case 'small': return 28
+      case 'medium': return 34
+      default: return 28
     }
   }
 }
+
+// =============================================================================
+// ENTRY ANIMATIONS - MORE IMPACTFUL
+// =============================================================================
 
 function getEntryCSS(
   entry: EntryAnimation,
@@ -242,103 +471,182 @@ function getEntryCSS(
   duration: number,
   rhythm: string
 ): React.CSSProperties {
-  const progress = Math.min(1, frame / duration)
+  // Easing based on rhythm
+  const getEasedProgress = (p: number) => {
+    switch (rhythm) {
+      case 'snappy': return 1 - Math.pow(1 - p, 4)
+      case 'punchy': return 1 - Math.pow(1 - p, 5)
+      case 'dramatic': return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
+      default: return 1 - Math.pow(1 - p, 3) // smooth
+    }
+  }
+
+  const rawProgress = Math.min(1, frame / duration)
+  const progress = getEasedProgress(rawProgress)
 
   switch (entry) {
     case 'fade_in':
       return { opacity: progress }
+
     case 'slide_up': {
-      const y = (1 - progress) * 100
+      const y = (1 - progress) * 150
       return { transform: `translateY(${y}px)`, opacity: progress }
     }
+
     case 'slide_down': {
-      const y = (1 - progress) * -100
+      const y = (1 - progress) * -150
       return { transform: `translateY(${y}px)`, opacity: progress }
     }
+
     case 'slide_left': {
-      const x = (1 - progress) * 200
+      const x = (1 - progress) * 250
       return { transform: `translateX(${x}px)`, opacity: progress }
     }
+
     case 'slide_right': {
-      const x = (1 - progress) * -200
+      const x = (1 - progress) * -250
       return { transform: `translateX(${x}px)`, opacity: progress }
     }
+
     case 'scale_up': {
-      const scale = 0.5 + progress * 0.5
+      const scale = 0.3 + progress * 0.7
       return { transform: `scale(${scale})`, opacity: progress }
     }
+
     case 'scale_down': {
-      const scale = 1.5 - progress * 0.5
+      const scale = 1.8 - progress * 0.8
       return { transform: `scale(${scale})`, opacity: progress }
     }
+
     case 'pop': {
-      const scale = spring({ frame, fps, config: { damping: 10, stiffness: 100, mass: 0.5 } })
-      return { transform: `scale(${scale})`, opacity: Math.min(1, frame / 5) }
+      const s = spring({ frame, fps, config: { damping: 12, stiffness: 200, mass: 0.8 } })
+      return { transform: `scale(${s})`, opacity: Math.min(1, frame / 4) }
     }
+
     case 'blur_in': {
-      const blur = (1 - progress) * 20
+      const blur = (1 - progress) * 25
       return { filter: `blur(${blur}px)`, opacity: progress }
     }
+
     case 'wipe_right': {
       const clip = (1 - progress) * 100
-      return { clipPath: `inset(0 ${clip}% 0 0)` }
+      return { clipPath: `inset(0 ${clip}% 0 0)`, opacity: 1 }
     }
+
     case 'wipe_up': {
       const clip = (1 - progress) * 100
-      return { clipPath: `inset(${clip}% 0 0 0)` }
+      return { clipPath: `inset(${clip}% 0 0 0)`, opacity: 1 }
     }
+
     case 'split_reveal': {
       const clip = (1 - progress) * 50
-      return { clipPath: `inset(${clip}% 0)` }
+      return { clipPath: `inset(${clip}% 0)`, opacity: 1 }
     }
+
     case 'glitch_in': {
-      const glitch = frame % 3 === 0 ? Math.random() * 5 : 0
-      return { transform: `translateX(${glitch}px)`, opacity: progress }
+      const glitchX = frame < duration * 0.7 && frame % 2 === 0 ? (Math.random() - 0.5) * 15 : 0
+      const glitchY = frame < duration * 0.5 && frame % 3 === 0 ? (Math.random() - 0.5) * 8 : 0
+      return {
+        transform: `translate(${glitchX}px, ${glitchY}px)`,
+        opacity: progress,
+        filter: frame < duration * 0.6 ? `hue-rotate(${Math.random() * 20}deg)` : 'none',
+      }
     }
+
     case 'bounce_in': {
-      const s = spring({ frame, fps, config: { damping: 8, stiffness: 150, mass: 0.5 } })
+      const s = spring({ frame, fps, config: { damping: 10, stiffness: 180, mass: 0.6 } })
       return { transform: `scale(${s})`, opacity: Math.min(1, frame / 3) }
     }
+
     case 'rotate_in': {
-      const rot = (1 - progress) * -10
-      return { transform: `rotate(${rot}deg)`, opacity: progress }
+      const rot = (1 - progress) * -15
+      const scale = 0.8 + progress * 0.2
+      return { transform: `rotate(${rot}deg) scale(${scale})`, opacity: progress }
     }
+
+    case 'typewriter':
+      return { opacity: 1, clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` }
+
     case 'none':
       return { opacity: 1 }
+
     default:
       return { opacity: progress }
   }
 }
 
+// =============================================================================
+// EXIT ANIMATIONS
+// =============================================================================
+
 function getExitCSS(exit: string, frame: number, duration: number): React.CSSProperties {
   const progress = Math.min(1, frame / duration)
+  const eased = 1 - Math.pow(1 - progress, 2)
 
   switch (exit) {
     case 'fade_out':
-      return { opacity: 1 - progress }
+      return { opacity: 1 - eased }
     case 'slide_up':
-      return { transform: `translateY(${-progress * 100}px)`, opacity: 1 - progress }
+      return { transform: `translateY(${-eased * 100}px)`, opacity: 1 - eased }
     case 'slide_down':
-      return { transform: `translateY(${progress * 100}px)`, opacity: 1 - progress }
+      return { transform: `translateY(${eased * 100}px)`, opacity: 1 - eased }
+    case 'slide_left':
+      return { transform: `translateX(${-eased * 150}px)`, opacity: 1 - eased }
+    case 'slide_right':
+      return { transform: `translateX(${eased * 150}px)`, opacity: 1 - eased }
     case 'scale_down':
-      return { transform: `scale(${1 - progress * 0.5})`, opacity: 1 - progress }
+      return { transform: `scale(${1 - eased * 0.3})`, opacity: 1 - eased }
     case 'blur_out':
-      return { filter: `blur(${progress * 20}px)`, opacity: 1 - progress }
+      return { filter: `blur(${eased * 20}px)`, opacity: 1 - eased }
     case 'none':
-      return {}
+      return { opacity: 1 }
     default:
-      return { opacity: 1 - progress }
+      return { opacity: 1 - eased }
   }
 }
 
 // =============================================================================
-// PREVIEW VIDEO COMPOSITION
+// HOLD ANIMATIONS (During scene)
+// =============================================================================
+
+function getHoldCSS(holdAnim: string, frame: number, fps: number): React.CSSProperties {
+  switch (holdAnim) {
+    case 'subtle_float': {
+      const y = Math.sin(frame / 20) * 5
+      const rot = Math.sin(frame / 30) * 0.5
+      return { transform: `translateY(${y}px) rotate(${rot}deg)`, opacity: 1 }
+    }
+    case 'pulse': {
+      const scale = 1 + Math.sin(frame / 15) * 0.02
+      return { transform: `scale(${scale})`, opacity: 1 }
+    }
+    case 'shake': {
+      const x = Math.sin(frame * 2) * 2
+      return { transform: `translateX(${x}px)`, opacity: 1 }
+    }
+    case 'breathe': {
+      const scale = 1 + Math.sin(frame / 25) * 0.015
+      const y = Math.sin(frame / 25) * 3
+      return { transform: `scale(${scale}) translateY(${y}px)`, opacity: 1 }
+    }
+    default:
+      return { opacity: 1 }
+  }
+}
+
+// =============================================================================
+// VIDEO COMPOSITION
 // =============================================================================
 
 const PreviewVideo: React.FC<{ scenes: SceneSpec[] }> = ({ scenes }) => {
   if (!scenes || scenes.length === 0) {
     return (
-      <AbsoluteFill style={{ backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <AbsoluteFill style={{
+        backgroundColor: '#1a1a2e',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
         <span style={{ color: '#fff', fontSize: 24, fontFamily: 'Inter' }}>No scenes to preview</span>
       </AbsoluteFill>
     )
@@ -347,8 +655,9 @@ const PreviewVideo: React.FC<{ scenes: SceneSpec[] }> = ({ scenes }) => {
   let currentFrame = 0
   const sceneFrames = scenes.map(scene => {
     const start = currentFrame
-    currentFrame += scene.durationFrames || 75
-    return { start, duration: scene.durationFrames || 75 }
+    const duration = scene.durationFrames || 75
+    currentFrame += duration
+    return { start, duration }
   })
 
   return (
@@ -358,9 +667,9 @@ const PreviewVideo: React.FC<{ scenes: SceneSpec[] }> = ({ scenes }) => {
           key={index}
           from={sceneFrames[index].start}
           durationInFrames={sceneFrames[index].duration}
-          name={`${scene.sceneType}: ${scene.headline?.substring(0, 15) || 'Scene'}`}
+          name={`${scene.sceneType}: ${scene.headline?.substring(0, 20) || 'Scene'}`}
         >
-          <PreviewScene scene={scene} />
+          <PreviewScene scene={scene} index={index} />
         </Sequence>
       ))}
     </AbsoluteFill>
@@ -391,7 +700,7 @@ export const CreativePreview: React.FC<CreativePreviewProps> = ({ scenes, classN
           maxHeight: '500px',
         }}
         controls
-        autoPlay={false}
+        autoPlay
         loop
       />
     </div>
