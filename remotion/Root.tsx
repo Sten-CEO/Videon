@@ -8,7 +8,7 @@
 import React from 'react'
 import { Composition } from 'remotion'
 import { CreativeVideo, CREATIVE_VIDEO_CONFIG } from './CreativeVideo'
-import type { SceneSpec } from '@/lib/creative'
+import type { SceneSpec } from '../lib/creative'
 
 // Default scenes for preview (required by Remotion bundler)
 const defaultScenes: SceneSpec[] = [

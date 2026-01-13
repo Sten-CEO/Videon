@@ -18,7 +18,7 @@
 import React from 'react'
 import { AbsoluteFill, Sequence } from 'remotion'
 import { AuthorityScene } from './AuthorityScene'
-import type { RenderScene } from '@/lib/video/renderer'
+import type { RenderScene } from '../lib/video/renderer'
 
 // =============================================================================
 // CONSTANTS
