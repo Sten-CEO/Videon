@@ -1,31 +1,86 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface VideoPreviewProps {
   isLoading?: boolean
   thumbnailUrl?: string
+  videoUrl?: string
   progress?: number
   showControls?: boolean
   className?: string
+  statusText?: string
 }
 
 // Video preview component styled like a modern video player
 export function VideoPreview({
   isLoading = false,
   thumbnailUrl,
+  videoUrl,
   progress = 0,
   showControls = true,
   className = '',
+  statusText = 'Generating video...',
 }: VideoPreviewProps) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  // Update time display
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    const handleTimeUpdate = () => setCurrentTime(video.currentTime)
+    const handleLoadedMetadata = () => setDuration(video.duration)
+    const handleEnded = () => setIsPlaying(false)
+
+    video.addEventListener('timeupdate', handleTimeUpdate)
+    video.addEventListener('loadedmetadata', handleLoadedMetadata)
+    video.addEventListener('ended', handleEnded)
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate)
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      video.removeEventListener('ended', handleEnded)
+    }
+  }, [videoUrl])
+
+  function togglePlay() {
+    const video = videoRef.current
+    if (!video) return
+
+    if (isPlaying) {
+      video.pause()
+    } else {
+      video.play()
+    }
+    setIsPlaying(!isPlaying)
+  }
+
+  function formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const videoProgress = duration > 0 ? (currentTime / duration) * 100 : progress
 
   return (
     <div className={`relative rounded-2xl overflow-hidden bg-background-tertiary border border-border ${className}`}>
-      {/* Video container with 16:9 aspect ratio */}
-      <div className="relative aspect-video bg-gradient-to-br from-background-secondary to-background-tertiary">
-        {/* Thumbnail or placeholder */}
-        {thumbnailUrl ? (
+      {/* Video container - 9:16 for vertical video */}
+      <div className="relative bg-gradient-to-br from-background-secondary to-background-tertiary" style={{ aspectRatio: '9/16', maxHeight: '500px' }}>
+        {/* Actual video element */}
+        {videoUrl ? (
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className="absolute inset-0 w-full h-full object-contain bg-black"
+            playsInline
+            onClick={togglePlay}
+          />
+        ) : thumbnailUrl ? (
           <img
             src={thumbnailUrl}
             alt="Video thumbnail"
@@ -60,7 +115,10 @@ export function VideoPreview({
                     </defs>
                   </svg>
                 </div>
-                <span className="text-sm text-foreground-muted">Generating video...</span>
+                <span className="text-sm text-foreground-muted">{statusText}</span>
+                {progress > 0 && progress < 100 && (
+                  <span className="text-xs text-foreground-subtle">{Math.round(progress)}%</span>
+                )}
               </div>
             ) : (
               <div className="text-foreground-subtle">
@@ -72,22 +130,16 @@ export function VideoPreview({
           </div>
         )}
 
-        {/* Play button overlay */}
-        {!isLoading && showControls && (
+        {/* Play button overlay for video */}
+        {videoUrl && !isPlaying && (
           <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition-opacity group"
+            onClick={togglePlay}
+            className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
           >
-            <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              {isPlaying ? (
-                <svg className="w-6 h-6 text-background" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6 text-background ml-1" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              )}
+            <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-background ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
             </div>
           </button>
         )}
@@ -100,7 +152,7 @@ export function VideoPreview({
           <div className="relative h-1 bg-border rounded-full overflow-hidden mb-3">
             <div
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
+              style={{ width: `${videoProgress}%` }}
             />
           </div>
 
@@ -108,7 +160,11 @@ export function VideoPreview({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Play/Pause */}
-              <button className="text-foreground-muted hover:text-foreground transition-colors">
+              <button
+                onClick={togglePlay}
+                disabled={!videoUrl}
+                className="text-foreground-muted hover:text-foreground transition-colors disabled:opacity-50"
+              >
                 {isPlaying ? (
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
@@ -128,16 +184,24 @@ export function VideoPreview({
               </button>
 
               {/* Time */}
-              <span className="text-xs text-foreground-subtle">0:00 / 0:30</span>
+              <span className="text-xs text-foreground-subtle">
+                {formatTime(currentTime)} / {formatTime(duration || 10)}
+              </span>
             </div>
 
             <div className="flex items-center gap-3">
               {/* Download */}
-              <button className="text-foreground-muted hover:text-foreground transition-colors">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </button>
+              {videoUrl && (
+                <a
+                  href={videoUrl}
+                  download
+                  className="text-foreground-muted hover:text-foreground transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </a>
+              )}
 
               {/* Fullscreen */}
               <button className="text-foreground-muted hover:text-foreground transition-colors">

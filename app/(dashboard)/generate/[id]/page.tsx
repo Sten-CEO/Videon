@@ -3,8 +3,22 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Button, Textarea, Card, VideoPreview } from '@/components/ui'
-import { simulatedMessages } from '@/lib/data/mock'
 import type { ChatMessage } from '@/lib/types'
+
+type GenerationPhase = 'idle' | 'analyzing' | 'generating_blueprint' | 'rendering_video' | 'complete' | 'error'
+
+interface AIBlueprint {
+  hook: string
+  angle: string
+  video_structure: Array<{
+    timestamp: string
+    visual: string
+    text_overlay: string
+    audio: string
+  }>
+  reasoning: string
+  visual_suggestions: string[]
+}
 
 // Main conversation content component
 function ConversationContent() {
@@ -13,13 +27,17 @@ function ConversationContent() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [isThinking, setIsThinking] = useState(false)
+  const [phase, setPhase] = useState<GenerationPhase>('idle')
   const [videoProgress, setVideoProgress] = useState(0)
-  const [videoReady, setVideoReady] = useState(false)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [blueprint, setBlueprint] = useState<AIBlueprint | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const hasInitialized = useRef(false)
+
+  const isGenerating = phase !== 'idle' && phase !== 'complete' && phase !== 'error'
+  const videoReady = phase === 'complete' && videoUrl !== null
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -34,79 +52,154 @@ function ConversationContent() {
     }
   }, [initialPrompt])
 
-  async function startGeneration(prompt: string) {
-    setIsGenerating(true)
-    setIsThinking(true)
-    setVideoProgress(0)
-    setVideoReady(false)
-
-    // Add user message
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: prompt,
+  function addMessage(role: 'user' | 'assistant', content: string) {
+    const message: ChatMessage = {
+      id: `${role}-${Date.now()}`,
+      role,
+      content,
       timestamp: new Date().toISOString(),
     }
-    setMessages([userMessage])
+    setMessages(prev => [...prev, message])
+  }
 
-    // Simulate AI responses with delays
-    for (let i = 0; i < simulatedMessages.length; i++) {
-      const { delay, message } = simulatedMessages[i]
+  async function startGeneration(prompt: string) {
+    setPhase('analyzing')
+    setVideoProgress(0)
+    setVideoUrl(null)
+    setBlueprint(null)
+    setError(null)
 
-      await new Promise(resolve => setTimeout(resolve, delay - (i > 0 ? simulatedMessages[i - 1].delay : 0)))
+    // Add user message
+    addMessage('user', prompt)
 
-      // Update progress
-      const progress = Math.min(((i + 1) / simulatedMessages.length) * 100, 100)
-      setVideoProgress(progress)
+    try {
+      // Phase 1: Generate AI Blueprint
+      setPhase('generating_blueprint')
+      addMessage('assistant', 'Analyzing your request and creating a video marketing strategy...')
 
-      // Add message
-      setMessages(prev => [...prev, {
-        ...message,
-        id: `${message.id}-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-      }])
+      const blueprintResponse = await fetch('/api/ai-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product: prompt,
+          target_audience: 'general audience',
+          platform: 'TikTok/Instagram',
+        }),
+      })
 
-      // If last message, mark as ready
-      if (i === simulatedMessages.length - 1) {
-        setIsThinking(false)
-        setIsGenerating(false)
-        setVideoReady(true)
+      if (!blueprintResponse.ok) {
+        throw new Error('Failed to generate blueprint')
       }
+
+      const blueprintData = await blueprintResponse.json()
+      setBlueprint(blueprintData)
+      setVideoProgress(30)
+
+      // Show the AI strategy
+      const strategyMessage = `**Video Strategy Ready**
+
+**Hook:** ${blueprintData.hook}
+
+**Angle:** ${blueprintData.angle}
+
+**Video Structure:**
+${blueprintData.video_structure.map((scene: { timestamp: string; visual: string; text_overlay: string }) =>
+  `- ${scene.timestamp}: ${scene.visual}\n  Text: "${scene.text_overlay}"`
+).join('\n')}
+
+**Reasoning:** ${blueprintData.reasoning}
+
+Now rendering your video...`
+
+      addMessage('assistant', strategyMessage)
+
+      // Phase 2: Render Video
+      setPhase('rendering_video')
+      setVideoProgress(40)
+
+      // Prepare scenes for Remotion
+      const scenes = blueprintData.video_structure.map((scene: { timestamp: string; visual: string; text_overlay: string; audio: string }, index: number) => ({
+        id: `scene-${index + 1}`,
+        headline: scene.text_overlay,
+        subtext: scene.visual,
+        backgroundColor: index === 0 ? '#6366f1' : index === 1 ? '#1e1e2e' : index === 2 ? '#10b981' : '#f59e0b',
+        textColor: '#ffffff',
+      }))
+
+      const renderResponse = await fetch('/api/video/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenes,
+          brand: {
+            primaryColor: '#6366f1',
+            secondaryColor: '#8b5cf6',
+            fontFamily: 'Inter',
+          },
+        }),
+      })
+
+      if (!renderResponse.ok) {
+        const errorData = await renderResponse.json()
+        throw new Error(errorData.error || 'Failed to render video')
+      }
+
+      const renderData = await renderResponse.json()
+      setVideoProgress(100)
+      setVideoUrl(renderData.videoUrl)
+      setPhase('complete')
+
+      addMessage('assistant', `Your video is ready! You can preview it on the right and download it when you're satisfied. Feel free to ask me to make any changes or generate a new version.`)
+
+    } catch (err) {
+      console.error('Generation error:', err)
+      setPhase('error')
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      addMessage('assistant', `I encountered an error while generating your video: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again or contact support if the issue persists.`)
     }
   }
 
   async function handleSendMessage() {
     if (!inputValue.trim() || isGenerating) return
 
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: inputValue,
-      timestamp: new Date().toISOString(),
-    }
-
-    setMessages(prev => [...prev, userMessage])
+    const userMessage = inputValue
     setInputValue('')
-    setIsThinking(true)
+    addMessage('user', userMessage)
 
-    // Simulate AI response
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    const aiMessage: ChatMessage = {
-      id: `ai-${Date.now()}`,
-      role: 'assistant',
-      content: 'I\'ve updated the video based on your feedback. The changes are now reflected in the preview. Let me know if you\'d like any other adjustments!',
-      timestamp: new Date().toISOString(),
+    // If asking to regenerate or make changes
+    if (userMessage.toLowerCase().includes('regenerate') ||
+        userMessage.toLowerCase().includes('new video') ||
+        userMessage.toLowerCase().includes('try again')) {
+      // Extract the product/topic from original prompt or use the new message
+      const newPrompt = initialPrompt || userMessage
+      await startGeneration(newPrompt)
+    } else {
+      // General conversation response
+      addMessage('assistant', 'I understand you want to make changes. To regenerate the video with modifications, please describe what you\'d like to change and I\'ll create a new version for you.')
     }
-
-    setMessages(prev => [...prev, aiMessage])
-    setIsThinking(false)
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
+    }
+  }
+
+  function getStatusText(): string {
+    switch (phase) {
+      case 'analyzing':
+        return 'Analyzing your request...'
+      case 'generating_blueprint':
+        return 'Creating video strategy...'
+      case 'rendering_video':
+        return 'Rendering video...'
+      case 'complete':
+        return 'Video ready!'
+      case 'error':
+        return 'Error occurred'
+      default:
+        return 'Ready to generate'
     }
   }
 
@@ -118,7 +211,7 @@ function ConversationContent() {
         <div className="p-4 border-b border-border">
           <h2 className="font-semibold">Video Generation</h2>
           <p className="text-sm text-foreground-muted">
-            {isGenerating ? 'Generating your video...' : 'Chat with AI to refine your video'}
+            {isGenerating ? getStatusText() : 'Chat with AI to refine your video'}
           </p>
         </div>
 
@@ -154,7 +247,7 @@ function ConversationContent() {
           ))}
 
           {/* Thinking indicator */}
-          {isThinking && (
+          {isGenerating && (
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-sm font-medium text-accent">
                 AI
@@ -201,21 +294,25 @@ function ConversationContent() {
       <div className="w-[480px] flex flex-col gap-4">
         {/* Video player */}
         <VideoPreview
-          isLoading={isGenerating && !videoReady}
+          isLoading={isGenerating}
           progress={videoProgress}
           showControls={videoReady}
+          videoUrl={videoUrl || undefined}
+          statusText={getStatusText()}
         />
 
         {/* Actions */}
-        {videoReady && (
+        {videoReady && videoUrl && (
           <Card padding="md">
             <div className="flex gap-3">
-              <Button variant="primary" fullWidth>
-                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Export Video
-              </Button>
+              <a href={videoUrl} download className="flex-1">
+                <Button variant="primary" fullWidth>
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download Video
+                </Button>
+              </a>
               <Button variant="outline">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -225,17 +322,32 @@ function ConversationContent() {
           </Card>
         )}
 
+        {/* Error display */}
+        {phase === 'error' && error && (
+          <Card padding="md" className="border-red-500/50 bg-red-500/10">
+            <h3 className="font-semibold text-red-500 mb-2">Error</h3>
+            <p className="text-sm text-foreground-muted">{error}</p>
+            <Button
+              variant="outline"
+              className="mt-3"
+              onClick={() => initialPrompt && startGeneration(initialPrompt)}
+            >
+              Try Again
+            </Button>
+          </Card>
+        )}
+
         {/* Video details */}
         <Card padding="md">
           <h3 className="font-semibold mb-3">Video Details</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-foreground-muted">Duration</span>
-              <span>0:30</span>
+              <span>~10s</span>
             </div>
             <div className="flex justify-between">
               <span className="text-foreground-muted">Resolution</span>
-              <span>1080p</span>
+              <span>1080x1920 (9:16)</span>
             </div>
             <div className="flex justify-between">
               <span className="text-foreground-muted">Format</span>
@@ -243,12 +355,29 @@ function ConversationContent() {
             </div>
             <div className="flex justify-between">
               <span className="text-foreground-muted">Status</span>
-              <span className={videoReady ? 'text-success' : 'text-warning'}>
-                {videoReady ? 'Ready' : 'Generating'}
+              <span className={videoReady ? 'text-success' : phase === 'error' ? 'text-red-500' : 'text-warning'}>
+                {getStatusText()}
               </span>
             </div>
           </div>
         </Card>
+
+        {/* Blueprint summary */}
+        {blueprint && (
+          <Card padding="md">
+            <h3 className="font-semibold mb-3">Video Strategy</h3>
+            <div className="space-y-2 text-sm">
+              <div>
+                <span className="text-foreground-muted">Hook:</span>
+                <p className="mt-1">{blueprint.hook}</p>
+              </div>
+              <div>
+                <span className="text-foreground-muted">Angle:</span>
+                <p className="mt-1">{blueprint.angle}</p>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   )
