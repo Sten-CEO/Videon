@@ -48,6 +48,19 @@ export {
   type FontWeight,
   type EntryAnimation,
   type ExitAnimation,
+  // Image System
+  type ImageIntent,
+  type ImageIntentType,
+  type ImageSpec,
+  type ImageRole,
+  type ImageTreatment,
+  type ImageEffect,
+  type ImageEntryEffect,
+  type ImagePosition,
+  type ImageSize,
+  type ImageStackSpec,
+  type IconSpec,
+  type IconType,
 } from './schema'
 
 // Backgrounds
@@ -93,3 +106,16 @@ export {
   type AnimationDefinition,
   type RhythmConfig,
 } from './motion'
+
+// Images
+export {
+  getImageTreatmentStyles,
+  getImagePositionStyles,
+  getImageSizeStyles,
+  getImageEntryAnimationStyles,
+  getImageExitAnimationStyles,
+  getImageHoldAnimationStyles,
+  getImageStyles,
+  getImageZIndex,
+  getSmartPositionForLayout,
+} from './images'

@@ -14,11 +14,12 @@ import { renderMedia, selectComposition } from '@remotion/renderer'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import { existsSync, mkdirSync, statSync } from 'fs'
-import type { SceneSpec } from '@/lib/creative'
+import type { SceneSpec, ImageIntent } from '@/lib/creative'
 
 // Request body type - expects full AI SceneSpec
 interface RequestBody {
   scenes: SceneSpec[]
+  providedImages?: ImageIntent[]
 }
 
 // Ensure renders directory exists
@@ -83,8 +84,10 @@ export async function POST(request: Request) {
 
     // Step 2: Select the composition
     console.log(`[Video Render] Step 2: Selecting composition...`)
+    console.log(`[Video Render] Provided images count: ${body.providedImages?.length || 0}`)
     const inputProps = {
       scenes: body.scenes,
+      providedImages: body.providedImages || [],
     } as Record<string, unknown>
 
     let composition

@@ -171,6 +171,176 @@ export interface AccentSpec {
 }
 
 // =============================================================================
+// IMAGE SYSTEM — USER INPUT (Intent)
+// =============================================================================
+
+/**
+ * User-provided image with intent
+ * The user specifies WHAT the image is, not HOW it should be used
+ */
+export interface ImageIntent {
+  id: string                    // Unique identifier
+  url: string                   // Image URL or base64
+  intent: ImageIntentType       // What this image represents
+  description?: string          // Optional natural language description
+  priority?: 'primary' | 'secondary' | 'optional'  // User hint about importance
+}
+
+export type ImageIntentType =
+  | 'product_screenshot'        // Main product/feature screenshot
+  | 'dashboard_overview'        // Dashboard or app overview
+  | 'ui_detail'                 // Specific UI element or feature
+  | 'logo'                      // Brand logo
+  | 'icon'                      // Icon or symbol
+  | 'testimonial'               // Person photo for testimonial
+  | 'proof_element'             // Stats, graphs, social proof
+  | 'before_after'              // Comparison visuals
+  | 'hero_visual'               // Main hero/featured image
+  | 'background_asset'          // Subtle background element
+
+// =============================================================================
+// IMAGE SYSTEM — AI DECISIONS (Spec)
+// =============================================================================
+
+/**
+ * AI-decided image usage in a scene
+ * The AI decides HOW, WHEN, and IF an image is used
+ */
+export interface ImageSpec {
+  // Reference to user-provided image
+  imageId: string
+
+  // AI's narrative decision
+  role: ImageRole
+  importance: 'hero' | 'supporting' | 'background' | 'accent'
+
+  // Visual treatment (AI decides)
+  treatment: ImageTreatment
+  effect: ImageEffect
+
+  // Positioning (AI decides)
+  position: ImagePosition
+  size: ImageSize
+
+  // Timing within scene (AI decides)
+  entryDelay?: number           // Frames before image appears
+  duration?: number             // How long image is visible (null = full scene)
+
+  // Optional: stacking with other images
+  stackOrder?: number           // Z-index when multiple images
+  stackRelation?: 'overlap' | 'adjacent' | 'background'
+}
+
+export type ImageRole =
+  | 'proof'                     // Demonstrates the claim visually
+  | 'context'                   // Sets the scene/environment
+  | 'emphasis'                  // Reinforces the message
+  | 'recall'                    // Brand/product recall
+  | 'transition'                // Visual bridge between ideas
+  | 'background'                // Atmospheric, non-focus
+
+export interface ImageTreatment {
+  // Cropping
+  crop?: 'none' | 'focus_center' | 'focus_top' | 'focus_bottom' | 'custom'
+  cropFocus?: { x: number; y: number }  // 0-100 percentage
+
+  // Styling
+  cornerRadius?: number         // Pixels, 0 = sharp corners
+  shadow?: 'none' | 'subtle' | 'medium' | 'strong'
+  border?: 'none' | 'subtle' | 'accent'
+  borderColor?: string
+
+  // Visual adjustments
+  brightness?: number           // 0.5 - 1.5, default 1
+  contrast?: number             // 0.5 - 1.5, default 1
+  blur?: number                 // 0 - 20px, for background images
+  opacity?: number              // 0 - 1, default 1
+}
+
+export interface ImageEffect {
+  // Entry animation
+  entry: ImageEntryEffect
+  entryDuration: number         // Frames
+
+  // Hold animation (while visible)
+  hold?: 'none' | 'subtle_zoom' | 'parallax' | 'float'
+
+  // Exit animation
+  exit?: 'fade' | 'slide_out' | 'scale_down' | 'none'
+  exitDuration?: number
+}
+
+export type ImageEntryEffect =
+  | 'fade_in'
+  | 'slide_up'
+  | 'slide_down'
+  | 'slide_left'
+  | 'slide_right'
+  | 'scale_in'                  // 95% → 100%
+  | 'mask_reveal'               // Clean edge reveal
+  | 'blur_in'
+  | 'pop'
+  | 'none'                      // Hard cut
+
+export interface ImagePosition {
+  // Horizontal: 'left' | 'center' | 'right' | number (percentage)
+  horizontal: 'left' | 'center' | 'right' | number
+
+  // Vertical: 'top' | 'center' | 'bottom' | number (percentage)
+  vertical: 'top' | 'center' | 'bottom' | number
+
+  // Offset from calculated position
+  offsetX?: number              // Pixels
+  offsetY?: number              // Pixels
+}
+
+export interface ImageSize {
+  // Size mode
+  mode: 'contain' | 'cover' | 'fixed' | 'percentage'
+
+  // For fixed/percentage modes
+  width?: number                // Pixels or percentage
+  height?: number               // Pixels or percentage
+  maxWidth?: number             // Maximum width constraint
+  maxHeight?: number            // Maximum height constraint
+}
+
+// =============================================================================
+// IMAGE STACK — Multiple images in one scene
+// =============================================================================
+
+export interface ImageStackSpec {
+  layout: 'overlap' | 'side_by_side' | 'stacked_vertical' | 'scattered'
+  images: ImageSpec[]
+  spacing?: number              // Pixels between images
+  alignment?: 'start' | 'center' | 'end'
+}
+
+// =============================================================================
+// ICON SYSTEM — Marketing standard icons
+// =============================================================================
+
+export interface IconSpec {
+  type: IconType
+  color: string                 // Hex color
+  size: 'small' | 'medium' | 'large'
+  position: ImagePosition
+  animation?: 'none' | 'pop' | 'pulse' | 'bounce'
+}
+
+export type IconType =
+  | 'check'                     // Validation, success
+  | 'clock'                     // Time, speed
+  | 'lightning'                 // Fast, powerful
+  | 'calendar'                  // Planning, scheduling
+  | 'stack'                     // Multiple tools/features
+  | 'chart_up'                  // Growth, improvement
+  | 'shield'                    // Security, trust
+  | 'star'                      // Quality, rating
+  | 'heart'                     // Love, favorite
+  | 'arrow_right'               // Direction, next step
+
+// =============================================================================
 // COMPLETE SCENE SPECIFICATION
 // =============================================================================
 
@@ -189,6 +359,12 @@ export interface SceneSpec {
   typography: TypographySpec
   motion: MotionSpec
   accent?: AccentSpec
+
+  // IMAGE SYSTEM — AI-decided image usage (optional)
+  // If images are provided, AI decides how/when/if to use them
+  images?: ImageSpec[]          // Single or multiple images in this scene
+  imageStack?: ImageStackSpec   // For complex multi-image layouts
+  icons?: IconSpec[]            // Marketing icons for this scene
 
   // Timing
   durationFrames: number  // Total scene duration in frames
@@ -222,6 +398,10 @@ export interface VideoSpec {
     mainTension: string
     conversionTrigger: string
   }
+
+  // USER-PROVIDED IMAGES (Input)
+  // The user provides images with their intent - AI decides how/when/if to use them
+  providedImages?: ImageIntent[]
 
   // Scenes (all visual decisions included)
   scenes: SceneSpec[]
