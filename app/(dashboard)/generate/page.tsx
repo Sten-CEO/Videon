@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button, Textarea, Card, StatusBadge } from '@/components/ui'
+import { Button, Textarea, Card, StatusBadge, ImageUpload } from '@/components/ui'
 import { DashboardHeader } from '@/components/layout/DashboardHeader'
 import { mockVideos } from '@/lib/data/mock'
+import type { ImageIntent } from '@/lib/creative'
 
 export default function GeneratePage() {
   const router = useRouter()
   const [description, setDescription] = useState('')
+  const [images, setImages] = useState<ImageIntent[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
 
   const recentProjects = mockVideos.slice(0, 3)
@@ -18,6 +20,13 @@ export default function GeneratePage() {
     if (!description.trim()) return
 
     setIsGenerating(true)
+
+    // Store images in sessionStorage (URL has length limits for base64)
+    if (images.length > 0) {
+      sessionStorage.setItem('videon_images', JSON.stringify(images))
+    } else {
+      sessionStorage.removeItem('videon_images')
+    }
 
     // Simulate a short delay then redirect to conversation page
     await new Promise(resolve => setTimeout(resolve, 500))
@@ -46,12 +55,34 @@ export default function GeneratePage() {
           />
         </div>
 
+        {/* Image Upload Section */}
+        <div className="mb-6 pt-4 border-t border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <svg className="w-5 h-5 text-foreground-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-sm font-medium text-foreground-muted">
+              Images (optionnel)
+            </span>
+          </div>
+          <ImageUpload
+            images={images}
+            onChange={setImages}
+            maxImages={5}
+          />
+        </div>
+
         <div className="flex items-center justify-between">
           <div className="text-sm text-foreground-muted">
             <span className={description.length > 0 ? 'text-foreground' : ''}>
               {description.length}
             </span>
             {' '}characters
+            {images.length > 0 && (
+              <span className="ml-2">
+                • {images.length} image{images.length > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
 
           <Button
