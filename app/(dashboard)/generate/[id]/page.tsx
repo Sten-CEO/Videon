@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Button, Textarea, Card, VideoPreview } from '@/components/ui'
+import { Button, Textarea, Card, RemotionPreview } from '@/components/ui'
 import type { ChatMessage } from '@/lib/types'
 
 type GenerationPhase = 'idle' | 'analyzing' | 'generating_strategy' | 'rendering_video' | 'complete' | 'error'
@@ -50,6 +50,21 @@ function ConversationContent() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [strategy, setStrategy] = useState<VideoStrategy | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [previewScenes, setPreviewScenes] = useState<Array<{
+    headline: string
+    subtext?: string
+    backgroundColor?: string
+    textColor?: string
+    shotType?: string
+    energy?: 'low' | 'medium' | 'high'
+    recommendedEffect?: string
+    recommendedFont?: string
+  }>>([])
+  const [previewBrand] = useState({
+    primaryColor: '#6366f1',
+    secondaryColor: '#8b5cf6',
+    fontFamily: 'Inter',
+  })
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const hasInitialized = useRef(false)
@@ -86,6 +101,7 @@ function ConversationContent() {
     setVideoUrl(null)
     setStrategy(null)
     setError(null)
+    setPreviewScenes([])
 
     // Add user message
     addMessage('user', prompt)
@@ -111,6 +127,19 @@ function ConversationContent() {
       setStrategy(strategyData)
       setVideoProgress(30)
 
+      // Create preview scenes immediately for real-time preview
+      const scenes = strategyData.shots.map((shot) => ({
+        headline: shot.copy,
+        subtext: shot.goal,
+        backgroundColor: SHOT_COLORS[shot.shot_type] || '#6366f1',
+        textColor: '#ffffff',
+        shotType: shot.shot_type,
+        energy: shot.energy,
+        recommendedEffect: shot.recommended_effects?.[0] || undefined,
+        recommendedFont: shot.recommended_fonts?.[0] || undefined,
+      }))
+      setPreviewScenes(scenes)
+
       // Show the strategic AI response
       const strategyMessage = `**Attention Strategy Designed**
 
@@ -129,48 +158,45 @@ Now rendering your video...`
 
       addMessage('assistant', strategyMessage)
 
-      // Phase 2: Render Video
+      // Phase 2: Render Video (attempt server-side render, but don't fail if unavailable)
       setPhase('rendering_video')
       setVideoProgress(40)
 
       // Map shots to Remotion scenes with AI data
-      const scenes = strategyData.shots.map((shot, index) => ({
+      const renderScenes = scenes.map((scene, index) => ({
         id: `shot-${index + 1}`,
-        headline: shot.copy,
-        subtext: shot.goal,
-        backgroundColor: SHOT_COLORS[shot.shot_type] || '#6366f1',
-        textColor: '#ffffff',
-        // Pass AI decisions to renderer
-        shotType: shot.shot_type,
-        energy: shot.energy,
-        recommendedEffect: shot.recommended_effects?.[0] || undefined,
-        recommendedFont: shot.recommended_fonts?.[0] || undefined,
+        ...scene,
       }))
 
-      const renderResponse = await fetch('/api/video/render', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scenes,
-          brand: {
-            primaryColor: '#6366f1',
-            secondaryColor: '#8b5cf6',
-            fontFamily: 'Inter',
-          },
-        }),
-      })
+      // Attempt MP4 render (may fail without Chromium)
+      try {
+        const renderResponse = await fetch('/api/video/render', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scenes: renderScenes,
+            brand: {
+              primaryColor: '#6366f1',
+              secondaryColor: '#8b5cf6',
+              fontFamily: 'Inter',
+            },
+          }),
+        })
 
-      if (!renderResponse.ok) {
-        const errorData = await renderResponse.json()
-        throw new Error(errorData.error || 'Failed to render video')
+        if (renderResponse.ok) {
+          const renderData = await renderResponse.json()
+          setVideoUrl(renderData.downloadUrl)
+        } else {
+          console.warn('MP4 render failed - preview still available')
+        }
+      } catch (renderErr) {
+        console.warn('MP4 render unavailable:', renderErr)
       }
 
-      const renderData = await renderResponse.json()
       setVideoProgress(100)
-      setVideoUrl(renderData.downloadUrl)
       setPhase('complete')
 
-      addMessage('assistant', `Your video is ready! Preview it on the right and download when satisfied. Want changes? Just describe what you'd like different.`)
+      addMessage('assistant', `Your video is ready! Use the player on the right to preview. ${videoUrl ? 'Download the MP4 when satisfied.' : 'MP4 export requires additional server setup.'} Want changes? Just describe what you'd like different.`)
 
     } catch (err) {
       console.error('Generation error:', err)
@@ -310,26 +336,64 @@ Now rendering your video...`
 
       {/* Video Preview Section */}
       <div className="w-[480px] flex flex-col gap-4 overflow-y-auto">
-        {/* Video player */}
-        <VideoPreview
-          isLoading={isGenerating}
-          progress={videoProgress}
-          showControls={videoReady}
-          videoUrl={videoUrl || undefined}
-          statusText={getStatusText()}
-        />
+        {/* Video player - Use Remotion for real-time preview */}
+        {previewScenes.length > 0 ? (
+          <RemotionPreview
+            scenes={previewScenes}
+            brand={previewBrand}
+            className="border border-border"
+          />
+        ) : (
+          <div className="relative rounded-2xl overflow-hidden bg-background-tertiary border border-border" style={{ aspectRatio: '9/16', maxHeight: '500px' }}>
+            <div className="absolute inset-0 flex items-center justify-center">
+              {isGenerating ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="relative w-16 h-16">
+                    <svg className="animate-spin w-full h-full" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+                      <path className="opacity-75" fill="none" stroke="url(#gradient)" strokeWidth="2" strokeLinecap="round" d="M4 12a8 8 0 018-8" />
+                      <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#6366f1" />
+                          <stop offset="100%" stopColor="#8b5cf6" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <span className="text-sm text-foreground-muted">{getStatusText()}</span>
+                  {videoProgress > 0 && videoProgress < 100 && (
+                    <span className="text-xs text-foreground-subtle">{Math.round(videoProgress)}%</span>
+                  )}
+                </div>
+              ) : (
+                <div className="text-foreground-subtle flex flex-col items-center gap-2">
+                  <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm">Ready to generate</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Download button */}
-        {videoReady && videoUrl && (
+        {videoUrl ? (
           <a href={videoUrl} download className="block">
             <Button variant="primary" fullWidth>
               <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              Download Video
+              Download MP4
             </Button>
           </a>
-        )}
+        ) : previewScenes.length > 0 && phase === 'complete' ? (
+          <Card padding="sm" className="bg-amber-500/10 border-amber-500/30">
+            <p className="text-sm text-amber-400">
+              Preview ready! MP4 export requires server-side rendering setup.
+            </p>
+          </Card>
+        ) : null}
 
         {/* Error display */}
         {phase === 'error' && error && (
