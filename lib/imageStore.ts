@@ -18,12 +18,11 @@ export function storeImages(images: ImageIntent[]): void {
 }
 
 /**
- * Retrieve and clear stored images
+ * Retrieve stored images (does NOT clear - call clearStoredImages explicitly)
  */
 export function retrieveImages(): ImageIntent[] {
-  const images = storedImages
-  storedImages = [] // Clear after retrieval
-  return images
+  console.log(`[ImageStore] Retrieving ${storedImages.length} images`)
+  return storedImages
 }
 
 /**
