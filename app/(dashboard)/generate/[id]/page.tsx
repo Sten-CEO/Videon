@@ -5,20 +5,38 @@ import { useSearchParams } from 'next/navigation'
 import { Button, Textarea, Card, VideoPreview } from '@/components/ui'
 import type { ChatMessage } from '@/lib/types'
 
-type GenerationPhase = 'idle' | 'analyzing' | 'generating_blueprint' | 'rendering_video' | 'complete' | 'error'
+type GenerationPhase = 'idle' | 'analyzing' | 'generating_strategy' | 'rendering_video' | 'complete' | 'error'
 
-interface AIBlueprint {
-  hook: string
-  angle: string
-  video_structure: Array<{
-    scene: number
-    duration: string
-    purpose: string
-    content: string
-    text_overlay?: string
+// New strategic AI response structure
+interface VideoStrategy {
+  attention_strategy: {
+    audience_state: string
+    core_problem: string
+    main_tension: string
+    surprise_element: string
+    conversion_trigger: string
+  }
+  video_rhythm: {
+    pace: 'slow' | 'medium' | 'fast'
+    intensity_curve: 'linear' | 'wave' | 'spike'
+    pattern_interrupts: number
+  }
+  shots: Array<{
+    shot_type: 'AGGRESSIVE_HOOK' | 'PATTERN_INTERRUPT' | 'PROBLEM_PRESSURE' | 'SOLUTION_REVEAL' | 'PROOF' | 'CTA'
+    goal: string
+    copy: string
+    energy: 'low' | 'medium' | 'high'
   }>
-  reasoning: string
-  visual_suggestions: string[]
+}
+
+// Map shot types to colors for visual distinction
+const SHOT_COLORS: Record<string, string> = {
+  AGGRESSIVE_HOOK: '#ef4444',    // Red - attention grabbing
+  PATTERN_INTERRUPT: '#f59e0b',  // Amber - disruption
+  PROBLEM_PRESSURE: '#1e1e2e',   // Dark - tension
+  SOLUTION_REVEAL: '#10b981',    // Green - relief
+  PROOF: '#6366f1',              // Primary - credibility
+  CTA: '#8b5cf6',                // Accent - action
 }
 
 // Main conversation content component
@@ -31,7 +49,7 @@ function ConversationContent() {
   const [phase, setPhase] = useState<GenerationPhase>('idle')
   const [videoProgress, setVideoProgress] = useState(0)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
-  const [blueprint, setBlueprint] = useState<AIBlueprint | null>(null)
+  const [strategy, setStrategy] = useState<VideoStrategy | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -67,48 +85,48 @@ function ConversationContent() {
     setPhase('analyzing')
     setVideoProgress(0)
     setVideoUrl(null)
-    setBlueprint(null)
+    setStrategy(null)
     setError(null)
 
     // Add user message
     addMessage('user', prompt)
 
     try {
-      // Phase 1: Generate AI Blueprint
-      setPhase('generating_blueprint')
-      addMessage('assistant', 'Analyzing your request and creating a video marketing strategy...')
+      // Phase 1: Generate AI Strategy
+      setPhase('generating_strategy')
+      addMessage('assistant', 'Analyzing audience psychology and designing attention strategy...')
 
-      const blueprintResponse = await fetch('/api/ai-test', {
+      const strategyResponse = await fetch('/api/ai-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: prompt,
-        }),
+        body: JSON.stringify({ message: prompt }),
       })
 
-      if (!blueprintResponse.ok) {
-        const errorData = await blueprintResponse.json()
-        throw new Error(errorData.error || 'Failed to generate blueprint')
+      if (!strategyResponse.ok) {
+        const errorData = await strategyResponse.json()
+        throw new Error(errorData.error || 'Failed to generate strategy')
       }
 
-      const responseData = await blueprintResponse.json()
-      const blueprintData = responseData.data
-      setBlueprint(blueprintData)
+      const responseData = await strategyResponse.json()
+      const strategyData: VideoStrategy = responseData.data
+      setStrategy(strategyData)
       setVideoProgress(30)
 
-      // Show the AI strategy
-      const strategyMessage = `**Video Strategy Ready**
+      // Show the strategic AI response
+      const strategyMessage = `**Attention Strategy Designed**
 
-**Hook:** ${blueprintData.hook}
+**Core Problem:** ${strategyData.attention_strategy.core_problem}
 
-**Angle:** ${blueprintData.angle}
+**Main Tension:** ${strategyData.attention_strategy.main_tension}
 
-**Video Structure:**
-${blueprintData.video_structure.map((scene: { scene: number; duration: string; content: string; text_overlay?: string }) =>
-  `- ${scene.duration}: ${scene.content}\n  Text: "${scene.text_overlay || ''}"`
+**Conversion Trigger:** ${strategyData.attention_strategy.conversion_trigger}
+
+**Video Rhythm:** ${strategyData.video_rhythm.pace} pace, ${strategyData.video_rhythm.intensity_curve} intensity
+
+**Shots (${strategyData.shots.length}):**
+${strategyData.shots.map((shot, i) =>
+  `${i + 1}. [${shot.shot_type}] "${shot.copy}" (${shot.energy} energy)`
 ).join('\n')}
-
-**Reasoning:** ${blueprintData.reasoning}
 
 Now rendering your video...`
 
@@ -118,12 +136,12 @@ Now rendering your video...`
       setPhase('rendering_video')
       setVideoProgress(40)
 
-      // Prepare scenes for Remotion
-      const scenes = blueprintData.video_structure.map((scene: { scene: number; duration: string; content: string; text_overlay?: string }, index: number) => ({
-        id: `scene-${index + 1}`,
-        headline: scene.text_overlay || '',
-        subtext: scene.content,
-        backgroundColor: index === 0 ? '#6366f1' : index === 1 ? '#1e1e2e' : index === 2 ? '#10b981' : '#f59e0b',
+      // Map shots to Remotion scenes
+      const scenes = strategyData.shots.map((shot, index) => ({
+        id: `shot-${index + 1}`,
+        headline: shot.copy,
+        subtext: shot.goal,
+        backgroundColor: SHOT_COLORS[shot.shot_type] || '#6366f1',
         textColor: '#ffffff',
       }))
 
@@ -150,13 +168,13 @@ Now rendering your video...`
       setVideoUrl(renderData.downloadUrl)
       setPhase('complete')
 
-      addMessage('assistant', `Your video is ready! You can preview it on the right and download it when you're satisfied. Feel free to ask me to make any changes or generate a new version.`)
+      addMessage('assistant', `Your video is ready! Preview it on the right and download when satisfied. Want changes? Just describe what you'd like different.`)
 
     } catch (err) {
       console.error('Generation error:', err)
       setPhase('error')
       setError(err instanceof Error ? err.message : 'An error occurred')
-      addMessage('assistant', `I encountered an error while generating your video: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again or contact support if the issue persists.`)
+      addMessage('assistant', `Error: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`)
     }
   }
 
@@ -167,16 +185,15 @@ Now rendering your video...`
     setInputValue('')
     addMessage('user', userMessage)
 
-    // If asking to regenerate or make changes
+    // Regenerate with the new/modified prompt
     if (userMessage.toLowerCase().includes('regenerate') ||
-        userMessage.toLowerCase().includes('new video') ||
-        userMessage.toLowerCase().includes('try again')) {
-      // Extract the product/topic from original prompt or use the new message
-      const newPrompt = initialPrompt || userMessage
+        userMessage.toLowerCase().includes('new') ||
+        userMessage.toLowerCase().includes('try again') ||
+        userMessage.toLowerCase().includes('change')) {
+      const newPrompt = initialPrompt ? `${initialPrompt}\n\nUser modification: ${userMessage}` : userMessage
       await startGeneration(newPrompt)
     } else {
-      // General conversation response
-      addMessage('assistant', 'I understand you want to make changes. To regenerate the video with modifications, please describe what you\'d like to change and I\'ll create a new version for you.')
+      addMessage('assistant', 'To modify the video, describe what you\'d like to change and I\'ll generate a new version.')
     }
   }
 
@@ -190,9 +207,9 @@ Now rendering your video...`
   function getStatusText(): string {
     switch (phase) {
       case 'analyzing':
-        return 'Analyzing your request...'
-      case 'generating_blueprint':
-        return 'Creating video strategy...'
+        return 'Analyzing audience...'
+      case 'generating_strategy':
+        return 'Designing attention strategy...'
       case 'rendering_video':
         return 'Rendering video...'
       case 'complete':
@@ -223,7 +240,6 @@ Now rendering your video...`
               key={message.id}
               className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
-              {/* Avatar */}
               <div
                 className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-medium ${
                   message.role === 'user'
@@ -234,7 +250,6 @@ Now rendering your video...`
                 {message.role === 'user' ? 'U' : 'AI'}
               </div>
 
-              {/* Message bubble */}
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   message.role === 'user'
@@ -273,7 +288,7 @@ Now rendering your video...`
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isGenerating ? 'Wait for generation to complete...' : 'Ask AI to make changes...'}
+              placeholder={isGenerating ? 'Wait for generation...' : 'Describe changes or new video...'}
               disabled={isGenerating}
               rows={1}
               className="resize-none"
@@ -292,7 +307,7 @@ Now rendering your video...`
       </div>
 
       {/* Video Preview Section */}
-      <div className="w-[480px] flex flex-col gap-4">
+      <div className="w-[480px] flex flex-col gap-4 overflow-y-auto">
         {/* Video player */}
         <VideoPreview
           isLoading={isGenerating}
@@ -302,25 +317,16 @@ Now rendering your video...`
           statusText={getStatusText()}
         />
 
-        {/* Actions */}
+        {/* Download button */}
         {videoReady && videoUrl && (
-          <Card padding="md">
-            <div className="flex gap-3">
-              <a href={videoUrl} download className="flex-1">
-                <Button variant="primary" fullWidth>
-                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download Video
-                </Button>
-              </a>
-              <Button variant="outline">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              </Button>
-            </div>
-          </Card>
+          <a href={videoUrl} download className="block">
+            <Button variant="primary" fullWidth>
+              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download Video
+            </Button>
+          </a>
         )}
 
         {/* Error display */}
@@ -344,15 +350,15 @@ Now rendering your video...`
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-foreground-muted">Duration</span>
-              <span>~10s</span>
+              <span>~{strategy ? strategy.shots.length * 2.5 : 10}s</span>
             </div>
             <div className="flex justify-between">
               <span className="text-foreground-muted">Resolution</span>
               <span>1080x1920 (9:16)</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-foreground-muted">Format</span>
-              <span>MP4</span>
+              <span className="text-foreground-muted">Shots</span>
+              <span>{strategy?.shots.length || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-foreground-muted">Status</span>
@@ -363,19 +369,53 @@ Now rendering your video...`
           </div>
         </Card>
 
-        {/* Blueprint summary */}
-        {blueprint && (
+        {/* Attention Strategy */}
+        {strategy && (
           <Card padding="md">
-            <h3 className="font-semibold mb-3">Video Strategy</h3>
-            <div className="space-y-2 text-sm">
+            <h3 className="font-semibold mb-3">Attention Strategy</h3>
+            <div className="space-y-3 text-sm">
               <div>
-                <span className="text-foreground-muted">Hook:</span>
-                <p className="mt-1">{blueprint.hook}</p>
+                <span className="text-xs uppercase tracking-wide text-foreground-subtle">Core Problem</span>
+                <p className="mt-1 text-foreground-muted">{strategy.attention_strategy.core_problem}</p>
               </div>
               <div>
-                <span className="text-foreground-muted">Angle:</span>
-                <p className="mt-1">{blueprint.angle}</p>
+                <span className="text-xs uppercase tracking-wide text-foreground-subtle">Main Tension</span>
+                <p className="mt-1 text-foreground-muted">{strategy.attention_strategy.main_tension}</p>
               </div>
+              <div>
+                <span className="text-xs uppercase tracking-wide text-foreground-subtle">Conversion Trigger</span>
+                <p className="mt-1 text-foreground-muted">{strategy.attention_strategy.conversion_trigger}</p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Shots breakdown */}
+        {strategy && (
+          <Card padding="md">
+            <h3 className="font-semibold mb-3">Shot Sequence</h3>
+            <div className="space-y-2">
+              {strategy.shots.map((shot, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-2 p-2 rounded-lg bg-background-tertiary"
+                >
+                  <div
+                    className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                    style={{ backgroundColor: SHOT_COLORS[shot.shot_type] }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-foreground-subtle">
+                        {shot.shot_type.replace('_', ' ')}
+                      </span>
+                      <span className="text-xs text-foreground-subtle">•</span>
+                      <span className="text-xs text-foreground-subtle">{shot.energy}</span>
+                    </div>
+                    <p className="text-sm font-medium truncate">{shot.copy}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </Card>
         )}
