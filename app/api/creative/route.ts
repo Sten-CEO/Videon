@@ -8,7 +8,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 import { getCreativeDirectorPrompt } from '@/lib/creative/aiPrompt'
-import { validateVideoSpec, type VideoSpec } from '@/lib/creative'
+import { validateVideoSpec, type VideoSpec, type ImageIntent } from '@/lib/creative'
 
 const anthropic = new Anthropic()
 const MODEL = 'claude-sonnet-4-20250514'
@@ -16,6 +16,7 @@ const MAX_TOKENS = 4096
 
 interface RequestBody {
   message: string
+  providedImages?: ImageIntent[]
 }
 
 export async function POST(request: Request) {
@@ -27,6 +28,28 @@ export async function POST(request: Request) {
     }
 
     console.log('[Creative] Generating for:', body.message.substring(0, 100))
+    console.log('[Creative] Provided images:', body.providedImages?.length || 0)
+
+    // Build user prompt with optional image information
+    let userPrompt = `Create a complete video with FULL visual direction for:\n\n${body.message}\n\n`
+
+    // Add image information if provided
+    if (body.providedImages && body.providedImages.length > 0) {
+      userPrompt += `\n\n=== USER-PROVIDED IMAGES ===\nThe user has provided ${body.providedImages.length} image(s) for potential use in the video:\n\n`
+      body.providedImages.forEach((img, i) => {
+        userPrompt += `Image ${i + 1}:\n`
+        userPrompt += `  - ID: "${img.id}"\n`
+        userPrompt += `  - Intent: ${img.intent}\n`
+        userPrompt += `  - Priority: ${img.priority || 'primary'}\n`
+        if (img.description) {
+          userPrompt += `  - Description: ${img.description}\n`
+        }
+        userPrompt += '\n'
+      })
+      userPrompt += `\nYOU DECIDE how, when, and IF to use these images based on the CONCEPT LOCK and video narrative. Reference images by their "id" in the "images" array of each scene.\n\n`
+    }
+
+    userPrompt += `You are the CREATIVE DIRECTOR. Specify EVERY visual decision. VARY layouts, colors, animations. Output ONLY valid JSON.`
 
     const response = await anthropic.messages.create({
       model: MODEL,
@@ -34,7 +57,7 @@ export async function POST(request: Request) {
       system: getCreativeDirectorPrompt(),
       messages: [{
         role: 'user',
-        content: `Create a complete video with FULL visual direction for:\n\n${body.message}\n\nYou are the CREATIVE DIRECTOR. Specify EVERY visual decision. VARY layouts, colors, animations. Output ONLY valid JSON.`
+        content: userPrompt
       }]
     })
 
@@ -57,7 +80,9 @@ export async function POST(request: Request) {
         concept: parsed.concept,
         // Strategy
         strategy: parsed.strategy || {},
-        // Scenes with full visual specs
+        // User-provided images (pass through for rendering)
+        providedImages: body.providedImages,
+        // Scenes with full visual specs (including AI's image decisions)
         scenes: parsed.scenes || [],
         // Video settings
         fps: parsed.fps || 30,

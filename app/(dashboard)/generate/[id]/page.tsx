@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Button, Textarea, Card, CreativePreview } from '@/components/ui'
 import type { ChatMessage } from '@/lib/types'
-import type { SceneSpec, VideoSpec } from '@/lib/creative'
+import type { SceneSpec, VideoSpec, ImageIntent } from '@/lib/creative'
 
 type GenerationPhase = 'idle' | 'analyzing' | 'generating_strategy' | 'rendering_video' | 'complete' | 'error'
 
@@ -21,12 +21,28 @@ function ConversationContent() {
   const [videoSpec, setVideoSpec] = useState<VideoSpec | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [previewScenes, setPreviewScenes] = useState<SceneSpec[]>([])
+  const [providedImages, setProvidedImages] = useState<ImageIntent[]>([])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const hasInitialized = useRef(false)
 
   const isGenerating = phase !== 'idle' && phase !== 'complete' && phase !== 'error'
   const videoReady = phase === 'complete' && videoUrl !== null
+
+  // Load images from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('videon_images')
+      if (stored) {
+        const images = JSON.parse(stored) as ImageIntent[]
+        setProvidedImages(images)
+        // Clear after reading
+        sessionStorage.removeItem('videon_images')
+      }
+    } catch (err) {
+      console.warn('Failed to load images from sessionStorage:', err)
+    }
+  }, [])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -62,6 +78,11 @@ function ConversationContent() {
     // Add user message
     addMessage('user', prompt)
 
+    // Show images info if present
+    if (providedImages.length > 0) {
+      addMessage('assistant', `${providedImages.length} image(s) fournie(s). L'IA va decider comment les integrer a votre video...`)
+    }
+
     try {
       // Phase 1: Generate AI Creative Direction
       setPhase('generating_strategy')
@@ -70,7 +91,10 @@ function ConversationContent() {
       const creativeResponse = await fetch('/api/creative', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: prompt }),
+        body: JSON.stringify({
+          message: prompt,
+          providedImages: providedImages.length > 0 ? providedImages : undefined,
+        }),
       })
 
       if (!creativeResponse.ok) {
@@ -114,6 +138,7 @@ Now rendering your video with full visual direction...`
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             scenes: spec.scenes,  // Pass complete SceneSpec array as-is
+            providedImages: providedImages.length > 0 ? providedImages : undefined,
           }),
         })
 
