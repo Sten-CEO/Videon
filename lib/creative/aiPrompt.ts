@@ -596,9 +596,10 @@ STEP 5: OUTPUT FORMAT (STRICT JSON)
 
 NOTE ON IMAGES:
 • The "images" field is OPTIONAL - only include if providedImages exist AND serve the concept
-• Reference images by their "id" from the providedImages array
+• CRITICAL: Reference images by their EXACT "id" from the providedImages array (e.g., if user provides "img-abc123", use "imageId": "img-abc123")
 • You decide WHICH scenes get images, HOW they're treated, and IF they're used at all
 • If an image doesn't strengthen the conceptLock → don't include it
+• When providedImages ARE given, you SHOULD use them - they were uploaded for a reason
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                ABSOLUTE RULES
@@ -733,7 +734,7 @@ If NO → REDESIGN.
       "emotionalGoal": "Relief and hope",
       "headline": "Automate it. In seconds.",
       "subtext": null,
-      "layout": "TEXT_CENTER",
+      "layout": "TEXT_TOP",
       "background": {
         "type": "gradient",
         "gradientColors": ["#11998E", "#38EF7D"],
@@ -760,7 +761,41 @@ If NO → REDESIGN.
         "holdAnimation": "subtle_float",
         "rhythm": "smooth"
       },
-      "durationFrames": 75
+      "images": [
+        {
+          "imageId": "img-dashboard-001",
+          "role": "proof",
+          "importance": "hero",
+          "treatment": {
+            "cornerRadius": 12,
+            "shadow": "medium",
+            "border": "none",
+            "brightness": 1,
+            "contrast": 1,
+            "blur": 0,
+            "opacity": 1
+          },
+          "effect": {
+            "entry": "slide_up",
+            "entryDuration": 20,
+            "hold": "subtle_zoom",
+            "exit": "fade",
+            "exitDuration": 10
+          },
+          "position": {
+            "horizontal": "center",
+            "vertical": 65,
+            "offsetX": 0,
+            "offsetY": 0
+          },
+          "size": {
+            "mode": "contain",
+            "maxWidth": 900
+          },
+          "entryDelay": 15
+        }
+      ],
+      "durationFrames": 90
     },
     {
       "sceneType": "CTA",
