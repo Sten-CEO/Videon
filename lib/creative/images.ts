@@ -163,6 +163,21 @@ export function getImageSizeStyles(size: ImageSize): React.CSSProperties {
   switch (size.mode) {
     case 'contain':
       styles.objectFit = 'contain'
+      // CRITICAL: Must set explicit width/height for images to render
+      // Use the provided width or default to auto with max constraints
+      if (size.width) {
+        styles.width = typeof size.width === 'number' ? `${size.width}px` : size.width
+      } else {
+        // Default to a reasonable width that respects maxWidth
+        styles.width = size.maxWidth ? `${size.maxWidth}px` : '80%'
+      }
+      if (size.height) {
+        styles.height = typeof size.height === 'number' ? `${size.height}px` : size.height
+      } else {
+        // Use auto height to maintain aspect ratio
+        styles.height = 'auto'
+      }
+      // Apply max constraints
       styles.maxWidth = size.maxWidth ? `${size.maxWidth}px` : '80%'
       styles.maxHeight = size.maxHeight ? `${size.maxHeight}px` : '60%'
       break
@@ -174,8 +189,12 @@ export function getImageSizeStyles(size: ImageSize): React.CSSProperties {
       break
 
     case 'fixed':
-      if (size.width) styles.width = size.width
-      if (size.height) styles.height = size.height
+      if (size.width) {
+        styles.width = typeof size.width === 'number' ? `${size.width}px` : size.width
+      }
+      if (size.height) {
+        styles.height = typeof size.height === 'number' ? `${size.height}px` : size.height
+      }
       styles.objectFit = 'contain'
       break
 
@@ -186,12 +205,12 @@ export function getImageSizeStyles(size: ImageSize): React.CSSProperties {
       break
   }
 
-  // Apply max constraints
-  if (size.maxWidth && size.mode !== 'cover') {
-    styles.maxWidth = size.maxWidth
+  // Apply max constraints for non-cover modes
+  if (size.maxWidth && size.mode !== 'cover' && size.mode !== 'contain') {
+    styles.maxWidth = typeof size.maxWidth === 'number' ? `${size.maxWidth}px` : size.maxWidth
   }
-  if (size.maxHeight && size.mode !== 'cover') {
-    styles.maxHeight = size.maxHeight
+  if (size.maxHeight && size.mode !== 'cover' && size.mode !== 'contain') {
+    styles.maxHeight = typeof size.maxHeight === 'number' ? `${size.maxHeight}px` : size.maxHeight
   }
 
   return styles
@@ -478,17 +497,18 @@ function easeInCubic(t: number): number {
  * Get z-index for image based on importance
  */
 export function getImageZIndex(importance: ImageSpec['importance']): number {
+  // Z-index values: background 0, texture 1, images 10-25, content 30
   switch (importance) {
     case 'background':
-      return 1
+      return 10
     case 'accent':
-      return 5
-    case 'supporting':
-      return 10
-    case 'hero':
       return 15
+    case 'supporting':
+      return 20
+    case 'hero':
+      return 25
     default:
-      return 10
+      return 20
   }
 }
 

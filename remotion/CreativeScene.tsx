@@ -76,23 +76,23 @@ export const CreativeScene: React.FC<CreativeSceneProps> = ({ scene, providedIma
 
   return (
     <AbsoluteFill>
-      {/* Background Layer */}
-      <AbsoluteFill style={bgStyles} />
+      {/* Background Layer - z-index 0 */}
+      <AbsoluteFill style={{ ...bgStyles, zIndex: 0 }} />
 
-      {/* Texture Overlay */}
+      {/* Texture Overlay - z-index 1 */}
       {textureStyles && (
-        <AbsoluteFill style={{ ...textureStyles, pointerEvents: 'none' }} />
+        <AbsoluteFill style={{ ...textureStyles, pointerEvents: 'none', zIndex: 1 }} />
       )}
 
-      {/* Image Layer - Between background and content */}
+      {/* Image Layer - z-index 10-25 (set by SceneImage based on importance) */}
       <SceneImages
         images={scene.images}
         providedImages={providedImages}
         sceneDuration={scene.durationFrames}
       />
 
-      {/* Content Layer with Animation */}
-      <div style={{ ...containerStyles, ...animationStyles }}>
+      {/* Content Layer with Animation - z-index 30 (always above images) */}
+      <div style={{ ...containerStyles, ...animationStyles, position: 'relative', zIndex: 30 }}>
         <div style={contentStyles}>
           {/* Headline */}
           <h1 style={headlineStyles}>
