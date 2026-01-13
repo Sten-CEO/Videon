@@ -201,6 +201,10 @@ export interface SceneSpec {
 export interface VideoSpec {
   // Creative Blueprint (strategic thinking)
   blueprint?: {
+    // CONCEPT LOCK - The dominant mental idea (mandatory)
+    conceptLock: string       // e.g. "Chaos becomes clarity"
+    conceptValidation: string // Why this concept is strong/memorable
+    // Creative direction
     creativeAngle: string
     aggressiveness: 'soft' | 'medium' | 'aggressive'
     emotionArc: string
