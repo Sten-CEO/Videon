@@ -63,6 +63,16 @@ function getScenePalette(sceneType: string, index: number) {
   return palettes[index % palettes.length]
 }
 
+// Helper to darken/lighten a hex color
+function shadeColor(color: string, percent: number): string {
+  const num = parseInt(color.replace('#', ''), 16)
+  const amt = Math.round(2.55 * percent)
+  const R = Math.max(0, Math.min(255, (num >> 16) + amt))
+  const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt))
+  const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt))
+  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`
+}
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -83,50 +93,39 @@ const PreviewScene: React.FC<{ scene: SceneSpec; index: number }> = ({ scene, in
   // Get intelligent palette based on scene type
   const palette = useMemo(() => getScenePalette(scene.sceneType, index), [scene.sceneType, index])
 
-  // Build background with intelligent fallbacks
+  // Build background - ALWAYS use intelligent palettes for guaranteed great colors
   const bgStyles = useMemo(() => {
     const bg = scene.background
-
-    // If AI specified colors, use them
-    if (bg?.color && bg.color !== '#000' && bg.color !== '#000000') {
-      if (bg.type === 'solid') {
-        return { backgroundColor: bg.color }
-      }
-    }
-
-    if (bg?.gradientColors && bg.gradientColors.length >= 2) {
-      const angle = bg.gradientAngle ?? 135
-      if (bg.type === 'gradient') {
-        return { background: `linear-gradient(${angle}deg, ${bg.gradientColors.join(', ')})` }
-      }
-      if (bg.type === 'radial') {
-        const cx = bg.radialCenter?.x ?? 30
-        const cy = bg.radialCenter?.y ?? 30
-        return { background: `radial-gradient(ellipse at ${cx}% ${cy}%, ${bg.gradientColors[0]} 0%, ${bg.gradientColors[1]} 100%)` }
-      }
-    }
-
-    // INTELLIGENT FALLBACK: Use palette based on scene type
     const [color1, color2] = palette.bg
     const bgType = bg?.type || 'gradient'
+    const angle = bg?.gradientAngle ?? 135
 
-    if (bgType === 'solid') {
-      return { backgroundColor: color1 }
+    // ALWAYS use palette colors - AI specifies type, we provide colors
+    switch (bgType) {
+      case 'solid':
+        return { backgroundColor: color1 }
+
+      case 'radial':
+        return {
+          background: `radial-gradient(ellipse at 30% 20%, ${color1} 0%, ${color2} 70%, ${shadeColor(color2, -30)} 100%)`
+        }
+
+      case 'mesh':
+        return {
+          background: `
+            radial-gradient(ellipse at 0% 0%, ${color1} 0%, transparent 50%),
+            radial-gradient(ellipse at 100% 100%, ${color2} 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, ${shadeColor(color1, -20)} 0%, transparent 70%),
+            linear-gradient(135deg, ${shadeColor(color1, -40)} 0%, ${shadeColor(color2, -40)} 100%)
+          `
+        }
+
+      case 'gradient':
+      default:
+        return {
+          background: `linear-gradient(${angle}deg, ${color1} 0%, ${color2} 50%, ${shadeColor(color2, -20)} 100%)`
+        }
     }
-    if (bgType === 'radial') {
-      return { background: `radial-gradient(ellipse at 30% 20%, ${color1} 0%, ${color2} 100%)` }
-    }
-    if (bgType === 'mesh') {
-      return {
-        background: `
-          radial-gradient(ellipse at 20% 0%, ${color1}90 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 100%, ${color2}90 0%, transparent 50%),
-          linear-gradient(180deg, ${color1} 0%, ${color2} 100%)
-        `
-      }
-    }
-    // Default to gradient
-    return { background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)` }
   }, [scene.background, palette])
 
   // Layout styles with REAL positioning
