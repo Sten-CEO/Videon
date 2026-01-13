@@ -7,7 +7,7 @@ import type { ChatMessage } from '@/lib/types'
 
 type GenerationPhase = 'idle' | 'analyzing' | 'generating_strategy' | 'rendering_video' | 'complete' | 'error'
 
-// New strategic AI response structure
+// AI response structure (matches /lib/video/aiSystemPrompt.ts)
 interface VideoStrategy {
   attention_strategy: {
     audience_state: string
@@ -16,27 +16,26 @@ interface VideoStrategy {
     surprise_element: string
     conversion_trigger: string
   }
-  video_rhythm: {
-    pace: 'slow' | 'medium' | 'fast'
-    intensity_curve: 'linear' | 'wave' | 'spike'
-    pattern_interrupts: number
-  }
   shots: Array<{
-    shot_type: 'AGGRESSIVE_HOOK' | 'PATTERN_INTERRUPT' | 'PROBLEM_PRESSURE' | 'SOLUTION_REVEAL' | 'PROOF' | 'CTA'
+    shot_type: string
     goal: string
     copy: string
     energy: 'low' | 'medium' | 'high'
+    recommended_effects: string[]
+    recommended_fonts: string[]
   }>
 }
 
-// Map shot types to colors for visual distinction
+// Map shot types to colors for visual distinction (from Shot Library)
 const SHOT_COLORS: Record<string, string> = {
-  AGGRESSIVE_HOOK: '#ef4444',    // Red - attention grabbing
-  PATTERN_INTERRUPT: '#f59e0b',  // Amber - disruption
-  PROBLEM_PRESSURE: '#1e1e2e',   // Dark - tension
-  SOLUTION_REVEAL: '#10b981',    // Green - relief
-  PROOF: '#6366f1',              // Primary - credibility
-  CTA: '#8b5cf6',                // Accent - action
+  AGGRESSIVE_HOOK: '#ef4444',    // Red - stop the scroll
+  PATTERN_INTERRUPT: '#f59e0b',  // Amber - reset attention
+  PROBLEM_PRESSURE: '#dc2626',   // Dark red - amplify pain
+  PROBLEM_CLARITY: '#6b7280',    // Gray - clear articulation
+  SOLUTION_REVEAL: '#10b981',    // Green - transformation
+  VALUE_PROOF: '#6366f1',        // Primary - credibility
+  POWER_STAT: '#8b5cf6',         // Purple - impact
+  CTA_DIRECT: '#f59e0b',         // Amber - action
 }
 
 // Main conversation content component
@@ -121,11 +120,9 @@ function ConversationContent() {
 
 **Conversion Trigger:** ${strategyData.attention_strategy.conversion_trigger}
 
-**Video Rhythm:** ${strategyData.video_rhythm.pace} pace, ${strategyData.video_rhythm.intensity_curve} intensity
-
 **Shots (${strategyData.shots.length}):**
 ${strategyData.shots.map((shot, i) =>
-  `${i + 1}. [${shot.shot_type}] "${shot.copy}" (${shot.energy} energy)`
+  `${i + 1}. [${shot.shot_type}] "${shot.copy}" → ${shot.recommended_effects[0] || 'default'}`
 ).join('\n')}
 
 Now rendering your video...`
@@ -405,14 +402,19 @@ Now rendering your video...`
                     style={{ backgroundColor: SHOT_COLORS[shot.shot_type] }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-medium text-foreground-subtle">
-                        {shot.shot_type.replace('_', ' ')}
+                        {shot.shot_type.replace(/_/g, ' ')}
                       </span>
                       <span className="text-xs text-foreground-subtle">•</span>
                       <span className="text-xs text-foreground-subtle">{shot.energy}</span>
                     </div>
                     <p className="text-sm font-medium truncate">{shot.copy}</p>
+                    {shot.recommended_effects && shot.recommended_effects.length > 0 && (
+                      <p className="text-xs text-foreground-subtle mt-1">
+                        Effect: {shot.recommended_effects[0].replace(/_/g, ' ').toLowerCase()}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
