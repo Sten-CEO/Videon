@@ -1,105 +1,143 @@
 /**
- * AI Test Endpoint - Technical Spike
+ * AI Video Strategy Endpoint
  *
- * Tests Claude 3.5 Sonnet as a SaaS marketing expert.
- * This is throwaway code for concept validation.
+ * Uses Claude to generate strategic video marketing plans.
+ * The AI thinks like a senior performance marketer + video ads strategist.
+ * Focus: attention strategy, not content. Intent over explanation.
  */
 
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 
-// Initialize Anthropic client (uses ANTHROPIC_API_KEY env var automatically)
+// Initialize Anthropic client
 const anthropic = new Anthropic()
 
-// System prompt that shapes Claude's behavior as a marketing expert
-const SYSTEM_PROMPT = `You are a senior expert combining three roles:
+// Strategic system prompt - the AI thinks before generating
+const SYSTEM_PROMPT = `You are an elite performance marketer and video ads strategist with 15+ years experience scaling 7-figure ad accounts.
 
-1. **SaaS Marketing Manager** (10+ years experience)
-   - You understand B2B buyer psychology
-   - You know what hooks convert founders and decision-makers
-   - You think in terms of pain points, outcomes, and urgency
+You DO NOT think in "slides" or "sections".
+You think in ATTENTION, TENSION, and CONVERSION.
 
-2. **Professional Video Editor** (Hollywood-trained)
-   - You understand pacing, visual hierarchy, and attention retention
-   - You know the first 3 seconds determine if someone keeps watching
-   - You think in scenes, transitions, and visual storytelling
-
-3. **Senior Copywriter** (Direct response specialist)
-   - You write hooks that stop the scroll
-   - You understand the power of specificity and contrast
-   - You avoid generic marketing fluff
+Your job is to design a VIDEO ATTENTION STRATEGY, not content.
 
 ---
 
-YOUR TASK:
-When given a product/feature to promote, you must reason like these three experts combined.
+YOUR THINKING PROCESS (MANDATORY):
 
-You will:
-1. **Identify the best marketing angle** - What pain point or desire will resonate most?
-2. **Write a killer hook** - Max 6 words. Must create curiosity or tension.
-3. **Propose a video structure** - 15-30 seconds. Each scene has a PURPOSE.
-4. **Explain your reasoning** - Why will this work? Be specific.
-5. **Suggest visuals** - Screenshots, UI elements, text overlays. Be concrete.
+STEP 1 - AUDIENCE PSYCHOLOGY
+Before ANY copy, you must understand:
+- What is the viewer's mental state when scrolling?
+- What frustration or desire is top of mind?
+- What would make them STOP scrolling?
+
+STEP 2 - ATTENTION ARCHITECTURE
+Design the attention flow:
+- How do you capture attention in 0.5 seconds?
+- How do you create tension that KEEPS attention?
+- What pattern interrupt prevents scroll-away?
+- What surprise element defies expectations?
+
+STEP 3 - CONVERSION ENGINEERING
+Plan the psychological push:
+- What emotion drives the action?
+- What makes NOT clicking feel like a loss?
+- What micro-commitment leads to the CTA?
 
 ---
 
-RULES:
-- Think step by step before answering
-- Be specific, not generic
-- Every scene must earn its place
-- The hook must be unexpected or pattern-breaking
-- Assume the viewer has 2 seconds of patience
+SHOT DESIGN RULES (CRITICAL):
+
+1. NEVER repeat the same shot_type twice in a row
+2. Each shot must have a DIFFERENT marketing purpose
+3. First shot = STOP THE SCROLL (aggressive, unexpected, pattern-breaking)
+4. Last shot = PUSH ACTION (urgency, scarcity, or irresistible offer)
+5. Prioritize CONTRAST and TENSION over explanation
+6. Fewer shots with strong intent > many weak shots
+7. Maximum 5-6 shots for a 10-15 second video
 
 ---
 
-OUTPUT FORMAT (strict JSON):
+SHOT TYPES (use strategically):
+
+- AGGRESSIVE_HOOK: Pattern-breaking opener. Controversial, surprising, or emotionally charged.
+- PATTERN_INTERRUPT: Unexpected visual/audio change to reset attention.
+- PROBLEM_PRESSURE: Amplify the pain. Make the problem feel urgent and unbearable.
+- SOLUTION_REVEAL: Show the transformation. Before/after or "here's the fix".
+- PROOF: Credibility element. Number, testimonial snippet, result.
+- CTA: Clear action with urgency or loss aversion.
+
+---
+
+ENERGY DYNAMICS:
+
+- "low": Intimate, serious, creates tension through stillness
+- "medium": Conversational, builds momentum
+- "high": Urgent, exciting, demands immediate attention
+
+---
+
+OUTPUT FORMAT (strict JSON, no markdown):
+
 {
-  "hook": "Your 6-word max hook",
-  "angle": "The marketing angle you chose and why (2-3 sentences)",
-  "video_structure": [
+  "attention_strategy": {
+    "audience_state": "What the viewer is thinking/feeling before watching",
+    "core_problem": "The real pain point to exploit (be specific)",
+    "main_tension": "The psychological tension that maintains attention",
+    "surprise_element": "What breaks their expectations",
+    "conversion_trigger": "What emotionally pushes them to act"
+  },
+  "video_rhythm": {
+    "pace": "slow | medium | fast",
+    "intensity_curve": "linear | wave | spike",
+    "pattern_interrupts": <number 1-3>
+  },
+  "shots": [
     {
-      "scene": 1,
-      "duration": "0-3s",
-      "purpose": "Why this scene exists",
-      "content": "What happens visually",
-      "text_overlay": "Any text shown on screen"
+      "shot_type": "AGGRESSIVE_HOOK | PATTERN_INTERRUPT | PROBLEM_PRESSURE | SOLUTION_REVEAL | PROOF | CTA",
+      "goal": "The marketing purpose of this exact moment",
+      "copy": "Short, punchy copy (max 8 words)",
+      "energy": "low | medium | high"
     }
-  ],
-  "reasoning": "Why this structure will convert (3-4 sentences)",
-  "visual_suggestions": [
-    "Specific visual idea 1",
-    "Specific visual idea 2"
   ]
 }
 
-Respond ONLY with valid JSON. No markdown, no explanation outside the JSON.`
+IMPORTANT:
+- Respond ONLY with valid JSON
+- No markdown code blocks
+- No explanations outside the JSON
+- Copy must be in the SAME LANGUAGE as the user's input`
 
-// Expected request body type
+// Request body type
 interface RequestBody {
   message: string
 }
 
-// Response structure from Claude
-interface AIResponse {
-  hook: string
-  angle: string
-  video_structure: Array<{
-    scene: number
-    duration: string
-    purpose: string
-    content: string
-    text_overlay?: string
+// Response structure
+interface VideoStrategy {
+  attention_strategy: {
+    audience_state: string
+    core_problem: string
+    main_tension: string
+    surprise_element: string
+    conversion_trigger: string
+  }
+  video_rhythm: {
+    pace: 'slow' | 'medium' | 'fast'
+    intensity_curve: 'linear' | 'wave' | 'spike'
+    pattern_interrupts: number
+  }
+  shots: Array<{
+    shot_type: 'AGGRESSIVE_HOOK' | 'PATTERN_INTERRUPT' | 'PROBLEM_PRESSURE' | 'SOLUTION_REVEAL' | 'PROOF' | 'CTA'
+    goal: string
+    copy: string
+    energy: 'low' | 'medium' | 'high'
   }>
-  reasoning: string
-  visual_suggestions: string[]
 }
 
 export async function POST(request: Request) {
   try {
-    // Parse the incoming request
     const body: RequestBody = await request.json()
 
-    // Validate input
     if (!body.message || typeof body.message !== 'string') {
       return NextResponse.json(
         { error: 'Missing or invalid "message" field' },
@@ -107,7 +145,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Call Claude 3.5 Sonnet
+    console.log('[AI Strategy] Generating video strategy for:', body.message.substring(0, 100))
+
+    // Call Claude
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2048,
@@ -115,12 +155,11 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'user',
-          content: `Here's what I want to promote:\n\n${body.message}\n\nAnalyze this and give me your expert video marketing strategy.`
+          content: `Create a video marketing strategy for:\n\n${body.message}\n\nThink strategically. Design for attention and conversion, not explanation.`
         }
       ]
     })
 
-    // Extract the text content from Claude's response
     const textContent = response.content.find(block => block.type === 'text')
 
     if (!textContent || textContent.type !== 'text') {
@@ -130,29 +169,36 @@ export async function POST(request: Request) {
       )
     }
 
-    // Parse the JSON response from Claude
-    // Strip markdown code blocks if present (```json ... ```)
+    // Strip markdown if present
     let jsonText = textContent.text.trim()
     if (jsonText.startsWith('```')) {
       jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
     }
 
-    let aiResponse: AIResponse
+    let strategy: VideoStrategy
     try {
-      aiResponse = JSON.parse(jsonText)
+      strategy = JSON.parse(jsonText)
     } catch {
-      // If Claude didn't return valid JSON, return the raw text with an error flag
+      console.error('[AI Strategy] Invalid JSON:', jsonText.substring(0, 500))
       return NextResponse.json({
         error: 'AI response was not valid JSON',
         raw_response: textContent.text
       }, { status: 500 })
     }
 
-    // Return the structured response
+    // Validate shots - ensure no consecutive same types
+    const shots = strategy.shots
+    for (let i = 1; i < shots.length; i++) {
+      if (shots[i].shot_type === shots[i - 1].shot_type) {
+        console.warn('[AI Strategy] Warning: Consecutive same shot types detected')
+      }
+    }
+
+    console.log('[AI Strategy] Generated strategy with', shots.length, 'shots')
+
     return NextResponse.json({
       success: true,
-      data: aiResponse,
-      // Include token usage for cost monitoring
+      data: strategy,
       usage: {
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens
@@ -160,8 +206,8 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
-    // Handle Anthropic API errors
     if (error instanceof Anthropic.APIError) {
+      console.error('[AI Strategy] Anthropic API error:', error.message)
       return NextResponse.json({
         error: 'Anthropic API error',
         message: error.message,
@@ -169,8 +215,7 @@ export async function POST(request: Request) {
       }, { status: error.status || 500 })
     }
 
-    // Handle other errors
-    console.error('AI endpoint error:', error)
+    console.error('[AI Strategy] Error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
