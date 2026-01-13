@@ -34,10 +34,20 @@ export const SceneImage: React.FC<SceneImageProps> = ({
     return null
   }
 
-  // Build image source - use staticFile for local files
-  const imageSrc = imageData.url.startsWith('/')
-    ? staticFile(imageData.url)
-    : imageData.url
+  // Build image source
+  // - If it starts with 'data:', it's base64 (preview) - use directly
+  // - If it starts with '/', it's a file URL (render) - use staticFile
+  let imageSrc: string
+  if (imageData.url.startsWith('data:')) {
+    // Base64 URL - use directly (preview mode)
+    imageSrc = imageData.url
+  } else if (imageData.url.startsWith('/')) {
+    // File URL - use staticFile (render mode)
+    imageSrc = staticFile(imageData.url)
+  } else {
+    // Other URL (http, etc.) - use directly
+    imageSrc = imageData.url
+  }
 
   // Get AI-driven styles for this frame (position, size, animation, treatment)
   const styles = getImageStyles(spec, frame, sceneDuration, fps)
