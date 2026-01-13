@@ -93,14 +93,31 @@ const PreviewScene: React.FC<{ scene: SceneSpec; index: number }> = ({ scene, in
   // Get intelligent palette based on scene type
   const palette = useMemo(() => getScenePalette(scene.sceneType, index), [scene.sceneType, index])
 
-  // Build background - ALWAYS use intelligent palettes for guaranteed great colors
+  // Build background - Use AI colors, with vibrant fallbacks
   const bgStyles = useMemo(() => {
     const bg = scene.background
-    const [color1, color2] = palette.bg
-    const bgType = bg?.type || 'gradient'
     const angle = bg?.gradientAngle ?? 135
 
-    // ALWAYS use palette colors - AI specifies type, we provide colors
+    // Get colors from AI or use palette fallback
+    let color1: string
+    let color2: string
+
+    if (bg?.gradientColors && bg.gradientColors.length >= 2) {
+      // AI provided colors - use them
+      color1 = bg.gradientColors[0]
+      color2 = bg.gradientColors[1]
+    } else if (bg?.color && bg.color !== '#000' && bg.color !== '#000000') {
+      // AI provided solid color
+      color1 = bg.color
+      color2 = shadeColor(bg.color, -30)
+    } else {
+      // FALLBACK: Use palette colors (never black)
+      color1 = palette.bg[0]
+      color2 = palette.bg[1]
+    }
+
+    const bgType = bg?.type || 'gradient'
+
     switch (bgType) {
       case 'solid':
         return { backgroundColor: color1 }
@@ -123,7 +140,7 @@ const PreviewScene: React.FC<{ scene: SceneSpec; index: number }> = ({ scene, in
       case 'gradient':
       default:
         return {
-          background: `linear-gradient(${angle}deg, ${color1} 0%, ${color2} 50%, ${shadeColor(color2, -20)} 100%)`
+          background: `linear-gradient(${angle}deg, ${color1} 0%, ${color2} 100%)`
         }
     }
   }, [scene.background, palette])
