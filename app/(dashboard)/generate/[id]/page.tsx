@@ -22,31 +22,28 @@ function ConversationContent() {
   const [videoSpec, setVideoSpec] = useState<VideoSpec | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [previewScenes, setPreviewScenes] = useState<SceneSpec[]>([])
-  const [providedImages, setProvidedImages] = useState<ImageIntent[]>([])
 
+  // Use ref for images to avoid race conditions with useEffect
+  const imagesRef = useRef<ImageIntent[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const hasInitialized = useRef(false)
 
   const isGenerating = phase !== 'idle' && phase !== 'complete' && phase !== 'error'
   const videoReady = phase === 'complete' && videoUrl !== null
 
-  // Load images from memory store on mount
-  useEffect(() => {
-    const images = retrieveImages()
-    if (images.length > 0) {
-      setProvidedImages(images)
-    }
-  }, [])
-
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Start generation when page loads with a prompt
+  // Load images and start generation when page loads
   useEffect(() => {
     if (initialPrompt && !hasInitialized.current) {
       hasInitialized.current = true
+      // Load images BEFORE starting generation (synchronously)
+      const images = retrieveImages()
+      imagesRef.current = images
+      console.log('[Generate] Images loaded:', images.length, images.map(i => i.id))
       startGeneration(initialPrompt)
     }
   }, [initialPrompt])
@@ -69,12 +66,15 @@ function ConversationContent() {
     setError(null)
     setPreviewScenes([])
 
+    // Get images from ref (loaded synchronously before this function)
+    const images = imagesRef.current
+
     // Add user message
     addMessage('user', prompt)
 
     // Show images info if present
-    if (providedImages.length > 0) {
-      addMessage('assistant', `${providedImages.length} image(s) fournie(s). L'IA va decider comment les integrer a votre video...`)
+    if (images.length > 0) {
+      addMessage('assistant', `${images.length} image(s) fournie(s). L'IA va decider comment les integrer a votre video...`)
     }
 
     try {
@@ -82,12 +82,14 @@ function ConversationContent() {
       setPhase('generating_strategy')
       addMessage('assistant', 'AI Creative Director is analyzing your brief and designing the video...')
 
+      console.log('[Generate] Sending to API with images:', images.length)
+
       const creativeResponse = await fetch('/api/creative', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: prompt,
-          providedImages: providedImages.length > 0 ? providedImages : undefined,
+          providedImages: images.length > 0 ? images : undefined,
         }),
       })
 
@@ -127,12 +129,13 @@ Now rendering your video with full visual direction...`
       // Attempt MP4 render (may fail without Chromium)
       // IMPORTANT: Pass FULL AI SceneSpec - no stripping, no defaults
       try {
+        console.log('[Generate] Rendering with images:', images.length)
         const renderResponse = await fetch('/api/video/render', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             scenes: spec.scenes,  // Pass complete SceneSpec array as-is
-            providedImages: providedImages.length > 0 ? providedImages : undefined,
+            providedImages: images.length > 0 ? images : undefined,
           }),
         })
 
