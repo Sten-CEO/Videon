@@ -205,6 +205,7 @@ export interface VideoSpec {
     aggressiveness: 'soft' | 'medium' | 'aggressive'
     emotionArc: string
     differentiator: string
+    qualityCheck?: string  // What was removed/simplified during self-review
   }
 
   // Creative concept summary
