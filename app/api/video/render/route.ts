@@ -64,23 +64,61 @@ export async function POST(request: Request) {
     console.log(`[Video Render] Scenes count: ${body.scenes.length}`)
     console.log(`[Video Render] Scenes:`, body.scenes.map(s => `${s.sceneType}: ${s.headline?.substring(0, 30) || 'no headline'}`))
 
-    // Debug: Log images in each scene
+    // ================================================================
+    // CRITICAL: Validate providedImages BEFORE rendering
+    // ================================================================
+
+    // Collect all image IDs referenced in scenes
+    const requiredImageIds = new Set<string>()
     body.scenes.forEach((scene, i) => {
       if (scene.images && scene.images.length > 0) {
-        console.log(`[Video Render] Scene ${i} (${scene.sceneType}) has ${scene.images.length} images:`, scene.images.map(img => img.imageId))
-      } else {
-        console.log(`[Video Render] Scene ${i} (${scene.sceneType}): NO images`)
+        scene.images.forEach(img => {
+          requiredImageIds.add(img.imageId)
+          console.log(`[Video Render] Scene ${i} requires image: ${img.imageId}`)
+        })
       }
     })
 
-    // Debug: Log provided images
+    // Create a map of provided images by ID
+    const providedImagesMap = new Map<string, ImageIntent>()
     if (body.providedImages && body.providedImages.length > 0) {
-      console.log(`[Video Render] ProvidedImages count: ${body.providedImages.length}`)
-      console.log(`[Video Render] ProvidedImages IDs:`, body.providedImages.map(img => img.id))
-      console.log(`[Video Render] ProvidedImages URL lengths:`, body.providedImages.map(img => ({ id: img.id, urlLen: img.url?.length || 0 })))
-    } else {
-      console.log(`[Video Render] NO providedImages received!`)
+      body.providedImages.forEach(img => {
+        providedImagesMap.set(img.id, img)
+        console.log(`[Video Render] ProvidedImage available: ${img.id} (URL length: ${img.url?.length || 0})`)
+      })
     }
+
+    // Check if all required images are provided
+    const missingImages: string[] = []
+    requiredImageIds.forEach(id => {
+      if (!providedImagesMap.has(id)) {
+        missingImages.push(id)
+      }
+    })
+
+    if (missingImages.length > 0) {
+      console.error(`[Video Render] ❌ MISSING IMAGES:`, missingImages)
+      console.error(`[Video Render] Required:`, Array.from(requiredImageIds))
+      console.error(`[Video Render] Available:`, Array.from(providedImagesMap.keys()))
+      return NextResponse.json(
+        {
+          error: 'Missing required images',
+          missingImages,
+          requiredImages: Array.from(requiredImageIds),
+          providedImages: Array.from(providedImagesMap.keys()),
+        },
+        { status: 400 }
+      )
+    }
+
+    console.log(`[Video Render] ✅ All ${requiredImageIds.size} required images are present`)
+    console.log(`[Video Render] ProvidedImages count: ${body.providedImages?.length || 0}`)
+
+    // ================================================================
+    // Log payload size for debugging
+    // ================================================================
+    const payloadSize = JSON.stringify(body).length
+    console.log(`[Video Render] Total payload size: ${payloadSize} bytes (${(payloadSize / 1024 / 1024).toFixed(2)} MB)`)
 
     // Step 1: Bundle the Remotion project
     console.log(`[Video Render] Step 1: Bundling composition...`)
@@ -102,18 +140,32 @@ export async function POST(request: Request) {
 
     // Step 2: Select the composition
     console.log(`[Video Render] Step 2: Selecting composition...`)
-    console.log(`[Video Render] Provided images count: ${body.providedImages?.length || 0}`)
+
+    // ================================================================
+    // CRITICAL: Build inputProps with validated images
+    // ================================================================
     const inputProps = {
       scenes: body.scenes,
       providedImages: body.providedImages || [],
-    } as Record<string, unknown>
+    }
+
+    console.log(`[Video Render] inputProps.scenes: ${inputProps.scenes.length}`)
+    console.log(`[Video Render] inputProps.providedImages: ${inputProps.providedImages.length}`)
+
+    // Log first image to verify data
+    if (inputProps.providedImages.length > 0) {
+      const firstImg = inputProps.providedImages[0]
+      console.log(`[Video Render] First image ID: ${firstImg.id}`)
+      console.log(`[Video Render] First image URL starts with: ${firstImg.url?.substring(0, 50)}`)
+      console.log(`[Video Render] First image URL length: ${firstImg.url?.length}`)
+    }
 
     let composition
     try {
       composition = await selectComposition({
         serveUrl: bundleLocation,
-        id: 'CreativeVideo',  // Uses the new AI-driven composition
-        inputProps,
+        id: 'CreativeVideo',
+        inputProps: inputProps as Record<string, unknown>,
       })
       console.log(`[Video Render] Composition: ${composition.id}`)
       console.log(`[Video Render] Duration: ${composition.durationInFrames} frames @ ${composition.fps}fps`)
@@ -125,13 +177,15 @@ export async function POST(request: Request) {
 
     // Step 3: Render the video
     console.log(`[Video Render] Step 3: Rendering video...`)
+    console.log(`[Video Render] Passing inputProps with ${inputProps.providedImages.length} images to renderMedia`)
+
     try {
       await renderMedia({
         composition,
         serveUrl: bundleLocation,
         codec: 'h264',
         outputLocation: outputPath,
-        inputProps,
+        inputProps: inputProps as Record<string, unknown>,
         chromiumOptions: {
           enableMultiProcessOnLinux: true,
         },
