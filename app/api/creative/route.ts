@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         }
         userPrompt += '\n'
       })
-      userPrompt += `\nYOU DECIDE how, when, and IF to use these images based on the CONCEPT LOCK and video narrative. Reference images by their "id" in the "images" array of each scene.\n\n`
+      userPrompt += `\nIMPORTANT: The user uploaded these images specifically for this video. You SHOULD include them in appropriate scenes using their EXACT IDs (e.g., "${body.providedImages[0].id}"). Add an "images" array to relevant scenes, referencing each image by its "imageId".\n\n`
     }
 
     userPrompt += `You are the CREATIVE DIRECTOR. Specify EVERY visual decision. VARY layouts, colors, animations. Output ONLY valid JSON.`
@@ -101,6 +101,20 @@ export async function POST(request: Request) {
       console.log('[Creative] Aggressiveness:', videoSpec.blueprint.aggressiveness)
     }
     console.log('[Creative] Generated', videoSpec.scenes.length, 'scenes')
+
+    // Debug: Log what images the AI generated in each scene
+    videoSpec.scenes.forEach((scene, i) => {
+      if (scene.images && scene.images.length > 0) {
+        console.log(`[Creative] Scene ${i} (${scene.sceneType}) images:`, scene.images.map(img => img.imageId))
+      } else {
+        console.log(`[Creative] Scene ${i} (${scene.sceneType}): NO images`)
+      }
+    })
+
+    // Debug: Log provided image IDs for comparison
+    if (body.providedImages && body.providedImages.length > 0) {
+      console.log('[Creative] Available image IDs:', body.providedImages.map(img => img.id))
+    }
 
     return NextResponse.json({
       success: true,
