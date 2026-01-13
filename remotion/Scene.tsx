@@ -1,186 +1,141 @@
 /**
- * Single Scene Component for Remotion
+ * Scene Component — The Core Render Unit
  *
- * Renders one scene with animated text and optional background image.
+ * This component renders a single shot using:
+ * - Dynamic layouts (based on shot type & energy)
+ * - Dynamic effects (based on AI recommendations)
+ * - Dynamic backgrounds (based on shot type & energy)
+ * - Dynamic fonts (based on AI recommendations)
+ *
+ * IMPORTANT: This component makes AI decisions VISIBLE.
+ * Different AI recommendations = Different visual output.
  */
 
 import React from 'react'
-import {
-  AbsoluteFill,
-  Img,
-  interpolate,
-  useCurrentFrame,
-  useVideoConfig,
-} from 'remotion'
+import { AbsoluteFill } from 'remotion'
 import type { Scene as SceneType, Brand } from './types'
 
-interface SceneProps {
-  scene: SceneType
+// Import render systems
+import { getEffectComponent } from './effects'
+import { getLayoutComponent, selectLayout, type LayoutName } from './layouts'
+import { getBackgroundComponent, selectBackground, getTextColorForBackground, type BackgroundName } from './backgrounds'
+import { getFontFamily, getWeightForEnergy } from './fonts'
+
+// ============================================================================
+// SCENE PROPS TYPE (Updated to support render decisions)
+// ============================================================================
+
+export interface SceneProps {
+  scene: SceneType & {
+    /** Shot type from AI */
+    shotType?: string
+    /** Energy level */
+    energy?: 'low' | 'medium' | 'high'
+    /** Recommended effect from AI */
+    recommendedEffect?: string
+    /** Recommended font from AI */
+    recommendedFont?: string
+  }
   brand: Brand
   sceneIndex: number
+  /** Previous layout to avoid repetition */
+  previousLayout?: LayoutName | null
+  /** Previous background to avoid repetition */
+  previousBackground?: BackgroundName | null
 }
 
-export const Scene: React.FC<SceneProps> = ({ scene, brand, sceneIndex }) => {
-  const frame = useCurrentFrame()
-  const { durationInFrames } = useVideoConfig()
+// ============================================================================
+// SCENE COMPONENT
+// ============================================================================
 
-  // Animation: fade in at start, fade out at end
-  const opacity = interpolate(
-    frame,
-    [0, 15, durationInFrames - 15, durationInFrames],
-    [0, 1, 1, 0],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
-  )
+export const Scene: React.FC<SceneProps> = ({
+  scene,
+  brand,
+  sceneIndex,
+  previousLayout = null,
+  previousBackground = null,
+}) => {
+  // Extract AI decisions (with defaults)
+  const shotType = scene.shotType || getDefaultShotType(sceneIndex)
+  const energy = scene.energy || 'medium'
+  const recommendedEffect = scene.recommendedEffect || getDefaultEffect(shotType)
+  const recommendedFont = scene.recommendedFont || 'INTER'
 
-  // Slide up animation for headline
-  const headlineY = interpolate(
-    frame,
-    [0, 20],
-    [50, 0],
-    { extrapolateRight: 'clamp' }
-  )
+  // Select layout based on shot type (avoiding consecutive duplicates)
+  const layout = selectLayout(shotType, previousLayout, energy)
 
-  // Delayed slide up for subtext
-  const subtextY = interpolate(
-    frame,
-    [10, 30],
-    [30, 0],
-    { extrapolateRight: 'clamp' }
-  )
+  // Select background based on shot type (avoiding consecutive duplicates)
+  const background = selectBackground(shotType, energy, previousBackground)
 
-  const subtextOpacity = interpolate(
-    frame,
-    [10, 25],
-    [0, 1],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
-  )
+  // Get font configuration
+  const fontFamily = getFontFamily(recommendedFont)
+  const fontWeight = getWeightForEnergy(recommendedFont, energy)
 
-  // Background gradient based on scene index
-  const gradientAngle = 135 + sceneIndex * 30
-  const bgGradient = `linear-gradient(${gradientAngle}deg, #0a0a0b 0%, #18181b 50%, #0a0a0b 100%)`
+  // Get text color for background
+  const textColor = getTextColorForBackground(background)
+
+  // Get components
+  const BackgroundComponent = getBackgroundComponent(background)
+  const LayoutComponent = getLayoutComponent(layout)
+  const EffectComponent = getEffectComponent(recommendedEffect)
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: '#0a0a0b',
-        background: bgGradient,
-        opacity,
-      }}
-    >
-      {/* Optional background image */}
-      {scene.imageUrl && (
-        <AbsoluteFill style={{ opacity: 0.3 }}>
-          <Img
-            src={scene.imageUrl}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
+    <AbsoluteFill>
+      {/* Background Layer */}
+      <BackgroundComponent
+        primaryColor={scene.backgroundColor || brand.primaryColor}
+        secondaryColor={brand.secondaryColor}
+      >
+        {/* Effect Layer (wraps content with animation) */}
+        <AbsoluteFill>
+          <EffectComponent>
+            {/* Layout Layer (positions content) */}
+            <LayoutComponent
+              headline={scene.headline || ''}
+              subtext={scene.subtext}
+              fontFamily={fontFamily}
+              textColor={textColor}
+            />
+          </EffectComponent>
         </AbsoluteFill>
-      )}
-
-      {/* Gradient overlay */}
-      <AbsoluteFill
-        style={{
-          background: `linear-gradient(180deg, transparent 0%, rgba(10,10,11,0.8) 100%)`,
-        }}
-      />
-
-      {/* Content container */}
-      <AbsoluteFill
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '60px',
-        }}
-      >
-        {/* Headline */}
-        <div
-          style={{
-            transform: `translateY(${headlineY}px)`,
-            textAlign: 'center',
-          }}
-        >
-          <h1
-            style={{
-              fontSize: '72px',
-              fontWeight: 800,
-              color: '#ffffff',
-              margin: 0,
-              lineHeight: 1.1,
-              textShadow: '0 4px 20px rgba(0,0,0,0.5)',
-            }}
-          >
-            {scene.headline}
-          </h1>
-        </div>
-
-        {/* Subtext */}
-        {scene.subtext && (
-          <div
-            style={{
-              transform: `translateY(${subtextY}px)`,
-              opacity: subtextOpacity,
-              marginTop: '24px',
-              textAlign: 'center',
-            }}
-          >
-            <p
-              style={{
-                fontSize: '32px',
-                fontWeight: 500,
-                color: brand.primaryColor,
-                margin: 0,
-                textShadow: '0 2px 10px rgba(0,0,0,0.3)',
-              }}
-            >
-              {scene.subtext}
-            </p>
-          </div>
-        )}
-
-        {/* Accent line */}
-        <div
-          style={{
-            width: interpolate(frame, [20, 40], [0, 120], {
-              extrapolateRight: 'clamp',
-            }),
-            height: '4px',
-            backgroundColor: brand.primaryColor,
-            marginTop: '32px',
-            borderRadius: '2px',
-          }}
-        />
-      </AbsoluteFill>
-
-      {/* Scene indicator dots */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '40px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: '12px',
-        }}
-      >
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            style={{
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              backgroundColor: i === sceneIndex ? brand.primaryColor : '#3f3f46',
-              transition: 'background-color 0.3s',
-            }}
-          />
-        ))}
-      </div>
+      </BackgroundComponent>
     </AbsoluteFill>
   )
 }
+
+// ============================================================================
+// DEFAULT MAPPINGS (when AI data not available)
+// ============================================================================
+
+/**
+ * Get default shot type based on scene index
+ */
+function getDefaultShotType(sceneIndex: number): string {
+  const shotSequence = [
+    'AGGRESSIVE_HOOK',
+    'PROBLEM_PRESSURE',
+    'SOLUTION_REVEAL',
+    'VALUE_PROOF',
+    'CTA_DIRECT',
+  ]
+  return shotSequence[sceneIndex % shotSequence.length]
+}
+
+/**
+ * Get default effect based on shot type
+ */
+function getDefaultEffect(shotType: string): string {
+  const defaults: Record<string, string> = {
+    AGGRESSIVE_HOOK: 'TEXT_POP_SCALE',
+    PATTERN_INTERRUPT: 'HARD_CUT_TEXT',
+    PROBLEM_PRESSURE: 'TEXT_SLIDE_UP',
+    PROBLEM_CLARITY: 'TEXT_FADE_IN',
+    SOLUTION_REVEAL: 'IMAGE_REVEAL_MASK',
+    VALUE_PROOF: 'TEXT_SLIDE_LEFT',
+    POWER_STAT: 'TEXT_POP_SCALE',
+    CTA_DIRECT: 'BACKGROUND_FLASH',
+  }
+  return defaults[shotType] || 'TEXT_FADE_IN'
+}
+
+export default Scene
