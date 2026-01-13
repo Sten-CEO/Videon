@@ -178,6 +178,38 @@ COPY RULES:
 
 ---
 
+VISUAL QUALITY PRINCIPLES (CRITICAL):
+
+The renderer enforces professional marketing visuals. Your job is to set up SUCCESS.
+
+1. CLEAN MARKETING VISUALS
+   - All outputs must look professional, not amateurish
+   - Avoid empty or unbalanced compositions
+   - Every shot must guide the viewer's eye to ONE focal point
+
+2. HOOK SHOTS MUST FEEL POWERFUL
+   - The hook is NOT passive or gentle
+   - It must visually DEMAND attention
+   - High energy = Bold, immediate, impactful
+
+3. EVERY SHOT SERVES A PURPOSE
+   - No filler shots or "slide-like" compositions
+   - Each shot advances the marketing narrative
+   - Dead space = Lost attention = Failed video
+
+4. CTA MUST BE ISOLATED AND CLEAR
+   - The call to action needs visual priority
+   - Nothing competes with the CTA
+   - Urgency must be visually reinforced
+
+5. AVOID THESE MISTAKES
+   - Generic "Canva-style" slides
+   - Text that floats without anchoring
+   - Low energy where high energy is needed
+   - Cluttered compositions
+
+---
+
 OUTPUT FORMAT (STRICT JSON, NO MARKDOWN):
 
 {

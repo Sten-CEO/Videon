@@ -1,42 +1,166 @@
 /**
  * Video Library — Main Entry Point
  *
- * This file exports all video-related libraries and utilities.
- * Import from here for clean, organized access.
+ * ARCHITECTURE: VISUAL AUTHORITY SYSTEM
  *
- * ARCHITECTURE OVERVIEW:
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │                    PRIORITY ORDER (STRICT)                       │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │                                                                  │
+ * │  1. BRAND CONSTRAINTS (HIGHEST)                                 │
+ * │     - User preferences are NON-NEGOTIABLE                       │
+ * │     - Colors, fonts, vibe cannot be overridden                  │
+ * │     → /lib/video/brand/                                         │
+ * │                                                                  │
+ * │  2. COMPOSITION RULES                                           │
+ * │     - Marketing-grade layout enforcement                        │
+ * │     - Safe zones, focal points, hierarchy                       │
+ * │     → /lib/video/composition/                                   │
+ * │                                                                  │
+ * │  3. LAYOUT SELECTION                                            │
+ * │     - 5 marketing-safe templates only                           │
+ * │     - Shot type determines layout                               │
+ * │     → /lib/video/layouts/                                       │
+ * │                                                                  │
+ * │  4. EFFECT EXECUTION                                            │
+ * │     - AI can recommend, must be valid                           │
+ * │     - Effects add motion, not chaos                             │
+ * │     → /lib/video/effects/                                       │
+ * │                                                                  │
+ * │  5. TYPOGRAPHY REFINEMENT                                       │
+ * │     - Font selection respects brand                             │
+ * │     - Size adjusts to content length                            │
+ * │     → /lib/video/fonts/                                         │
+ * │                                                                  │
+ * └─────────────────────────────────────────────────────────────────┘
  *
- * ┌─────────────────────────────────────────────────────────────┐
- * │                    AI (Decision Maker)                       │
- * │  - Analyzes audience psychology                              │
- * │  - Designs attention strategy                                │
- * │  - Selects shots from Shot Library                          │
- * │  - Writes copy for each shot                                 │
- * │  - Recommends effects (constrained by mapping)              │
- * │  - Recommends fonts (constrained by library)                │
- * └─────────────────────────────────────────────────────────────┘
- *                              │
- *                              ▼
- * ┌─────────────────────────────────────────────────────────────┐
- * │                   Shot-Effect Mapping                        │
- * │  - Validates AI recommendations                              │
- * │  - Ensures only allowed effects are used                    │
- * │  - Provides fallbacks if needed                             │
- * └─────────────────────────────────────────────────────────────┘
- *                              │
- *                              ▼
- * ┌─────────────────────────────────────────────────────────────┐
- * │                   Engine (Executor)                          │
- * │  - Renders video using Remotion                             │
- * │  - Executes selected effects                                 │
- * │  - Applies fonts and styling                                │
- * │  - Outputs final MP4                                        │
- * └─────────────────────────────────────────────────────────────┘
+ * HOW TO USE:
+ *
+ * 1. Collect user input (product description, visual preferences)
+ * 2. Call AI to get strategy (uses aiSystemPrompt)
+ * 3. Call processStrategy() to get render decisions
+ * 4. Pass to Remotion for rendering
  */
 
-// ============================================================================
-// SHOT LIBRARY — Marketing Strategy Level
-// ============================================================================
+// =============================================================================
+// BRAND CONSTRAINTS (Priority 1)
+// =============================================================================
+
+export {
+  // Types
+  type BrandConstraints,
+  type BackgroundConstraint,
+  type PaletteConstraint,
+  type TypographyConstraint,
+  type VisualVibe,
+  type UserOverrides,
+  // Defaults
+  CLEAN_PROFESSIONAL,
+  BOLD_AGGRESSIVE,
+  WARM_FRIENDLY,
+  TECH_MODERN,
+  LUXURY_PREMIUM,
+  VIBE_DEFAULTS,
+  getDefaultConstraints,
+  // Resolver
+  resolveBrandConstraints,
+  detectVibeFromInstructions,
+  parseColorFromInput,
+  getContrastingTextColor,
+} from './brand'
+
+// =============================================================================
+// COMPOSITION RULES (Priority 2)
+// =============================================================================
+
+export {
+  // Rules
+  SAFE_ZONES,
+  TYPOGRAPHY_RULES,
+  SHOT_COMPOSITION_RULES,
+  isInSafeZone,
+  adjustToSafeZone,
+  getCompositionRules,
+  validateHeadline,
+  validateSubtext,
+  type ShotCompositionRule,
+  // Validator
+  validateScene,
+  validateSceneSequence,
+  type SceneInput,
+  type ValidatedScene,
+} from './composition'
+
+// =============================================================================
+// LAYOUTS (Priority 3)
+// =============================================================================
+
+export {
+  // Templates
+  CENTERED_ANCHOR,
+  LEFT_MARKETING,
+  SPLIT_CONTENT,
+  IMAGE_DOMINANT,
+  MINIMAL_CTA,
+  LAYOUTS,
+  getLayout,
+  getAllLayoutNames,
+  type LayoutName,
+  type LayoutConfig,
+  // Selector
+  selectLayout,
+  selectLayoutConfig,
+  isLayoutCompatible,
+  getCompatibleLayouts,
+} from './layouts'
+
+// =============================================================================
+// EFFECTS (Priority 4)
+// =============================================================================
+
+export {
+  // Types
+  EFFECTS,
+  getEffectMeta,
+  getAllEffectNames,
+  isValidEffect,
+  type EffectName,
+  type EffectMeta,
+  // Selector
+  selectEffect,
+  getAdjustedDuration,
+  getIntensityMultiplier,
+} from './effects'
+
+// =============================================================================
+// FONTS (Priority 5)
+// =============================================================================
+
+export {
+  FONTS,
+  getFontConfig,
+  isValidFont,
+  getFontFamily,
+  type FontName,
+  type FontConfig,
+} from './fonts'
+
+// =============================================================================
+// MAIN RENDERER (Orchestration)
+// =============================================================================
+
+export {
+  processStrategy,
+  toRemotionScenes,
+  type AIScene,
+  type AIStrategy,
+  type RenderScene,
+  type RenderOutput,
+} from './renderer'
+
+// =============================================================================
+// SHOT LIBRARY (For AI)
+// =============================================================================
 
 export {
   SHOT_TYPES,
@@ -52,9 +176,9 @@ export {
 
 export type { ShotType, ShotMetadata } from './shotLibrary'
 
-// ============================================================================
-// EFFECT LIBRARY — Visual Execution Level
-// ============================================================================
+// =============================================================================
+// EFFECT LIBRARY (For AI - Legacy)
+// =============================================================================
 
 export {
   EFFECT_TYPES,
@@ -67,9 +191,9 @@ export {
 
 export type { EffectType, EffectMetadata } from './effectLibrary'
 
-// ============================================================================
-// FONT LIBRARY — Typography System
-// ============================================================================
+// =============================================================================
+// FONT LIBRARY (For AI - Legacy)
+// =============================================================================
 
 export {
   FONT_TYPES,
@@ -79,15 +203,14 @@ export {
   getAllFontTypes,
   isValidFontType,
   getFontsForEnergy,
-  getFontFamily,
   getGoogleFontsUrl,
 } from './fontLibrary'
 
 export type { FontType, FontMetadata } from './fontLibrary'
 
-// ============================================================================
-// SHOT-EFFECT MAPPING — Creative Constraints
-// ============================================================================
+// =============================================================================
+// SHOT-EFFECT MAPPING (For AI - Legacy)
+// =============================================================================
 
 export {
   SHOT_EFFECT_MAP,
@@ -102,9 +225,9 @@ export {
   generateEffectSequence,
 } from './shotEffectMap'
 
-// ============================================================================
-// AI SYSTEM PROMPT — The Brain
-// ============================================================================
+// =============================================================================
+// AI SYSTEM PROMPT
+// =============================================================================
 
 export {
   SYSTEM_PROMPT,
