@@ -1,14 +1,12 @@
 /**
- * Scene Image Renderer
+ * Scene Image Renderer - BRUTAL DEBUG VERSION
  *
- * Renders images in scenes using file URLs (not base64).
- * Images are saved to public/temp-images by the render API.
+ * Bypasses ALL styling logic to confirm images can render.
  */
 
 import React from 'react'
 import { Img, useCurrentFrame, staticFile } from 'remotion'
 import type { ImageSpec, VideoSpec } from '../lib/creative'
-import { getImageStyles, getImageZIndex } from '../lib/creative'
 
 interface SceneImageProps {
   spec: ImageSpec
@@ -19,55 +17,55 @@ interface SceneImageProps {
 export const SceneImage: React.FC<SceneImageProps> = ({
   spec,
   providedImages,
-  sceneDuration,
 }) => {
   const frame = useCurrentFrame()
 
   // Find the image by ID
   const imageData = providedImages?.find(img => img.id === spec.imageId)
 
-  // Log at frame 0
   if (frame === 0) {
-    console.log(`[SceneImage] Rendering ${spec.imageId}`)
-    console.log(`[SceneImage] Found: ${!!imageData}`)
-    if (imageData) {
-      console.log(`[SceneImage] URL: ${imageData.url}`)
-    }
+    console.log(`[SceneImage] Rendering ${spec.imageId}, found: ${!!imageData}, url: ${imageData?.url}`)
   }
 
   if (!imageData || !imageData.url) {
-    if (frame === 0) {
-      console.warn(`[SceneImage] Image not found: ${spec.imageId}`)
-      console.warn(`[SceneImage] Available:`, providedImages?.map(i => i.id))
-    }
     return null
   }
 
-  // Get styles for this frame
-  const styles = getImageStyles(spec, frame, sceneDuration, 30)
-  const zIndex = getImageZIndex(spec.importance)
-
-  // Build the image source URL
-  // If it starts with /, it's a file in public folder - use staticFile
+  // Build image source - use staticFile for local files
   const imageSrc = imageData.url.startsWith('/')
     ? staticFile(imageData.url)
     : imageData.url
 
+  if (frame === 0) {
+    console.log(`[SceneImage] Final src: ${imageSrc}`)
+  }
+
+  // ================================================================
+  // BRUTAL FIXED STYLES - NO ANIMATION, NO POSITIONING LOGIC
+  // ================================================================
   return (
     <div
       style={{
         position: 'absolute',
-        inset: 0,
-        zIndex,
-        pointerEvents: 'none',
-        overflow: 'hidden',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 100,
       }}
     >
       <Img
         src={imageSrc}
         style={{
-          ...styles,
-          display: 'block',
+          width: '80%',
+          height: 'auto',
+          maxHeight: '60%',
+          objectFit: 'contain',
+          border: '4px solid red',  // Debug border to see bounds
+          backgroundColor: 'rgba(255,255,0,0.3)',  // Debug background
         }}
       />
     </div>
