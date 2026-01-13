@@ -52,17 +52,29 @@ export async function POST(request: Request) {
     try {
       const parsed = JSON.parse(jsonText)
       videoSpec = {
+        // Creative Blueprint (strategic thinking)
+        blueprint: parsed.blueprint,
+        concept: parsed.concept,
+        // Strategy
         strategy: parsed.strategy || {},
+        // Scenes with full visual specs
         scenes: parsed.scenes || [],
-        fps: 30,
-        width: 1080,
-        height: 1920,
+        // Video settings
+        fps: parsed.fps || 30,
+        width: parsed.width || 1080,
+        height: parsed.height || 1920,
       }
     } catch {
       return NextResponse.json({ success: false, error: 'Invalid JSON', raw_response: textContent.text }, { status: 500 })
     }
 
     const validation = validateVideoSpec(videoSpec)
+
+    // Log blueprint for debugging
+    if (videoSpec.blueprint) {
+      console.log('[Creative] Blueprint:', videoSpec.blueprint.creativeAngle)
+      console.log('[Creative] Aggressiveness:', videoSpec.blueprint.aggressiveness)
+    }
     console.log('[Creative] Generated', videoSpec.scenes.length, 'scenes')
 
     return NextResponse.json({
