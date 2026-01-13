@@ -85,6 +85,7 @@ function shadeColor(color: string, percent: number): string {
 
 interface CreativePreviewProps {
   scenes: SceneSpec[]
+  providedImages?: Array<{ id: string; url: string; intent: string; description?: string }>
   className?: string
 }
 
@@ -92,7 +93,13 @@ interface CreativePreviewProps {
 // SCENE COMPONENT
 // =============================================================================
 
-const PreviewScene: React.FC<{ scene: SceneSpec; index: number }> = ({ scene, index }) => {
+interface PreviewSceneProps {
+  scene: SceneSpec
+  index: number
+  providedImages?: Array<{ id: string; url: string; intent: string; description?: string }>
+}
+
+const PreviewScene: React.FC<PreviewSceneProps> = ({ scene, index, providedImages }) => {
   const frame = useCurrentFrame()
   const { fps } = useVideoConfig()
 
@@ -273,6 +280,48 @@ const PreviewScene: React.FC<{ scene: SceneSpec; index: number }> = ({ scene, in
       {/* Texture Overlay */}
       {showTexture && (
         <AbsoluteFill style={getTextureCSS(scene.background?.texture || 'grain', textureOpacity)} />
+      )}
+
+      {/* Images Layer */}
+      {scene.images && scene.images.length > 0 && providedImages && (
+        <AbsoluteFill style={{ zIndex: 10 }}>
+          {scene.images.map((imgSpec, imgIndex) => {
+            const imgData = providedImages.find(p => p.id === imgSpec.imageId)
+            if (!imgData) return null
+            return (
+              <div
+                key={imgSpec.imageId + imgIndex}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '70%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 15,
+                }}
+              >
+                <img
+                  src={imgData.url}
+                  alt=""
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '50vh',
+                    objectFit: 'contain',
+                    borderRadius: imgSpec.treatment?.cornerRadius || 12,
+                    boxShadow: imgSpec.treatment?.shadow === 'strong'
+                      ? '0 20px 60px rgba(0,0,0,0.5)'
+                      : imgSpec.treatment?.shadow === 'medium'
+                      ? '0 12px 40px rgba(0,0,0,0.4)'
+                      : '0 8px 24px rgba(0,0,0,0.3)',
+                  }}
+                />
+              </div>
+            )
+          })}
+        </AbsoluteFill>
       )}
 
       {/* Content Container */}
@@ -660,7 +709,12 @@ function getHoldCSS(holdAnim: string, frame: number, fps: number): React.CSSProp
 // VIDEO COMPOSITION
 // =============================================================================
 
-const PreviewVideo: React.FC<{ scenes: SceneSpec[] }> = ({ scenes }) => {
+interface PreviewVideoProps {
+  scenes: SceneSpec[]
+  providedImages?: Array<{ id: string; url: string; intent: string; description?: string }>
+}
+
+const PreviewVideo: React.FC<PreviewVideoProps> = ({ scenes, providedImages }) => {
   if (!scenes || scenes.length === 0) {
     return (
       <AbsoluteFill style={{
@@ -691,7 +745,7 @@ const PreviewVideo: React.FC<{ scenes: SceneSpec[] }> = ({ scenes }) => {
           durationInFrames={sceneFrames[index].duration}
           name={`${scene.sceneType}: ${scene.headline?.substring(0, 20) || 'Scene'}`}
         >
-          <PreviewScene scene={scene} index={index} />
+          <PreviewScene scene={scene} index={index} providedImages={providedImages} />
         </Sequence>
       ))}
     </AbsoluteFill>
@@ -702,7 +756,7 @@ const PreviewVideo: React.FC<{ scenes: SceneSpec[] }> = ({ scenes }) => {
 // MAIN COMPONENT
 // =============================================================================
 
-export const CreativePreview: React.FC<CreativePreviewProps> = ({ scenes, className = '' }) => {
+export const CreativePreview: React.FC<CreativePreviewProps> = ({ scenes, providedImages, className = '' }) => {
   const [hasError, setHasError] = useState(false)
   const [isClient, setIsClient] = useState(false)
 
@@ -774,7 +828,7 @@ export const CreativePreview: React.FC<CreativePreviewProps> = ({ scenes, classN
         <Player
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           component={PreviewVideo as any}
-          inputProps={{ scenes }}
+          inputProps={{ scenes, providedImages }}
           durationInFrames={Math.max(totalFrames, 75)}
           fps={30}
           compositionWidth={1080}
