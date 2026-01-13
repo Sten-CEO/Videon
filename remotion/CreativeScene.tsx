@@ -7,7 +7,7 @@
 
 import React from 'react'
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion'
-import type { SceneSpec } from '../lib/creative'
+import type { SceneSpec, VideoSpec } from '../lib/creative'
 import {
   getBackgroundStyles,
   getTextureStyles,
@@ -19,12 +19,14 @@ import {
   getExitAnimationStyles,
   getHoldAnimationStyles,
 } from '../lib/creative'
+import { SceneImages } from './SceneImage'
 
 interface CreativeSceneProps {
   scene: SceneSpec
+  providedImages?: VideoSpec['providedImages']
 }
 
-export const CreativeScene: React.FC<CreativeSceneProps> = ({ scene }) => {
+export const CreativeScene: React.FC<CreativeSceneProps> = ({ scene, providedImages }) => {
   const frame = useCurrentFrame()
   const { fps } = useVideoConfig()
 
@@ -81,6 +83,13 @@ export const CreativeScene: React.FC<CreativeSceneProps> = ({ scene }) => {
       {textureStyles && (
         <AbsoluteFill style={{ ...textureStyles, pointerEvents: 'none' }} />
       )}
+
+      {/* Image Layer - Between background and content */}
+      <SceneImages
+        images={scene.images}
+        providedImages={providedImages}
+        sceneDuration={scene.durationFrames}
+      />
 
       {/* Content Layer with Animation */}
       <div style={{ ...containerStyles, ...animationStyles }}>

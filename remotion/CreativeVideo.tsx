@@ -12,9 +12,10 @@ import type { VideoSpec, SceneSpec } from '../lib/creative'
 
 interface CreativeVideoProps {
   scenes: SceneSpec[]
+  providedImages?: VideoSpec['providedImages']
 }
 
-export const CreativeVideo: React.FC<CreativeVideoProps> = ({ scenes }) => {
+export const CreativeVideo: React.FC<CreativeVideoProps> = ({ scenes, providedImages }) => {
   if (!scenes || scenes.length === 0) {
     return (
       <AbsoluteFill style={{ backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -40,7 +41,7 @@ export const CreativeVideo: React.FC<CreativeVideoProps> = ({ scenes }) => {
           durationInFrames={sceneFrames[index].duration}
           name={`${scene.sceneType}: ${scene.headline.substring(0, 20)}`}
         >
-          <CreativeScene scene={scene} />
+          <CreativeScene scene={scene} providedImages={providedImages} />
         </Sequence>
       ))}
     </AbsoluteFill>

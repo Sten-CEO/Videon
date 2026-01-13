@@ -58,7 +58,7 @@ export const RemotionRoot: React.FC = () => {
         fps={CREATIVE_VIDEO_CONFIG.fps}
         width={CREATIVE_VIDEO_CONFIG.width}
         height={CREATIVE_VIDEO_CONFIG.height}
-        defaultProps={{ scenes: defaultScenes }}
+        defaultProps={{ scenes: defaultScenes, providedImages: [] }}
         calculateMetadata={({ props }) => {
           const totalFrames = props.scenes?.reduce(
             (sum: number, s: SceneSpec) => sum + (s.durationFrames || 75),

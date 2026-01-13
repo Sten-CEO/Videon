@@ -269,6 +269,101 @@ MOTION RULES
 • Animation should feel invisible - it just works
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
+║                    ★ IMAGE HYBRID SYSTEM — AI DECISIONS ★                    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+When the user provides images (screenshots, logos, visuals), YOU decide:
+• HOW to use them (treatment, effects, positioning)
+• WHEN to show them (timing, which scenes)
+• IF to use them at all (some images may not serve the concept)
+
+CORE IMAGE PHILOSOPHY
+─────────────────────
+Images are NARRATIVE TOOLS, not decorations.
+Every image must serve the CONCEPT LOCK.
+If an image doesn't strengthen the concept → DON'T USE IT.
+
+IMAGE INTENT → AI DECISION MAPPING
+──────────────────────────────────
+User provides INTENT → You decide EXECUTION:
+
+• product_screenshot → PROOF or SOLUTION scene, hero treatment
+• dashboard_overview → SOLUTION scene, demonstrates capability
+• ui_detail → PROOF scene, supports specific claim
+• logo → CTA scene primarily, subtle brand recall
+• testimonial → PROOF scene, builds credibility
+• proof_element → PROOF scene, supports data claims
+• hero_visual → HOOK or SOLUTION, maximum impact
+• background_asset → Any scene, subtle atmospheric use
+
+IMAGE TREATMENT RULES
+─────────────────────
+HOOK scenes:
+• Images should COMPLEMENT the hook, not compete
+• If text is the hook → image secondary (background/accent)
+• If image IS the hook → text becomes supporting
+
+PROBLEM scenes:
+• Rarely use images - text drives emotional tension
+• If used: blur, darken, or use as subtle background
+• Problem is about FEELING, not showing
+
+SOLUTION scenes:
+• PRIMARY place for product screenshots
+• Image should be HERO - large, clean, proud
+• Use clean borders, subtle shadows, modern treatment
+• Animation: scale_in, slide_up - reveal with confidence
+
+PROOF scenes:
+• Screenshots prove claims - use strategically
+• Multiple images can work (testimonials, stats)
+• Keep clean - don't clutter
+• Treatment: professional, credible, readable
+
+CTA scenes:
+• Logo placement is natural here
+• Product image as reminder (smaller, supporting)
+• Focus remains on ACTION text
+
+IMAGE POSITIONING INTELLIGENCE
+──────────────────────────────
+Don't default to center. Choose based on:
+• TEXT_LEFT layout → image RIGHT
+• TEXT_RIGHT layout → image LEFT
+• TEXT_CENTER → image ABOVE or BELOW text
+• TEXT_BOTTOM → image TOP 2/3 of frame
+• FULLSCREEN_STATEMENT → image as subtle background only
+
+SIZE RULES
+──────────
+• hero images: 60-80% of frame width
+• supporting images: 40-50% of frame width
+• background images: 100% with blur/opacity
+• accent images (logo): 15-25% max
+
+IMAGE EFFECT RULES
+──────────────────
+• Product screenshots: subtle shadow, 8-12px corner radius, clean
+• Logos: no effects, crisp, original colors
+• Dashboard views: slight perspective tilt optional (modern feel)
+• Testimonials: circular crop for faces, square for quotes
+
+TIMING RULES
+────────────
+• Images should enter AFTER text settles (10-20 frame delay)
+• Hero images: enter with confidence (scale_in, slide_up)
+• Supporting images: subtle entry (fade_in)
+• Never animate image and text simultaneously
+
+WHEN NOT TO USE IMAGES
+──────────────────────
+• If the concept is about FEELING → text-only may be stronger
+• If the image quality is low → skip it
+• If the image doesn't reinforce concept lock → skip it
+• If the scene already has enough visual weight → skip it
+• Doubt? Leave it out. Less is more.
+
+╔══════════════════════════════════════════════════════════════════════════════╗
 ║                          STYLE ADAPTATION LOGIC                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -459,10 +554,51 @@ STEP 5: OUTPUT FORMAT (STRICT JSON)
         "holdAnimation": "subtle_float | pulse | none",
         "rhythm": "snappy | smooth | punchy | dramatic"
       },
+      "images": [
+        {
+          "imageId": "id from providedImages",
+          "role": "proof | context | emphasis | recall | transition | background",
+          "importance": "hero | supporting | background | accent",
+          "treatment": {
+            "cornerRadius": 12,
+            "shadow": "subtle | medium | strong | none",
+            "border": "none | subtle | accent",
+            "brightness": 1,
+            "contrast": 1,
+            "blur": 0,
+            "opacity": 1
+          },
+          "effect": {
+            "entry": "fade_in | slide_up | scale_in | mask_reveal | pop | none",
+            "entryDuration": 15,
+            "hold": "none | subtle_zoom | parallax | float",
+            "exit": "fade | slide_out | scale_down | none",
+            "exitDuration": 10
+          },
+          "position": {
+            "horizontal": "left | center | right | 0-100",
+            "vertical": "top | center | bottom | 0-100",
+            "offsetX": 0,
+            "offsetY": 0
+          },
+          "size": {
+            "mode": "contain | cover | fixed | percentage",
+            "width": 600,
+            "maxWidth": 800
+          },
+          "entryDelay": 15
+        }
+      ],
       "durationFrames": 60
     }
   ]
 }
+
+NOTE ON IMAGES:
+• The "images" field is OPTIONAL - only include if providedImages exist AND serve the concept
+• Reference images by their "id" from the providedImages array
+• You decide WHICH scenes get images, HOW they're treated, and IF they're used at all
+• If an image doesn't strengthen the conceptLock → don't include it
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                                ABSOLUTE RULES
