@@ -10,10 +10,16 @@
  * - Texture overlays for depth
  */
 
-import React, { useMemo } from 'react'
-import { Player } from '@remotion/player'
+import React, { useMemo, useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig, interpolate, spring } from 'remotion'
 import type { SceneSpec, LayoutType, EntryAnimation, BackgroundSpec, TypographySpec } from '@/lib/creative'
+
+// Dynamic import Player with SSR disabled (Remotion requires browser APIs)
+const Player = dynamic(
+  () => import('@remotion/player').then((mod) => mod.Player),
+  { ssr: false }
+)
 
 // =============================================================================
 // MARKETING COLOR PALETTES (Per Scene Type)
@@ -697,7 +703,13 @@ const PreviewVideo: React.FC<{ scenes: SceneSpec[] }> = ({ scenes }) => {
 // =============================================================================
 
 export const CreativePreview: React.FC<CreativePreviewProps> = ({ scenes, className = '' }) => {
-  const [hasError, setHasError] = React.useState(false)
+  const [hasError, setHasError] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  // Ensure we're on the client before rendering Remotion
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const totalFrames = useMemo(() => {
     return scenes.reduce((sum, s) => sum + (s.durationFrames || 75), 0)
@@ -738,14 +750,30 @@ export const CreativePreview: React.FC<CreativePreviewProps> = ({ scenes, classN
     )
   }
 
+  // Loading state while Player loads (SSR disabled)
+  if (!isClient) {
+    return (
+      <div
+        className={`relative rounded-xl overflow-hidden bg-gray-900 ${className}`}
+        style={{ aspectRatio: '9/16', maxHeight: '500px', minHeight: '300px' }}
+      >
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <span className="text-gray-400 mt-3 text-sm">Loading preview...</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
-      className={`relative rounded-xl overflow-hidden ${className}`}
+      className={`relative rounded-xl overflow-hidden bg-black ${className}`}
       style={{ aspectRatio: '9/16', maxHeight: '500px', minHeight: '300px' }}
     >
       <ErrorBoundary onError={() => setHasError(true)}>
         <Player
-          component={PreviewVideo}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          component={PreviewVideo as any}
           inputProps={{ scenes }}
           durationInFrames={Math.max(totalFrames, 75)}
           fps={30}
