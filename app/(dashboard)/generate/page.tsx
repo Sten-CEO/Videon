@@ -7,6 +7,7 @@ import { Button, Textarea, Card, StatusBadge, ImageUpload } from '@/components/u
 import { DashboardHeader } from '@/components/layout/DashboardHeader'
 import { mockVideos } from '@/lib/data/mock'
 import type { ImageIntent } from '@/lib/creative'
+import { storeImages } from '@/lib/imageStore'
 
 export default function GeneratePage() {
   const router = useRouter()
@@ -21,12 +22,8 @@ export default function GeneratePage() {
 
     setIsGenerating(true)
 
-    // Store images in sessionStorage (URL has length limits for base64)
-    if (images.length > 0) {
-      sessionStorage.setItem('videon_images', JSON.stringify(images))
-    } else {
-      sessionStorage.removeItem('videon_images')
-    }
+    // Store images in memory store (avoids sessionStorage quota limits)
+    storeImages(images)
 
     // Simulate a short delay then redirect to conversation page
     await new Promise(resolve => setTimeout(resolve, 500))
