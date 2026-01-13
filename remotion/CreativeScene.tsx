@@ -7,7 +7,7 @@
 
 import React from 'react'
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion'
-import type { SceneSpec } from '@/lib/creative'
+import type { SceneSpec } from '../lib/creative'
 import {
   getBackgroundStyles,
   getTextureStyles,
@@ -18,7 +18,7 @@ import {
   getEntryAnimationStyles,
   getExitAnimationStyles,
   getHoldAnimationStyles,
-} from '@/lib/creative'
+} from '../lib/creative'
 
 interface CreativeSceneProps {
   scene: SceneSpec

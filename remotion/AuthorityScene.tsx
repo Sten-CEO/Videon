@@ -13,7 +13,7 @@
 
 import React from 'react'
 import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from 'remotion'
-import type { RenderScene } from '@/lib/video/renderer'
+import type { RenderScene } from '../lib/video/renderer'
 
 // =============================================================================
 // PROPS TYPE

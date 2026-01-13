@@ -8,7 +8,7 @@
 import React from 'react'
 import { AbsoluteFill, Sequence } from 'remotion'
 import { CreativeScene } from './CreativeScene'
-import type { VideoSpec, SceneSpec } from '@/lib/creative'
+import type { VideoSpec, SceneSpec } from '../lib/creative'
 
 interface CreativeVideoProps {
   scenes: SceneSpec[]
