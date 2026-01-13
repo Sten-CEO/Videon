@@ -1,15 +1,14 @@
 /**
- * Scene Image Renderer - DEBUG MODE
+ * Scene Image Renderer
  *
- * BRUTAL TEST: Fixed position, no animation, red background
+ * Renders images in scenes using file URLs (not base64).
+ * Images are saved to public/temp-images by the render API.
  */
 
 import React from 'react'
-import { Img, useCurrentFrame } from 'remotion'
+import { Img, useCurrentFrame, staticFile } from 'remotion'
 import type { ImageSpec, VideoSpec } from '../lib/creative'
-
-// TEST: Use a public placeholder image to test if base64 is the issue
-const TEST_PUBLIC_URL = 'https://via.placeholder.com/400x300/ff0000/ffffff?text=TEST'
+import { getImageStyles, getImageZIndex } from '../lib/creative'
 
 interface SceneImageProps {
   spec: ImageSpec
@@ -20,102 +19,57 @@ interface SceneImageProps {
 export const SceneImage: React.FC<SceneImageProps> = ({
   spec,
   providedImages,
+  sceneDuration,
 }) => {
   const frame = useCurrentFrame()
 
-  // Find the actual image URL from providedImages
+  // Find the image by ID
   const imageData = providedImages?.find(img => img.id === spec.imageId)
 
-  // Log every frame for debugging
-  console.log(`[SceneImage] Frame ${frame} - imageId: ${spec.imageId}, found: ${!!imageData}`)
+  // Log at frame 0
+  if (frame === 0) {
+    console.log(`[SceneImage] Rendering ${spec.imageId}`)
+    console.log(`[SceneImage] Found: ${!!imageData}`)
+    if (imageData) {
+      console.log(`[SceneImage] URL: ${imageData.url}`)
+    }
+  }
 
-  if (!imageData) {
-    console.warn(`[SceneImage] Image not found: ${spec.imageId}`)
-    console.warn(`[SceneImage] Available IDs:`, providedImages?.map(i => i.id))
+  if (!imageData || !imageData.url) {
+    if (frame === 0) {
+      console.warn(`[SceneImage] Image not found: ${spec.imageId}`)
+      console.warn(`[SceneImage] Available:`, providedImages?.map(i => i.id))
+    }
     return null
   }
 
-  // Log URL info
-  if (frame === 0) {
-    console.log(`[SceneImage] URL length: ${imageData.url?.length}`)
-    console.log(`[SceneImage] URL starts with: ${imageData.url?.substring(0, 50)}`)
-  }
+  // Get styles for this frame
+  const styles = getImageStyles(spec, frame, sceneDuration, 30)
+  const zIndex = getImageZIndex(spec.importance)
 
-  // ================================================================
-  // BRUTAL TEST: No animation, fixed styles, maximum visibility
-  // ================================================================
-  const brutalStyles: React.CSSProperties = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '400px',
-    height: '300px',
-    objectFit: 'contain',
-    opacity: 1,
-    backgroundColor: 'red', // Red background to see container
-    border: '5px solid yellow', // Yellow border to see bounds
-    zIndex: 9999,
-  }
-
-  console.log(`[SceneImage] Frame ${frame} - Rendering with brutal styles`)
+  // Build the image source URL
+  // If it starts with /, it's a file in public folder - use staticFile
+  const imageSrc = imageData.url.startsWith('/')
+    ? staticFile(imageData.url)
+    : imageData.url
 
   return (
     <div
       style={{
         position: 'absolute',
         inset: 0,
-        zIndex: 9999,
-        backgroundColor: 'rgba(0, 255, 0, 0.3)', // Green overlay to see container
+        zIndex,
         pointerEvents: 'none',
+        overflow: 'hidden',
       }}
     >
-      {/* Test 1: Render with actual base64 URL */}
       <Img
-        src={imageData.url}
-        style={brutalStyles}
-        alt="Test image"
-        onError={(e) => {
-          console.error(`[SceneImage] ❌ IMAGE LOAD ERROR:`, e)
-          console.error(`[SceneImage] URL was:`, imageData.url?.substring(0, 100))
-        }}
-        onLoad={() => {
-          console.log(`[SceneImage] ✅ IMAGE LOADED SUCCESSFULLY: ${spec.imageId}`)
+        src={imageSrc}
+        style={{
+          ...styles,
+          display: 'block',
         }}
       />
-
-      {/* Test 2: Also render public URL to compare */}
-      <img
-        src={TEST_PUBLIC_URL}
-        style={{
-          position: 'absolute',
-          bottom: '20px',
-          right: '20px',
-          width: '100px',
-          height: '75px',
-          border: '3px solid blue',
-          zIndex: 10000,
-        }}
-        alt="Public test"
-        onLoad={() => console.log('[SceneImage] ✅ PUBLIC IMAGE LOADED')}
-        onError={() => console.error('[SceneImage] ❌ PUBLIC IMAGE FAILED')}
-      />
-
-      {/* Test 3: Simple colored div to confirm rendering works at all */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          width: '100px',
-          height: '100px',
-          backgroundColor: 'blue',
-          border: '3px solid white',
-          zIndex: 10000,
-        }}
-      >
-        <span style={{ color: 'white', fontSize: '12px' }}>DIV TEST</span>
-      </div>
     </div>
   )
 }
@@ -136,20 +90,13 @@ export const SceneImages: React.FC<SceneImagesProps> = ({
 }) => {
   const frame = useCurrentFrame()
 
-  console.log(`[SceneImages] Frame ${frame} - images: ${images?.length || 0}, providedImages: ${providedImages?.length || 0}`)
+  if (frame === 0) {
+    console.log(`[SceneImages] images: ${images?.length || 0}, providedImages: ${providedImages?.length || 0}`)
+  }
 
   if (!images || images.length === 0) {
-    console.log('[SceneImages] No images array in this scene')
     return null
   }
-
-  if (!providedImages || providedImages.length === 0) {
-    console.warn('[SceneImages] ⚠️ No providedImages available!')
-    return null
-  }
-
-  console.log('[SceneImages] Image IDs to render:', images.map(i => i.imageId))
-  console.log('[SceneImages] Available providedImages IDs:', providedImages.map(i => i.id))
 
   return (
     <>

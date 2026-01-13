@@ -13,8 +13,74 @@ import { bundle } from '@remotion/bundler'
 import { renderMedia, selectComposition } from '@remotion/renderer'
 import path from 'path'
 import { randomUUID } from 'crypto'
-import { existsSync, mkdirSync, statSync } from 'fs'
+import { existsSync, mkdirSync, statSync, writeFileSync, rmSync } from 'fs'
 import type { SceneSpec, ImageIntent } from '@/lib/creative'
+
+// Directory for temporary image files
+const tempImagesDir = path.join(process.cwd(), 'public', 'temp-images')
+if (!existsSync(tempImagesDir)) {
+  mkdirSync(tempImagesDir, { recursive: true })
+}
+
+/**
+ * Convert base64 images to file URLs
+ * This is CRITICAL because Remotion props serialization can fail with large base64 strings
+ */
+function saveImagesToFiles(images: ImageIntent[], renderId: string): ImageIntent[] {
+  return images.map((img, index) => {
+    if (!img.url || !img.url.startsWith('data:')) {
+      // Already a file URL, keep as-is
+      return img
+    }
+
+    // Extract base64 data and mime type
+    const matches = img.url.match(/^data:([^;]+);base64,(.+)$/)
+    if (!matches) {
+      console.warn(`[SaveImages] Invalid base64 format for ${img.id}`)
+      return img
+    }
+
+    const mimeType = matches[1]
+    const base64Data = matches[2]
+    const extension = mimeType.split('/')[1] || 'png'
+    const filename = `${renderId}-${index}-${img.id}.${extension}`
+    const filePath = path.join(tempImagesDir, filename)
+
+    try {
+      // Write base64 data to file
+      const buffer = Buffer.from(base64Data, 'base64')
+      writeFileSync(filePath, buffer)
+      console.log(`[SaveImages] Saved ${img.id} to ${filename} (${buffer.length} bytes)`)
+
+      // Return new ImageIntent with file URL
+      return {
+        ...img,
+        url: `/temp-images/${filename}`,
+      }
+    } catch (err) {
+      console.error(`[SaveImages] Failed to save ${img.id}:`, err)
+      return img
+    }
+  })
+}
+
+/**
+ * Clean up temporary image files after render
+ */
+function cleanupTempImages(renderId: string): void {
+  try {
+    const files = require('fs').readdirSync(tempImagesDir)
+    files.forEach((file: string) => {
+      if (file.startsWith(renderId)) {
+        const filePath = path.join(tempImagesDir, file)
+        rmSync(filePath, { force: true })
+        console.log(`[Cleanup] Removed ${file}`)
+      }
+    })
+  } catch (err) {
+    console.warn(`[Cleanup] Error cleaning temp images:`, err)
+  }
+}
 
 // Request body type - expects full AI SceneSpec
 interface RequestBody {
@@ -115,10 +181,15 @@ export async function POST(request: Request) {
     console.log(`[Video Render] ProvidedImages count: ${body.providedImages?.length || 0}`)
 
     // ================================================================
-    // Log payload size for debugging
+    // CRITICAL: Convert base64 images to file URLs
+    // Remotion props serialization fails with large base64 strings
     // ================================================================
-    const payloadSize = JSON.stringify(body).length
-    console.log(`[Video Render] Total payload size: ${payloadSize} bytes (${(payloadSize / 1024 / 1024).toFixed(2)} MB)`)
+    let fileBasedImages: ImageIntent[] = []
+    if (body.providedImages && body.providedImages.length > 0) {
+      console.log(`[Video Render] Converting ${body.providedImages.length} base64 images to files...`)
+      fileBasedImages = saveImagesToFiles(body.providedImages, renderId)
+      console.log(`[Video Render] Images converted:`, fileBasedImages.map(i => ({ id: i.id, url: i.url?.substring(0, 50) })))
+    }
 
     // Step 1: Bundle the Remotion project
     console.log(`[Video Render] Step 1: Bundling composition...`)
@@ -142,23 +213,20 @@ export async function POST(request: Request) {
     console.log(`[Video Render] Step 2: Selecting composition...`)
 
     // ================================================================
-    // CRITICAL: Build inputProps with validated images
+    // CRITICAL: Build inputProps with FILE-BASED images (not base64)
     // ================================================================
     const inputProps = {
       scenes: body.scenes,
-      providedImages: body.providedImages || [],
+      providedImages: fileBasedImages,  // Use file URLs, not base64!
     }
 
     console.log(`[Video Render] inputProps.scenes: ${inputProps.scenes.length}`)
     console.log(`[Video Render] inputProps.providedImages: ${inputProps.providedImages.length}`)
 
-    // Log first image to verify data
-    if (inputProps.providedImages.length > 0) {
-      const firstImg = inputProps.providedImages[0]
-      console.log(`[Video Render] First image ID: ${firstImg.id}`)
-      console.log(`[Video Render] First image URL starts with: ${firstImg.url?.substring(0, 50)}`)
-      console.log(`[Video Render] First image URL length: ${firstImg.url?.length}`)
-    }
+    // Log images to verify file URLs
+    inputProps.providedImages.forEach((img, i) => {
+      console.log(`[Video Render] Image ${i}: id=${img.id}, url=${img.url}`)
+    })
 
     let composition
     try {
@@ -218,6 +286,9 @@ export async function POST(request: Request) {
       throw new Error('Video file is too small, render may have failed')
     }
 
+    // Cleanup temp images after successful render
+    cleanupTempImages(renderId)
+
     console.log(`\n========================================`)
     console.log(`[Video Render] SUCCESS: ${renderId}`)
     console.log(`========================================\n`)
@@ -232,6 +303,9 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
+    // Cleanup temp images even on error
+    cleanupTempImages(renderId)
+
     console.error(`\n========================================`)
     console.error(`[Video Render] FAILED: ${renderId}`)
     console.error(`[Video Render] Error:`, error)
