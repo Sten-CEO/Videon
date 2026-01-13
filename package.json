@@ -6,15 +6,22 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "remotion:preview": "remotion preview remotion/index.ts",
+    "remotion:render": "remotion render remotion/index.ts MarketingVideo out/video.mp4"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@remotion/bundler": "^4.0.405",
+    "@remotion/cli": "^4.0.405",
+    "@remotion/renderer": "^4.0.405",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.1",
     "next": "16.1.1",
+    "openai": "^6.16.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "remotion": "^4.0.405"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

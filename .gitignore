@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated files (videos, images)
+/public/renders/
+/public/tmp/
+
+# Remotion
+/remotion-bundle/
