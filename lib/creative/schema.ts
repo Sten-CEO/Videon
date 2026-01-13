@@ -199,6 +199,9 @@ export interface SceneSpec {
 // =============================================================================
 
 export interface VideoSpec {
+  // Creative concept summary
+  concept?: string
+
   // Strategy (for reference)
   strategy: {
     audienceState: string
