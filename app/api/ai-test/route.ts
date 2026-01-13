@@ -131,9 +131,15 @@ export async function POST(request: Request) {
     }
 
     // Parse the JSON response from Claude
+    // Strip markdown code blocks if present (```json ... ```)
+    let jsonText = textContent.text.trim()
+    if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
+    }
+
     let aiResponse: AIResponse
     try {
-      aiResponse = JSON.parse(textContent.text)
+      aiResponse = JSON.parse(jsonText)
     } catch {
       // If Claude didn't return valid JSON, return the raw text with an error flag
       return NextResponse.json({
