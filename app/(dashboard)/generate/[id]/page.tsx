@@ -147,7 +147,7 @@ Now rendering your video...`
 
       const renderData = await renderResponse.json()
       setVideoProgress(100)
-      setVideoUrl(renderData.videoUrl)
+      setVideoUrl(renderData.downloadUrl)
       setPhase('complete')
 
       addMessage('assistant', `Your video is ready! You can preview it on the right and download it when you're satisfied. Feel free to ask me to make any changes or generate a new version.`)
