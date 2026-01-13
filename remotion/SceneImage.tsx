@@ -76,9 +76,16 @@ export const SceneImages: React.FC<SceneImagesProps> = ({
   providedImages,
   sceneDuration,
 }) => {
+  // Debug logging
+  console.log('[SceneImages] images array:', images?.length || 0, 'items')
+  console.log('[SceneImages] providedImages:', providedImages?.length || 0, 'available')
+
   if (!images || images.length === 0) {
+    console.log('[SceneImages] No images to render for this scene')
     return null
   }
+
+  console.log('[SceneImages] Rendering', images.length, 'images:', images.map(i => i.imageId))
 
   return (
     <>

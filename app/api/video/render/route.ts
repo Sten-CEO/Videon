@@ -64,6 +64,24 @@ export async function POST(request: Request) {
     console.log(`[Video Render] Scenes count: ${body.scenes.length}`)
     console.log(`[Video Render] Scenes:`, body.scenes.map(s => `${s.sceneType}: ${s.headline?.substring(0, 30) || 'no headline'}`))
 
+    // Debug: Log images in each scene
+    body.scenes.forEach((scene, i) => {
+      if (scene.images && scene.images.length > 0) {
+        console.log(`[Video Render] Scene ${i} (${scene.sceneType}) has ${scene.images.length} images:`, scene.images.map(img => img.imageId))
+      } else {
+        console.log(`[Video Render] Scene ${i} (${scene.sceneType}): NO images`)
+      }
+    })
+
+    // Debug: Log provided images
+    if (body.providedImages && body.providedImages.length > 0) {
+      console.log(`[Video Render] ProvidedImages count: ${body.providedImages.length}`)
+      console.log(`[Video Render] ProvidedImages IDs:`, body.providedImages.map(img => img.id))
+      console.log(`[Video Render] ProvidedImages URL lengths:`, body.providedImages.map(img => ({ id: img.id, urlLen: img.url?.length || 0 })))
+    } else {
+      console.log(`[Video Render] NO providedImages received!`)
+    }
+
     // Step 1: Bundle the Remotion project
     console.log(`[Video Render] Step 1: Bundling composition...`)
     const entryPoint = path.join(process.cwd(), 'remotion', 'index.ts')
