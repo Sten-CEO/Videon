@@ -194,14 +194,11 @@ Now rendering your video with full visual direction...`
     const userMessage = inputValue
     setInputValue('')
 
-    // If we have a video generated (complete or error state), treat ANY message as a modification request
-    // This allows natural conversation like "make it yellow" or "fond jaune" without needing specific keywords
-    if (phase === 'complete' || phase === 'error' || videoSpec !== null || previewScenes.length > 0) {
-      // Combine original prompt with user modification
-      const newPrompt = initialPrompt
-        ? `${initialPrompt}\n\nUser modification request: ${userMessage}`
-        : userMessage
-      await startGeneration(newPrompt)
+    // If we have a video generated, treat ANY message as a MODIFICATION request
+    // Pass the current videoSpec so the AI can modify it instead of regenerating from scratch
+    if (videoSpec !== null || previewScenes.length > 0) {
+      // MODIFICATION MODE: Pass current spec + modification request
+      await modifyVideo(userMessage)
     } else if (phase === 'idle') {
       // No video yet - start fresh generation
       addMessage('user', userMessage)
@@ -209,7 +206,87 @@ Now rendering your video with full visual direction...`
     } else {
       // Currently generating - just add the message, don't interrupt
       addMessage('user', userMessage)
-      addMessage('assistant', 'Generation en cours... Votre demande sera prise en compte dans la prochaine version.')
+      addMessage('assistant', 'Génération en cours... Votre demande sera prise en compte dans la prochaine version.')
+    }
+  }
+
+  // New function to modify existing video instead of regenerating
+  async function modifyVideo(modificationRequest: string) {
+    setPhase('analyzing')
+    setVideoProgress(0)
+    setVideoUrl(null)
+    setError(null)
+
+    const images = imagesRef.current
+
+    // Add user message
+    addMessage('user', modificationRequest)
+    addMessage('assistant', `Modification en cours: "${modificationRequest}"...`)
+
+    try {
+      setPhase('generating_strategy')
+      setVideoProgress(20)
+
+      console.log('[Generate] MODIFY mode - sending currentSpec to API')
+
+      const creativeResponse = await fetch('/api/creative', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: initialPrompt || 'Marketing video',
+          providedImages: images.length > 0 ? images : undefined,
+          currentSpec: videoSpec,  // Pass current spec for modification
+          modificationRequest: modificationRequest,  // Specific change requested
+        }),
+      })
+
+      if (!creativeResponse.ok) {
+        const errorData = await creativeResponse.json()
+        throw new Error(errorData.error || 'Failed to modify video')
+      }
+
+      const responseData = await creativeResponse.json()
+      const spec: VideoSpec = responseData.data
+      setVideoSpec(spec)
+      setVideoProgress(50)
+
+      // Update preview with modified scenes
+      setPreviewScenes(spec.scenes)
+
+      addMessage('assistant', `✓ Modification appliquée! La vidéo a été mise à jour.`)
+
+      // Render the modified video
+      setPhase('rendering_video')
+      setVideoProgress(60)
+
+      const imagesToRender = spec.providedImages || images
+
+      try {
+        const renderResponse = await fetch('/api/video/render', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scenes: spec.scenes,
+            providedImages: imagesToRender,
+          }),
+        })
+
+        if (renderResponse.ok) {
+          const renderData = await renderResponse.json()
+          setVideoUrl(renderData.downloadUrl)
+        }
+      } catch (renderErr) {
+        console.warn('MP4 render unavailable:', renderErr)
+      }
+
+      setVideoProgress(100)
+      setPhase('complete')
+
+    } catch (err) {
+      console.error('Modification error:', err)
+      setPhase('error')
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      addMessage('assistant', `Erreur: ${err instanceof Error ? err.message : 'Unknown error'}. Réessayez.`)
     }
   }
 
