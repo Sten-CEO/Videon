@@ -6,8 +6,15 @@ import { Button, Textarea, Card, CreativePreview } from '@/components/ui'
 import type { ChatMessage } from '@/lib/types'
 import type { SceneSpec, VideoSpec, ImageIntent } from '@/lib/creative'
 import { retrieveImages } from '@/lib/imageStore'
+import { getDebugPlanWithImages, validatePlanBeforeRender } from '@/lib/debug'
 
 type GenerationPhase = 'idle' | 'analyzing' | 'generating_strategy' | 'rendering_video' | 'complete' | 'error'
+
+// Enable debug mode globally
+declare global {
+  var __DEBUG_RENDERER__: boolean
+  var __RENDERER_ASSERTIONS__: boolean
+}
 
 // Unique ID generator to avoid duplicate keys
 let messageCounter = 0
@@ -30,6 +37,11 @@ function ConversationContent() {
   const [error, setError] = useState<string | null>(null)
   const [previewScenes, setPreviewScenes] = useState<SceneSpec[]>([])
 
+  // DEBUG MODE state
+  const [debugMode, setDebugMode] = useState(false)
+  const [showPlanJson, setShowPlanJson] = useState(false)
+  const [planValidation, setPlanValidation] = useState<{ valid: boolean; errors: string[]; warnings: string[] } | null>(null)
+
   // Use ref for images to avoid race conditions with useEffect
   const imagesRef = useRef<ImageIntent[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -42,6 +54,49 @@ function ConversationContent() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Enable/disable global debug mode
+  useEffect(() => {
+    if (typeof globalThis !== 'undefined') {
+      globalThis.__DEBUG_RENDERER__ = debugMode
+      globalThis.__RENDERER_ASSERTIONS__ = debugMode
+    }
+    if (debugMode) {
+      console.log('🔍 DEBUG MODE ENABLED - Renderer logging active')
+    }
+  }, [debugMode])
+
+  // Validate plan when videoSpec changes
+  useEffect(() => {
+    if (videoSpec) {
+      const validation = validatePlanBeforeRender(videoSpec)
+      setPlanValidation(validation)
+      if (!validation.valid) {
+        console.error('[PLAN VALIDATION FAILED]', validation.errors)
+      }
+      if (validation.warnings.length > 0) {
+        console.warn('[PLAN WARNINGS]', validation.warnings)
+      }
+    }
+  }, [videoSpec])
+
+  // Load debug plan
+  function loadDebugPlan() {
+    const debugPlan = getDebugPlanWithImages()
+    setVideoSpec(debugPlan)
+    setPreviewScenes(debugPlan.scenes)
+    setPhase('complete')
+    addMessage('assistant', `🔧 DEBUG PLAN LOADED
+
+This is a hardcoded test plan with OBVIOUS visual differences:
+
+**Scene 1:** Hot pink (#FF1493) background, Impact font, green accent
+**Scene 2:** Cyan (#00FFFF) background, moving image (0% → 100% X)
+**Scene 3:** Lime green gradient, 3 sequential beats
+
+If this looks the same as AI-generated videos, the RENDERER is broken.
+Check the console for [RENDERER LOG] entries.`)
+  }
 
   // Load images and start generation when page loads
   useEffect(() => {
@@ -325,10 +380,54 @@ Now rendering your video with full visual direction...`
       <div className="flex-1 flex flex-col bg-background-secondary rounded-2xl border border-border overflow-hidden">
         {/* Chat header */}
         <div className="p-4 border-b border-border">
-          <h2 className="font-semibold">Video Generation</h2>
-          <p className="text-sm text-foreground-muted">
-            {isGenerating ? getStatusText() : 'Chat with AI to refine your video'}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold">Video Generation</h2>
+              <p className="text-sm text-foreground-muted">
+                {isGenerating ? getStatusText() : 'Chat with AI to refine your video'}
+              </p>
+            </div>
+            {/* Debug Mode Toggle */}
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={debugMode}
+                  onChange={(e) => setDebugMode(e.target.checked)}
+                  className="w-4 h-4 accent-amber-500"
+                />
+                <span className="text-xs text-amber-500 font-mono">DEBUG</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Debug Controls Panel */}
+          {debugMode && (
+            <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-amber-500 text-xs font-bold">🔧 TRUTH TEST MODE</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={loadDebugPlan}
+                  className="px-3 py-1.5 text-xs bg-amber-500 text-black font-semibold rounded hover:bg-amber-400"
+                >
+                  Load Debug Plan
+                </button>
+                <button
+                  onClick={() => setShowPlanJson(!showPlanJson)}
+                  className="px-3 py-1.5 text-xs bg-gray-700 text-white rounded hover:bg-gray-600"
+                >
+                  {showPlanJson ? 'Hide' : 'Show'} Plan JSON
+                </button>
+              </div>
+              {planValidation && !planValidation.valid && (
+                <div className="mt-2 text-xs text-red-400">
+                  ⚠️ Plan validation failed: {planValidation.errors.join(', ')}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Messages */}
@@ -504,6 +603,44 @@ Now rendering your video with full visual direction...`
             </div>
           </div>
         </Card>
+
+        {/* Show Plan JSON Panel - Debug Mode */}
+        {showPlanJson && videoSpec && (
+          <Card padding="md" className="bg-gray-900 border-amber-500/30">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-amber-400 text-sm">📋 Plan JSON (What Renderer Receives)</h3>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(JSON.stringify(videoSpec, null, 2))
+                  alert('Copied to clipboard!')
+                }}
+                className="text-xs text-gray-400 hover:text-white"
+              >
+                Copy
+              </button>
+            </div>
+            <pre className="text-xs text-green-400 font-mono overflow-auto max-h-96 bg-black/50 p-2 rounded">
+              {JSON.stringify(videoSpec, null, 2)}
+            </pre>
+            {planValidation && (
+              <div className="mt-2 text-xs">
+                <div className={planValidation.valid ? 'text-green-400' : 'text-red-400'}>
+                  {planValidation.valid ? '✓ Plan valid' : `✗ ${planValidation.errors.length} errors`}
+                </div>
+                {planValidation.warnings.length > 0 && (
+                  <div className="text-amber-400 mt-1">
+                    ⚠ {planValidation.warnings.length} warnings:
+                    <ul className="ml-2">
+                      {planValidation.warnings.slice(0, 5).map((w, i) => (
+                        <li key={i}>• {w}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* Creative Concept */}
         {videoSpec && (

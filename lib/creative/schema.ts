@@ -341,6 +341,27 @@ export type IconType =
   | 'arrow_right'               // Direction, next step
 
 // =============================================================================
+// BEAT SYSTEM — Timed content within a scene
+// =============================================================================
+
+export interface BeatSpec {
+  beatId: string
+  type: 'text_primary' | 'text_secondary' | 'text_accent' | 'image_reveal' | 'visual_pause' | 'breathing_moment'
+  startFrame: number
+  durationFrames: number
+  content?: {
+    text?: string
+    imageId?: string
+    position?: { x: number; y: number }
+  }
+  animation?: {
+    entry: 'fade_in' | 'slide_up' | 'scale_in' | 'pop'
+    entryDuration: number
+    hold: 'static' | 'subtle_float' | 'pulse' | 'breathing'
+  }
+}
+
+// =============================================================================
 // COMPLETE SCENE SPECIFICATION
 // =============================================================================
 
@@ -365,6 +386,10 @@ export interface SceneSpec {
   images?: ImageSpec[]          // Single or multiple images in this scene
   imageStack?: ImageStackSpec   // For complex multi-image layouts
   icons?: IconSpec[]            // Marketing icons for this scene
+
+  // BEAT SYSTEM — Timed content within a scene (optional)
+  // Beats allow multiple elements to appear at different times
+  beats?: BeatSpec[]
 
   // Timing
   durationFrames: number  // Total scene duration in frames
