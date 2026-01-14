@@ -8,6 +8,10 @@
  * - Self-judges quality before output
  * - Professional image presentation patterns
  * - Fluid, nearly invisible transitions
+ * - Visual hierarchy enforcement
+ * - Locked color palettes
+ * - Narrative tempo control
+ * - Visual breathing moments
  *
  * Identity:
  * - Senior B2B SaaS marketing director
@@ -32,6 +36,10 @@ export type {
   RhythmDecision,
   ImagePatternId,
   TransitionId,
+  FocusRole,
+  VideoPhase,
+  SceneHierarchy,
+  VideoPaletteSpec,
 } from './types'
 
 export { STYLE_PROFILES, PHASE_WEIGHTS } from './types'
@@ -99,3 +107,60 @@ export {
   type TransitionDecision,
   type TransitionSequence,
 } from './transitions'
+
+// Visual hierarchy
+export {
+  analyzeHierarchy,
+  enforceHierarchy,
+  validateVideoHierarchy,
+  autoFixVideoHierarchy,
+  calculateBeatWeight,
+  type FocusElement,
+  type HierarchySpec,
+} from './visualHierarchy'
+
+// Color palette & depth
+export {
+  PRESET_PALETTES,
+  generatePaletteFromColor,
+  selectPalette,
+  applyPaletteToBackground,
+  applyPaletteToVideo,
+  validatePaletteConsistency,
+  getDepthShadowCSS,
+  getGradientCSS,
+  type ColorPalette,
+  type DepthLayer,
+  type VideoPalette,
+} from './palette'
+
+// Narrative tempo
+export {
+  TEMPO_PROFILES,
+  planNarrativeArc,
+  getScenePhase,
+  getSceneTempoProfile,
+  validateSceneTempo,
+  validateVideoTempo,
+  adjustSceneToTempo,
+  adjustVideoTempo,
+  getRecommendedBeatTiming,
+  getPhaseDescription,
+  type TempoProfile,
+  type NarrativeArc,
+} from './narrativeTempo'
+
+// Visual breathing
+export {
+  BREATHING_PRESETS,
+  analyzeBreathingNeed,
+  createBreathingBeat,
+  injectBreathingMoment,
+  analyzeVideoBreathing,
+  autoInjectBreathing,
+  createSilenceBeat,
+  isSilenceBeat,
+  calculateSilenceRatio,
+  type BreathingType,
+  type BreathingMoment,
+} from './visualBreathing'

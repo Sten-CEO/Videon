@@ -267,6 +267,126 @@ AUTORISÉ :
 • Simplicité intentionnelle
 
 ═══════════════════════════════════════════════════════════════════════════════
+                    👁️ HIÉRARCHIE VISUELLE (OBLIGATOIRE)
+═══════════════════════════════════════════════════════════════════════════════
+
+Chaque scène DOIT définir :
+• UN élément de focus PRIMARY
+• Des éléments SECONDARY optionnels (max 2)
+
+RÈGLES :
+• Un SEUL élément peut dominer visuellement à la fois
+• L'élément primary DOIT être :
+  - plus grand ou plus contrasté
+  - prioritaire en termes de motion
+• Les éléments secondary ne doivent JAMAIS concurrencer le primary
+
+SI la hiérarchie est floue :
+→ Simplifie
+→ Retire des éléments
+
+Pour chaque beat, définis :
+• "focusRole": "primary | secondary | ambient"
+
+═══════════════════════════════════════════════════════════════════════════════
+                    🎨 PALETTE & PROFONDEUR (VERROUILLÉE)
+═══════════════════════════════════════════════════════════════════════════════
+
+Chaque vidéo DOIT avoir une palette verrouillée :
+
+COULEURS REQUISES :
+• Une couleur PRIMARY (action, marque)
+• Une base NEUTRAL (fond, texte)
+• Un ACCENT optionnel (highlights)
+
+Cette palette s'applique à TOUTES les scènes.
+
+PROFONDEUR OBLIGATOIRE :
+• Gradients doux (jamais de fonds plats)
+• Texture légère (grain ou noise, 3-6% opacité)
+• Ombres minimales pour la profondeur
+
+INTERDIT :
+• Couleurs aléatoires entre scènes
+• Textures décoratives
+• Fonds vides et plats
+• Couleurs qui ne viennent pas de la palette
+
+Pour chaque scène, assure-toi que :
+• background.colors vient de la palette
+• typography.primaryColor est cohérent
+• texture est présente (grain | noise | dots)
+
+═══════════════════════════════════════════════════════════════════════════════
+                    ⏱️ TEMPO NARRATIF (CONTRÔLE GLOBAL)
+═══════════════════════════════════════════════════════════════════════════════
+
+Le cerveau contrôle le rythme global de la vidéo :
+
+STRUCTURE OBLIGATOIRE :
+
+OUVERTURE (20% de la vidéo) :
+├─ Rythme : RAPIDE
+├─ But : Accrocher immédiatement
+├─ Beats par scène : 2-3 (premium) / 3-5 (social)
+└─ Pas de moments de respiration
+
+DÉVELOPPEMENT (40% de la vidéo) :
+├─ Rythme : CALME
+├─ But : Construire la compréhension
+├─ Beats par scène : 1-2 (premium) / 2-3 (social)
+└─ Moments de respiration autorisés
+
+CLIMAX (25% de la vidéo) :
+├─ Rythme : MODÉRÉ
+├─ But : Démontrer la valeur
+├─ Beats par scène : 2-3 (premium) / 2-4 (social)
+└─ Emphase sur les preuves
+
+RÉSOLUTION (15% de la vidéo) :
+├─ Rythme : CONFIANT
+├─ But : Pousser à l'action
+├─ Beats par scène : 1-2
+└─ Clarté maximale
+
+La DENSITÉ de beats s'adapte à la position dans la vidéo.
+
+═══════════════════════════════════════════════════════════════════════════════
+                    🌬️ RESPIRATION VISUELLE (SILENCE INTENTIONNEL)
+═══════════════════════════════════════════════════════════════════════════════
+
+Le silence est AUTORISÉ et ENCOURAGÉ.
+
+RÈGLES :
+• Certains beats peuvent ne contenir AUCUN texte
+• Certains moments peuvent être visuellement calmes
+• La stimulation constante est INTERDITE
+
+TYPES DE MOMENTS DE RESPIRATION :
+
+VISUAL_PAUSE
+├─ Durée : 12-20 frames
+├─ Quand : Après une information importante
+└─ Visuel : Éléments en hold, fond en drift subtil
+
+EMPHASIS_HOLD
+├─ Durée : 15-25 frames
+├─ Quand : Après une révélation clé
+└─ Visuel : Élément principal en float subtil
+
+ABSORPTION_MOMENT
+├─ Durée : 18-30 frames
+├─ Quand : Après un texte long ou complexe
+└─ Visuel : Respiration douce du fond
+
+OÙ PLACER LA RESPIRATION :
+• Après les scènes PROOF
+• Après les révélations SOLUTION
+• JAMAIS dans les HOOK ou CTA
+
+Les moments de respiration augmentent la qualité perçue.
+
+═══════════════════════════════════════════════════════════════════════════════
                     ✅ SYSTÈME D'AUTO-JUGEMENT QUALITÉ
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -290,10 +410,16 @@ Si la réponse est NON :
   "style": "premium_saas | social_short",
   "concept": "La promesse centrale en une phrase",
   "emotionalArc": ["émotion1", "émotion2", "émotion3", "émotion4"],
+  "palette": {
+    "primary": "#6366f1",
+    "neutral": "#0f0f14",
+    "accent": "#22d3ee"
+  },
   "scenes": [
     {
       "sceneId": "scene_1",
       "sceneType": "HOOK | PROBLEM | SOLUTION | PROOF | CTA | TRANSITION",
+      "phase": "opening | development | climax | resolution",
       "intention": "capture_attention | create_tension | amplify_pain | reveal_solution | demonstrate_value | build_credibility | drive_action | create_transition | breathing_moment",
       "rhythm": {
         "needsMultipleBeats": true,
@@ -301,10 +427,15 @@ Si la réponse est NON :
         "suggestedBeatCount": 2,
         "beatStrategy": "progressive_reveal | emphasis_shift | visual_layering | single_moment | breathing_pause"
       },
+      "hierarchy": {
+        "primaryElement": "beat_1",
+        "secondaryElements": ["beat_2"]
+      },
       "beats": [
         {
           "beatId": "beat_1",
           "type": "text_appear | text_replace | text_emphasize | image_enter | image_reveal | image_reframe | visual_pause | breathing_moment",
+          "focusRole": "primary | secondary | ambient",
           "startFrame": 0,
           "durationFrames": 30,
           "content": {
