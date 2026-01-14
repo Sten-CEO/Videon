@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Button, Textarea, Card, CreativePreview, TruthTestPreview } from '@/components/ui'
+import { Button, Textarea, Card, CreativePreview, TruthTestPreview, BeatDrivenPreview } from '@/components/ui'
 import type { ChatMessage } from '@/lib/types'
 import type { SceneSpec, VideoSpec, ImageIntent } from '@/lib/creative'
 import { retrieveImages } from '@/lib/imageStore'
@@ -41,6 +41,7 @@ function ConversationContent() {
   const [debugMode, setDebugMode] = useState(false)
   const [showPlanJson, setShowPlanJson] = useState(false)
   const [showTruthTest, setShowTruthTest] = useState(false)
+  const [showBeatDemo, setShowBeatDemo] = useState(false)
   const [planValidation, setPlanValidation] = useState<{ valid: boolean; errors: string[]; warnings: string[] } | null>(null)
 
   // Use ref for images to avoid race conditions with useEffect
@@ -435,10 +436,32 @@ Now rendering your video with full visual direction...`
                   onClick={() => {
                     loadDebugPlan()
                     setShowTruthTest(false)
+                    setShowBeatDemo(false)
                   }}
                   className="px-3 py-1.5 text-xs bg-amber-500 text-black font-semibold rounded hover:bg-amber-400"
                 >
                   Load Debug Plan
+                </button>
+
+                {/* BEAT-DRIVEN DEMO - 5 Patterns */}
+                <button
+                  onClick={() => {
+                    setShowBeatDemo(!showBeatDemo)
+                    setShowTruthTest(false)
+                    if (!showBeatDemo) {
+                      console.log('%c========================================', 'background: #0f0; color: #000;')
+                      console.log('%c[DEBUG] BEAT-DRIVEN DEMO ACTIVATED', 'background: #0f0; color: #000; font-size: 16px; font-weight: bold;')
+                      console.log('%c[DEBUG] 5 Patterns: SaaS Hero → Problem → Image Focus → Proof → CTA', 'color: #0f0;')
+                      console.log('%c========================================', 'background: #0f0; color: #000;')
+                    }
+                  }}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded ${
+                    showBeatDemo
+                      ? 'bg-green-500 text-black'
+                      : 'bg-green-700 text-white hover:bg-green-600'
+                  }`}
+                >
+                  {showBeatDemo ? '✓ Beat Demo ON' : '🎬 Beat-Driven Demo'}
                 </button>
 
                 {/* Show JSON */}
@@ -458,6 +481,19 @@ Now rendering your video with full visual direction...`
                   <div>Scene 2: <span style={{ color: '#00FFFF' }}>■</span> CYAN (#00FFFF)</div>
                   <div>Scene 3: <span style={{ color: '#32CD32' }}>■</span> LIME GREEN (#32CD32)</div>
                   <div className="mt-1 text-fuchsia-400">If wrong → Remotion is broken</div>
+                </div>
+              )}
+
+              {/* Beat-Driven Demo Info */}
+              {showBeatDemo && (
+                <div className="p-2 bg-green-500/20 border border-green-500/50 rounded text-xs text-green-300 mb-2">
+                  <div className="font-bold mb-1">🎬 BEAT-DRIVEN DEMO (5 Patterns)</div>
+                  <div>Scene 1: <span style={{ color: '#FF3366' }}>■</span> SAAS_HERO_REVEAL</div>
+                  <div>Scene 2: <span style={{ color: '#1a1a2e' }}>■</span> PROBLEM_TENSION</div>
+                  <div>Scene 3: <span style={{ color: '#0a0a0a' }}>■</span> IMAGE_FOCUS_REVEAL</div>
+                  <div>Scene 4: <span style={{ color: '#667eea' }}>■</span> PROOF_HIGHLIGHTS</div>
+                  <div>Scene 5: <span style={{ color: '#00C853' }}>■</span> CTA_PUNCH</div>
+                  <div className="mt-1 text-green-400">Elements appear at beat timing</div>
                 </div>
               )}
 
@@ -545,9 +581,11 @@ Now rendering your video with full visual direction...`
 
       {/* Video Preview Section */}
       <div className="w-[480px] flex flex-col gap-4 overflow-y-auto">
-        {/* TRUTH TEST MODE - Show hardcoded test */}
+        {/* Debug modes - TRUTH TEST or BEAT-DRIVEN DEMO */}
         {showTruthTest ? (
           <TruthTestPreview className="border-2 border-fuchsia-500" />
+        ) : showBeatDemo ? (
+          <BeatDrivenPreview className="border-2 border-green-500" />
         ) : previewScenes.length > 0 ? (
           <CreativePreview
             scenes={previewScenes}

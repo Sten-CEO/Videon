@@ -11,6 +11,7 @@ import React from 'react'
 import { Composition } from 'remotion'
 import { CreativeVideo, CREATIVE_VIDEO_CONFIG } from './CreativeVideo'
 import { TruthTestVideo, TRUTH_TEST_CONFIG } from './TruthTestVideo'
+import { BeatDrivenDemo, BEAT_DRIVEN_DEMO_CONFIG } from './BeatDrivenDemo'
 import type { SceneSpec } from '../lib/creative'
 
 // Default scenes for preview (required by Remotion bundler)
@@ -82,6 +83,18 @@ export const RemotionRoot: React.FC = () => {
         width={TRUTH_TEST_CONFIG.width}
         height={TRUTH_TEST_CONFIG.height}
         defaultProps={{ scenes: [], providedImages: [] }}
+      />
+
+      {/* BEAT-DRIVEN DEMO - Shows all 5 patterns with timed beats */}
+      <Composition
+        id={BEAT_DRIVEN_DEMO_CONFIG.id}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        component={BeatDrivenDemo as any}
+        durationInFrames={BEAT_DRIVEN_DEMO_CONFIG.durationInFrames}
+        fps={BEAT_DRIVEN_DEMO_CONFIG.fps}
+        width={BEAT_DRIVEN_DEMO_CONFIG.width}
+        height={BEAT_DRIVEN_DEMO_CONFIG.height}
+        defaultProps={{}}
       />
     </>
   )
