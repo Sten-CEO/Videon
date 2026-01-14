@@ -20,9 +20,11 @@ import type {
   BrainSceneSpec,
   VideoStyle,
   GenerationProgress,
-  PHASE_WEIGHTS,
+  ImagePatternId,
+  TransitionId,
 } from './types'
 import { STYLE_PROFILES } from './types'
+import { planTransitionSequence } from './transitions'
 
 // =============================================================================
 // THE VIDEO BRAIN IDENTITY
@@ -122,6 +124,102 @@ INTERDIT :
 Si une image ne peut pas être utilisée correctement :
 → Réduis sa présence ou retarde-la
 → Ne la force JAMAIS
+
+═══════════════════════════════════════════════════════════════════════════════
+                    📐 PATTERNS DE PRÉSENTATION D'IMAGE
+═══════════════════════════════════════════════════════════════════════════════
+
+Les images ne sont JAMAIS placées brutes.
+Tu DOIS choisir UN pattern par image.
+
+PATTERNS DISPONIBLES :
+
+PRODUCT_FOCUS
+├─ Usage : Screenshots, UI produit
+├─ Style : Image légèrement réduite, coins arrondis, ombre douce
+├─ Position : Jamais plein écran, toujours avec espace de respiration
+└─ Idéal pour : hero, illustration
+
+FLOATING_MOCKUP
+├─ Usage : Produits SaaS modernes
+├─ Style : Flottant avec mouvement vertical subtil (très lent)
+├─ Position : Centré avec espace généreux
+└─ Idéal pour : hero, illustration, proof
+
+SPLIT_LAYOUT
+├─ Usage : Scènes d'explication
+├─ Style : Texte d'un côté, image de l'autre
+├─ Position : Alignement fort, équilibre visuel
+└─ Idéal pour : hero + texte, proof + texte
+
+STACKED_PROOF
+├─ Usage : Preuves, crédibilité
+├─ Style : Images ou image+texte empilés
+├─ Position : Layout calme et structuré
+└─ Idéal pour : proof, illustration, accent
+
+LOGO_SIGNATURE
+├─ Usage : Rappel de marque, outro
+├─ Style : Petit, élégant, JAMAIS dominant
+├─ Position : Centré, taille fixe max 180px
+└─ Idéal pour : logo uniquement
+
+RÈGLES :
+• Chaque image DOIT avoir un pattern
+• Les patterns doivent être COHÉRENTS dans la vidéo
+• Si tu doutes → choisis FLOATING_MOCKUP (le plus premium)
+
+═══════════════════════════════════════════════════════════════════════════════
+                    🌊 SYSTÈME DE TRANSITIONS FLUIDES
+═══════════════════════════════════════════════════════════════════════════════
+
+Les transitions doivent être PRESQUE INVISIBLES.
+Le spectateur ne doit PAS remarquer les transitions.
+L'ensemble doit ressembler à UN FLUX VISUEL CONTINU.
+
+TRANSITIONS DISPONIBLES :
+
+CROSSFADE
+├─ Style : Blend d'opacité doux avec mouvement minimal
+├─ Usage : Transition par défaut, la plus invisible
+└─ Durée : ~0.5s
+
+SLIDE_CONTINUE
+├─ Style : Continue la direction de mouvement existante
+├─ Usage : Quand les scènes partagent une direction
+└─ Durée : ~0.7s
+
+SCALE_MORPH
+├─ Style : Scale subtil pour continuité de profondeur
+├─ Usage : Pour les moments d'emphase (PROOF, CTA)
+└─ Durée : ~0.6s
+
+POSITION_FLOW
+├─ Style : Interpolation de position fluide
+├─ Usage : Quand la position du layout change
+└─ Durée : ~0.7s
+
+SEAMLESS_BLEND
+├─ Style : Opacité pure, quasi-invisible
+├─ Usage : Haute continuité visuelle entre scènes
+└─ Durée : ~0.4s
+
+INTELLIGENCE DES TRANSITIONS :
+
+Tu décides :
+1. SI une transition est nécessaire
+2. QUELLE transition utiliser
+3. SI la continuité est préférable au changement
+
+SI deux scènes partagent une logique visuelle :
+→ Réutilise position et mouvement
+→ Continue le mouvement au lieu de le réinitialiser
+
+INTERDIT :
+• Flash
+• Zoom punch
+• Wipes de template
+• Tout ce qui attire l'attention sur la transition
 
 ═══════════════════════════════════════════════════════════════════════════════
                     🎨 ADAPTATION AUTOMATIQUE DU STYLE
@@ -226,6 +324,23 @@ Si la réponse est NON :
           }
         }
       ],
+      "images": [
+        {
+          "imageId": "img_1",
+          "role": "hero | proof | illustration | background | accent | logo",
+          "pattern": "product_focus | floating_mockup | split_layout | stacked_proof | logo_signature",
+          "treatment": {
+            "frame": "none | device | browser | rounded | shadow",
+            "cornerRadius": 12,
+            "shadow": "none | subtle | medium | strong"
+          },
+          "layering": "below_text | above_text | integrated"
+        }
+      ],
+      "transition": {
+        "type": "crossfade | slide_continue | scale_morph | position_flow | seamless_blend",
+        "reason": "Explication courte du choix"
+      },
       "durationFrames": 75,
       "background": {
         "type": "gradient",
@@ -542,6 +657,31 @@ ${input.targetAudience}
     // Calculate total duration
     const totalDurationFrames = scenes.reduce((sum, s) => sum + (s.durationFrames || 75), 0)
 
+    // Calculate visual flow report
+    const transitionSequence = planTransitionSequence(scenes, style)
+
+    // Collect patterns and transitions used
+    const patternsUsed = new Set<ImagePatternId>()
+    const transitionsUsed = new Set<TransitionId>()
+
+    scenes.forEach(scene => {
+      // Collect image patterns
+      scene.images?.forEach(img => {
+        if (img.pattern) {
+          patternsUsed.add(img.pattern)
+        }
+      })
+      // Collect transitions
+      if (scene.transition?.type) {
+        transitionsUsed.add(scene.transition.type)
+      }
+    })
+
+    // Also add transitions from planned sequence
+    transitionSequence.transitions.forEach(t => {
+      transitionsUsed.add(t.spec.id)
+    })
+
     const output: VideoBrainOutput = {
       style,
       styleProfile,
@@ -553,6 +693,11 @@ ${input.targetAudience}
         allScenesValid: invalidScenes.length === 0,
         invalidScenes,
         warnings,
+      },
+      visualFlow: {
+        coherenceScore: transitionSequence.coherenceScore,
+        patternsUsed: Array.from(patternsUsed),
+        transitionsUsed: Array.from(transitionsUsed),
       },
     }
 
