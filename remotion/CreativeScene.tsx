@@ -43,6 +43,22 @@ export const CreativeScene: React.FC<CreativeSceneProps> = ({
   const frame = useCurrentFrame()
   const { fps } = useVideoConfig()
 
+  // PIPELINE TRACE: Log on first render of this scene instance
+  if (frame === 0) {
+    console.log(`%c[SCENE ${sceneIndex}] INIT`, 'background: #0a0; color: #fff; padding: 2px 8px;')
+    console.log(`[SCENE ${sceneIndex}] Type: ${scene.sceneType}`)
+    console.log(`[SCENE ${sceneIndex}] Headline: "${scene.headline}"`)
+    console.log(`[SCENE ${sceneIndex}] Background:`, scene.background)
+    console.log(`[SCENE ${sceneIndex}] Typography:`, {
+      font: scene.typography?.headlineFont,
+      color: scene.typography?.headlineColor,
+    })
+    console.log(`[SCENE ${sceneIndex}] Motion:`, {
+      entry: scene.motion?.entry,
+      exit: scene.motion?.exit,
+    })
+  }
+
   // Get layout configuration
   const layout = getLayoutConfig(scene.layout)
   const { containerStyles, contentStyles } = getLayoutStyles(layout)
@@ -106,21 +122,35 @@ export const CreativeScene: React.FC<CreativeSceneProps> = ({
     if (typeof globalThis !== 'undefined' && globalThis.__DEBUG_RENDERER__) {
       // Log at frame 0 and every 30 frames (1 second)
       if (frame === 0 || frame % 30 === 0) {
-        console.log('[RENDERER LOG]', {
-          frame,
-          sceneIndex,
+        // TRUTH TEST: Log the ACTUAL values being used
+        const bgColor = scene.background.type === 'solid'
+          ? scene.background.color
+          : scene.background.gradientColors?.join(' → ')
+
+        console.log(`%c[RENDERER] Frame ${frame} | Scene ${sceneIndex}`, 'background: #222; color: #0f0; padding: 2px 8px;')
+        console.log('[RENDERER] PLAN VALUES:', {
           sceneType: scene.sceneType,
-          phase,
-          activeBeat: activeBeatIndex,
-          totalBeats: beats.length,
-          background: scene.background.baseColor,
-          headline: scene.headline?.substring(0, 20),
+          layout: scene.layout,
+          bgType: scene.background.type,
+          bgColor: bgColor,
+          bgTexture: scene.background.texture,
+          headlineFont: scene.typography.headlineFont,
+          headlineColor: scene.typography.headlineColor,
+          entryAnimation: scene.motion.entry,
+          rhythm: scene.motion.rhythm,
           images: scene.images?.length || 0,
-          imageAnimation: scene.images?.[0]?.animation,
+          beats: beats.length,
+        })
+
+        // Log computed styles to verify they match
+        console.log('[RENDERER] COMPUTED STYLES:', {
+          backgroundCSS: bgStyles,
+          textureCSS: textureStyles ? 'applied' : 'none',
+          animationCSS: animationStyles,
         })
       }
     }
-  }, [frame, sceneIndex, scene, phase, activeBeatIndex, beats.length])
+  }, [frame, sceneIndex, scene, phase, activeBeatIndex, beats.length, bgStyles, textureStyles, animationStyles])
 
   // Render beats if they exist
   const renderBeats = () => {
@@ -237,7 +267,7 @@ export const CreativeScene: React.FC<CreativeSceneProps> = ({
           <div>Scene: {sceneIndex} ({scene.sceneType})</div>
           <div>Layout: {scene.layout}</div>
           <div>Beats: {activeBeatIndex !== null ? activeBeatIndex + 1 : 0} / {beats.length}</div>
-          <div>BG Color: {scene.background.baseColor || 'undefined'}</div>
+          <div>BG Color: {scene.background.color || scene.background.gradientColors?.[0] || 'gradient/mesh'}</div>
           <div>BG Type: {scene.background.type}</div>
           <div>Images: {scene.images?.length || 0}</div>
           {scene.images?.[0]?.animation && (
