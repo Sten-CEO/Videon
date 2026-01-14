@@ -6,6 +6,8 @@
  * - Uses visual beats for temporal progression
  * - Auto-adapts between Premium SaaS and Social Short styles
  * - Self-judges quality before output
+ * - Professional image presentation patterns
+ * - Fluid, nearly invisible transitions
  *
  * Identity:
  * - Senior B2B SaaS marketing director
@@ -28,6 +30,8 @@ export type {
   GenerationPhase,
   SceneIntention,
   RhythmDecision,
+  ImagePatternId,
+  TransitionId,
 } from './types'
 
 export { STYLE_PROFILES, PHASE_WEIGHTS } from './types'
@@ -68,3 +72,30 @@ export {
   PHASE_INFO,
   type ProgressCallback,
 } from './progressTracker'
+
+// Image presentation patterns
+export {
+  IMAGE_PATTERNS,
+  selectPattern,
+  getPattern,
+  getPatternsForRole,
+  adaptPatternForStyle,
+  mirrorPattern,
+  type ImagePattern,
+  type PatternSelectionContext,
+} from './imagePatterns'
+
+// Fluid transitions
+export {
+  TRANSITIONS,
+  analyzeVisualContinuity,
+  decideTransition,
+  getTransition,
+  adaptTransitionForStyle,
+  adaptTransitionDirection,
+  planTransitionSequence,
+  type TransitionSpec,
+  type SceneContext,
+  type TransitionDecision,
+  type TransitionSequence,
+} from './transitions'

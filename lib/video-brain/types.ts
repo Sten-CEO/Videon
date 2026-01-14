@@ -107,7 +107,9 @@ export interface BrainSceneSpec {
   /** Images used in this scene */
   images?: Array<{
     imageId: string
-    role: 'hero' | 'proof' | 'illustration' | 'background' | 'accent'
+    role: 'hero' | 'proof' | 'illustration' | 'background' | 'accent' | 'logo'
+    /** Presentation pattern selected for this image */
+    pattern: ImagePatternId
     treatment: {
       crop?: { x: number; y: number; width: number; height: number }
       frame: 'none' | 'device' | 'browser' | 'rounded' | 'shadow'
@@ -116,9 +118,42 @@ export interface BrainSceneSpec {
     }
     layering: 'below_text' | 'above_text' | 'integrated'
   }>
+  /** Transition to next scene */
+  transition?: {
+    type: TransitionId
+    reason: string
+  }
   /** Quality validation passed */
   qualityValidated: boolean
 }
+
+// =============================================================================
+// IMAGE PRESENTATION PATTERNS
+// =============================================================================
+
+/**
+ * Fixed library of professional image compositions
+ */
+export type ImagePatternId =
+  | 'product_focus'      // App screenshots, product UI - rounded, shadowed, breathing space
+  | 'floating_mockup'    // Modern SaaS - floating with subtle vertical motion
+  | 'split_layout'       // Text + image side by side - strong alignment
+  | 'stacked_proof'      // Multiple images or proof moments - calm, structured
+  | 'logo_signature'     // Brand presence - small, elegant, never dominant
+
+// =============================================================================
+// FLUID TRANSITIONS
+// =============================================================================
+
+/**
+ * Nearly invisible transitions between scenes
+ */
+export type TransitionId =
+  | 'crossfade'          // Soft opacity blend - most invisible
+  | 'slide_continue'     // Continues motion direction
+  | 'scale_morph'        // Subtle scale for depth continuity
+  | 'position_flow'      // Smooth position interpolation
+  | 'seamless_blend'     // Pure opacity for high visual continuity
 
 // =============================================================================
 // STYLE PROFILES
@@ -205,6 +240,15 @@ export interface VideoBrainOutput {
     allScenesValid: boolean
     invalidScenes: number[]
     warnings: string[]
+  }
+  /** Visual flow report */
+  visualFlow?: {
+    /** Transition coherence score (0-100) */
+    coherenceScore: number
+    /** Image patterns used */
+    patternsUsed: ImagePatternId[]
+    /** Transitions used */
+    transitionsUsed: TransitionId[]
   }
 }
 
