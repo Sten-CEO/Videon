@@ -9,6 +9,11 @@
 // =============================================================================
 
 /**
+ * Focus role in visual hierarchy
+ */
+export type FocusRole = 'primary' | 'secondary' | 'ambient'
+
+/**
  * A Beat represents ONE timed visual action within a scene
  */
 export interface VisualBeat {
@@ -16,6 +21,8 @@ export interface VisualBeat {
   beatId: string
   /** Type of visual action */
   type: 'text_appear' | 'text_replace' | 'text_emphasize' | 'image_enter' | 'image_reveal' | 'image_reframe' | 'visual_pause' | 'breathing_moment'
+  /** Role in visual hierarchy */
+  focusRole?: FocusRole
   /** When this beat starts (frames from scene start) */
   startFrame: number
   /** Duration of this beat in frames */
@@ -70,6 +77,21 @@ export interface RhythmDecision {
   beatStrategy: 'progressive_reveal' | 'emphasis_shift' | 'visual_layering' | 'single_moment' | 'breathing_pause'
 }
 
+/**
+ * Phase in the narrative tempo
+ */
+export type VideoPhase = 'opening' | 'development' | 'climax' | 'resolution'
+
+/**
+ * Visual hierarchy specification for a scene
+ */
+export interface SceneHierarchy {
+  /** Primary focus element ID */
+  primaryElement: string
+  /** Secondary element IDs (max 2) */
+  secondaryElements?: string[]
+}
+
 // =============================================================================
 // SCENE SPEC (ENHANCED)
 // =============================================================================
@@ -79,8 +101,12 @@ export interface BrainSceneSpec {
   sceneId: string
   /** Scene type for narrative arc */
   sceneType: 'HOOK' | 'PROBLEM' | 'SOLUTION' | 'PROOF' | 'CTA' | 'TRANSITION'
+  /** Phase in the narrative tempo */
+  phase?: VideoPhase
   /** Marketing intention driving this scene */
   intention: SceneIntention
+  /** Visual hierarchy for this scene */
+  hierarchy?: SceneHierarchy
   /** Rhythm decision - does this scene need beats? */
   rhythm: RhythmDecision
   /** Visual beats within this scene */
@@ -222,6 +248,18 @@ export interface VideoBrainInput {
   forceStyle?: VideoStyle
 }
 
+/**
+ * Locked color palette for the video
+ */
+export interface VideoPaletteSpec {
+  /** Primary action/brand color */
+  primary: string
+  /** Neutral base color */
+  neutral: string
+  /** Optional accent color */
+  accent?: string
+}
+
 export interface VideoBrainOutput {
   /** Detected/chosen style */
   style: VideoStyle
@@ -231,6 +269,8 @@ export interface VideoBrainOutput {
   concept: string
   /** Emotional arc */
   emotionalArc: string[]
+  /** Locked color palette */
+  palette?: VideoPaletteSpec
   /** All scenes with beats */
   scenes: BrainSceneSpec[]
   /** Total video duration in frames */
