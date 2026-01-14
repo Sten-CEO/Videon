@@ -3,11 +3,14 @@
  *
  * Registers all compositions for the Remotion bundler.
  * Uses CreativeVideo which renders AI specs EXACTLY as specified.
+ *
+ * TRUTH TEST: Also registers TruthTestVideo for debugging.
  */
 
 import React from 'react'
 import { Composition } from 'remotion'
 import { CreativeVideo, CREATIVE_VIDEO_CONFIG } from './CreativeVideo'
+import { TruthTestVideo, TRUTH_TEST_CONFIG } from './TruthTestVideo'
 import type { SceneSpec } from '../lib/creative'
 
 // Default scenes for preview (required by Remotion bundler)
@@ -50,6 +53,7 @@ const defaultScenes: SceneSpec[] = [
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* Main Creative Video Composition */}
       <Composition
         id={CREATIVE_VIDEO_CONFIG.id}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,6 +70,18 @@ export const RemotionRoot: React.FC = () => {
           ) || 300
           return { durationInFrames: totalFrames }
         }}
+      />
+
+      {/* TRUTH TEST Composition - 100% hardcoded, ignores all props */}
+      <Composition
+        id={TRUTH_TEST_CONFIG.id}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        component={TruthTestVideo as any}
+        durationInFrames={TRUTH_TEST_CONFIG.durationInFrames}
+        fps={TRUTH_TEST_CONFIG.fps}
+        width={TRUTH_TEST_CONFIG.width}
+        height={TRUTH_TEST_CONFIG.height}
+        defaultProps={{ scenes: [], providedImages: [] }}
       />
     </>
   )

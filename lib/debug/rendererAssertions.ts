@@ -67,7 +67,11 @@ export function assertBackgroundColorApplied(
   sceneIndex: number,
   renderedColor: string
 ): void {
-  const expectedColor = scene.background.baseColor?.toLowerCase() || ''
+  // For solid backgrounds, check the 'color' field (not baseColor!)
+  // For gradients, check the first gradient color
+  const expectedColor = scene.background.type === 'solid'
+    ? scene.background.color?.toLowerCase()
+    : scene.background.gradientColors?.[0]?.toLowerCase()
 
   if (expectedColor && renderedColor.toLowerCase() !== expectedColor) {
     throw new RendererAssertionError(

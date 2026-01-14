@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Button, Textarea, Card, CreativePreview } from '@/components/ui'
+import { Button, Textarea, Card, CreativePreview, TruthTestPreview } from '@/components/ui'
 import type { ChatMessage } from '@/lib/types'
 import type { SceneSpec, VideoSpec, ImageIntent } from '@/lib/creative'
 import { retrieveImages } from '@/lib/imageStore'
@@ -40,6 +40,7 @@ function ConversationContent() {
   // DEBUG MODE state
   const [debugMode, setDebugMode] = useState(false)
   const [showPlanJson, setShowPlanJson] = useState(false)
+  const [showTruthTest, setShowTruthTest] = useState(false)
   const [planValidation, setPlanValidation] = useState<{ valid: boolean; errors: string[]; warnings: string[] } | null>(null)
 
   // Use ref for images to avoid race conditions with useEffect
@@ -405,15 +406,42 @@ Now rendering your video with full visual direction...`
           {debugMode && (
             <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-amber-500 text-xs font-bold">🔧 TRUTH TEST MODE</span>
+                <span className="text-amber-500 text-xs font-bold">🔧 DEBUG MODE - TRUTH TEST</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-3">
+                {/* TRUTH TEST - Hardcoded Bypass */}
                 <button
-                  onClick={loadDebugPlan}
+                  onClick={() => {
+                    setShowTruthTest(!showTruthTest)
+                    if (!showTruthTest) {
+                      console.log('%c========================================', 'background: #f0f; color: #000;')
+                      console.log('%c[DEBUG] TRUTH TEST ACTIVATED', 'background: #f0f; color: #000; font-size: 16px; font-weight: bold;')
+                      console.log('%c[DEBUG] Expected: HOT PINK → CYAN → LIME GREEN', 'color: #f0f;')
+                      console.log('%c[DEBUG] If colors are WRONG, Remotion is broken!', 'color: #f00; font-weight: bold;')
+                      console.log('%c========================================', 'background: #f0f; color: #000;')
+                    }
+                  }}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded ${
+                    showTruthTest
+                      ? 'bg-fuchsia-500 text-black'
+                      : 'bg-fuchsia-700 text-white hover:bg-fuchsia-600'
+                  }`}
+                >
+                  {showTruthTest ? '✓ Truth Test ON' : '🧪 Run Truth Test'}
+                </button>
+
+                {/* Load Debug Plan */}
+                <button
+                  onClick={() => {
+                    loadDebugPlan()
+                    setShowTruthTest(false)
+                  }}
                   className="px-3 py-1.5 text-xs bg-amber-500 text-black font-semibold rounded hover:bg-amber-400"
                 >
                   Load Debug Plan
                 </button>
+
+                {/* Show JSON */}
                 <button
                   onClick={() => setShowPlanJson(!showPlanJson)}
                   className="px-3 py-1.5 text-xs bg-gray-700 text-white rounded hover:bg-gray-600"
@@ -421,6 +449,18 @@ Now rendering your video with full visual direction...`
                   {showPlanJson ? 'Hide' : 'Show'} Plan JSON
                 </button>
               </div>
+
+              {/* Truth Test Info */}
+              {showTruthTest && (
+                <div className="p-2 bg-fuchsia-500/20 border border-fuchsia-500/50 rounded text-xs text-fuchsia-300 mb-2">
+                  <div className="font-bold mb-1">🧪 TRUTH TEST (100% Hardcoded)</div>
+                  <div>Scene 1: <span style={{ color: '#FF1493' }}>■</span> HOT PINK (#FF1493)</div>
+                  <div>Scene 2: <span style={{ color: '#00FFFF' }}>■</span> CYAN (#00FFFF)</div>
+                  <div>Scene 3: <span style={{ color: '#32CD32' }}>■</span> LIME GREEN (#32CD32)</div>
+                  <div className="mt-1 text-fuchsia-400">If wrong → Remotion is broken</div>
+                </div>
+              )}
+
               {planValidation && !planValidation.valid && (
                 <div className="mt-2 text-xs text-red-400">
                   ⚠️ Plan validation failed: {planValidation.errors.join(', ')}
@@ -505,8 +545,10 @@ Now rendering your video with full visual direction...`
 
       {/* Video Preview Section */}
       <div className="w-[480px] flex flex-col gap-4 overflow-y-auto">
-        {/* Video player - Use Creative Preview for full visual specs */}
-        {previewScenes.length > 0 ? (
+        {/* TRUTH TEST MODE - Show hardcoded test */}
+        {showTruthTest ? (
+          <TruthTestPreview className="border-2 border-fuchsia-500" />
+        ) : previewScenes.length > 0 ? (
           <CreativePreview
             scenes={previewScenes}
             providedImages={imagesRef.current}

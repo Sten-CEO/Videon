@@ -18,20 +18,54 @@ interface CreativeVideoProps {
 export const CreativeVideo: React.FC<CreativeVideoProps> = ({ scenes, providedImages }) => {
   const frame = useCurrentFrame()
 
-  // Log props at frame 0
+  // PIPELINE TRACE: Log props at frame 0 with full details
   if (frame === 0) {
-    console.log('========================================')
-    console.log('[CreativeVideo] scenes:', scenes?.length || 0)
-    console.log('[CreativeVideo] providedImages:', providedImages?.length || 0)
-    if (providedImages && providedImages.length > 0) {
-      providedImages.forEach((img, i) => {
-        console.log(`[CreativeVideo] Image ${i}: id=${img.id}, url=${img.url}`)
-      })
-    }
+    console.log('%c========================================', 'background: #00f; color: #fff;')
+    console.log('%c[PIPELINE] CreativeVideo RECEIVED props', 'background: #00f; color: #fff; font-size: 14px; font-weight: bold;')
+    console.log('%c========================================', 'background: #00f; color: #fff;')
+
+    // Full scene dump for debugging
+    console.log('[PIPELINE] Total scenes:', scenes?.length || 0)
     scenes?.forEach((s, i) => {
-      console.log(`[CreativeVideo] Scene ${i}: ${s.sceneType}, images: ${s.images?.length || 0}`)
+      console.log(`%c[PIPELINE] Scene ${i}:`, 'color: #0af;', {
+        type: s.sceneType,
+        layout: s.layout,
+        bgType: s.background?.type,
+        bgColor: s.background?.type === 'solid' ? s.background.color : s.background?.gradientColors,
+        typography: {
+          font: s.typography?.headlineFont,
+          color: s.typography?.headlineColor,
+        },
+        motion: {
+          entry: s.motion?.entry,
+          rhythm: s.motion?.rhythm,
+        },
+        images: s.images?.length || 0,
+        beats: s.beats?.length || 0,
+        durationFrames: s.durationFrames,
+      })
     })
-    console.log('========================================')
+
+    // Image availability check
+    console.log('[PIPELINE] ProvidedImages:', providedImages?.length || 0)
+    providedImages?.forEach((img, i) => {
+      console.log(`[PIPELINE] Image ${i}:`, {
+        id: img.id,
+        urlType: img.url?.startsWith('data:') ? 'base64' : 'file',
+        urlLength: img.url?.length || 0,
+      })
+    })
+
+    // Generate plan hash for verification
+    const planHash = scenes
+      ? btoa(JSON.stringify(scenes.map(s => ({
+          t: s.sceneType,
+          l: s.layout,
+          bg: s.background?.type === 'solid' ? s.background.color : s.background?.gradientColors?.[0],
+        })))).substring(0, 16)
+      : 'NO_SCENES'
+    console.log(`%c[PIPELINE] Plan Hash: ${planHash}`, 'color: #f0f; font-weight: bold;')
+    console.log('%c========================================', 'background: #00f; color: #fff;')
   }
 
   if (!scenes || scenes.length === 0) {
@@ -59,7 +93,7 @@ export const CreativeVideo: React.FC<CreativeVideoProps> = ({ scenes, providedIm
           durationInFrames={sceneFrames[index].duration}
           name={`${scene.sceneType}: ${scene.headline.substring(0, 20)}`}
         >
-          <CreativeScene scene={scene} providedImages={providedImages} />
+          <CreativeScene scene={scene} sceneIndex={index} providedImages={providedImages} />
         </Sequence>
       ))}
     </AbsoluteFill>
