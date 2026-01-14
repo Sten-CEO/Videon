@@ -119,3 +119,31 @@ export {
   getImageZIndex,
   getSmartPositionForLayout,
 } from './images'
+
+// Visual Patterns (NEW - Beat-driven system)
+export {
+  type PatternId,
+  type ElementType,
+  type PatternBeat,
+  type VisualPattern,
+  type ResolvedBeat,
+  VISUAL_PATTERNS,
+  SAAS_HERO_REVEAL,
+  PROBLEM_TENSION,
+  IMAGE_FOCUS_REVEAL,
+  PROOF_HIGHLIGHTS,
+  CTA_PUNCH,
+  getPattern,
+  getPatternForSceneType,
+  resolvePatternBeats,
+} from './patterns'
+
+// Image Usage Presets (NEW - Predefined motion per usage type)
+export {
+  type ImageUsageType,
+  type ImageUsagePreset,
+  IMAGE_USAGE_PRESETS,
+  getImageUsagePreset,
+  getShadowStyle,
+  getEasingValue,
+} from './imageUsage'
