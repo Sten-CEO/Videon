@@ -3,6 +3,10 @@
  *
  * The AI acts as a full creative director, specifying EVERY visual decision.
  * NO DEFAULTS - The renderer executes EXACTLY what the AI outputs.
+ *
+ * Supports two modes:
+ * 1. NEW: Create a video from scratch
+ * 2. MODIFY: Apply specific changes to an existing video spec
  */
 
 import Anthropic from '@anthropic-ai/sdk'
@@ -17,6 +21,8 @@ const MAX_TOKENS = 4096
 interface RequestBody {
   message: string
   providedImages?: ImageIntent[]
+  currentSpec?: VideoSpec  // Existing video spec to modify
+  modificationRequest?: string  // Specific modification requested
 }
 
 export async function POST(request: Request) {
@@ -27,29 +33,69 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Missing message' }, { status: 400 })
     }
 
-    console.log('[Creative] Generating for:', body.message.substring(0, 100))
+    // Check if this is a modification request
+    const isModification = body.currentSpec && body.modificationRequest
+
+    console.log('[Creative] Mode:', isModification ? 'MODIFY' : 'NEW')
+    console.log('[Creative] Request:', body.message.substring(0, 100))
     console.log('[Creative] Provided images:', body.providedImages?.length || 0)
 
-    // Build user prompt with optional image information
-    let userPrompt = `Create a complete video with FULL visual direction for:\n\n${body.message}\n\n`
+    let userPrompt: string
 
-    // Add image information if provided
-    if (body.providedImages && body.providedImages.length > 0) {
-      userPrompt += `\n\n=== USER-PROVIDED IMAGES ===\nThe user has provided ${body.providedImages.length} image(s) for potential use in the video:\n\n`
-      body.providedImages.forEach((img, i) => {
-        userPrompt += `Image ${i + 1}:\n`
-        userPrompt += `  - ID: "${img.id}"\n`
-        userPrompt += `  - Intent: ${img.intent}\n`
-        userPrompt += `  - Priority: ${img.priority || 'primary'}\n`
-        if (img.description) {
-          userPrompt += `  - Description: ${img.description}\n`
-        }
-        userPrompt += '\n'
-      })
-      userPrompt += `\nIMPORTANT: The user uploaded these images specifically for this video. You SHOULD include them in appropriate scenes using their EXACT IDs (e.g., "${body.providedImages[0].id}"). Add an "images" array to relevant scenes, referencing each image by its "imageId".\n\n`
+    if (isModification) {
+      // MODIFICATION MODE: Apply specific changes to existing spec
+      console.log('[Creative] Modification request:', body.modificationRequest)
+
+      userPrompt = `=== MODIFICATION MODE ===
+
+You have an EXISTING video that the user wants to MODIFY.
+DO NOT create a new video from scratch.
+ONLY apply the specific change requested.
+KEEP everything else EXACTLY the same.
+
+=== CURRENT VIDEO SPECIFICATION ===
+${JSON.stringify(body.currentSpec, null, 2)}
+
+=== USER'S MODIFICATION REQUEST ===
+"${body.modificationRequest}"
+
+=== INSTRUCTIONS ===
+1. Parse the current video specification above
+2. Apply ONLY the change the user requested
+3. PRESERVE all other aspects of the video (layouts, animations, text, structure, etc.)
+4. Return the COMPLETE modified video specification
+
+CRITICAL RULES:
+- If user asks to change colors → change ONLY colors, keep everything else
+- If user asks to change text → change ONLY text, keep layouts/colors/animations
+- If user asks to shorten → adjust durations, keep all other properties
+- If user asks to add something → add it without removing existing elements
+- NEVER reset properties that weren't mentioned in the modification request
+
+Output ONLY valid JSON with the complete modified video specification.`
+
+    } else {
+      // NEW VIDEO MODE: Create from scratch
+      userPrompt = `Create a complete video with FULL visual direction for:\n\n${body.message}\n\n`
+
+      // Add image information if provided
+      if (body.providedImages && body.providedImages.length > 0) {
+        userPrompt += `\n\n=== USER-PROVIDED IMAGES ===\nThe user has provided ${body.providedImages.length} image(s) for potential use in the video:\n\n`
+        body.providedImages.forEach((img, i) => {
+          userPrompt += `Image ${i + 1}:\n`
+          userPrompt += `  - ID: "${img.id}"\n`
+          userPrompt += `  - Intent: ${img.intent}\n`
+          userPrompt += `  - Priority: ${img.priority || 'primary'}\n`
+          if (img.description) {
+            userPrompt += `  - Description: ${img.description}\n`
+          }
+          userPrompt += '\n'
+        })
+        userPrompt += `\nIMPORTANT: The user uploaded these images specifically for this video. You SHOULD include them in appropriate scenes using their EXACT IDs (e.g., "${body.providedImages[0].id}"). Add an "images" array to relevant scenes, referencing each image by its "imageId".\n\n`
+      }
+
+      userPrompt += `You are the CREATIVE DIRECTOR. Specify EVERY visual decision. VARY layouts, colors, animations. Output ONLY valid JSON.`
     }
-
-    userPrompt += `You are the CREATIVE DIRECTOR. Specify EVERY visual decision. VARY layouts, colors, animations. Output ONLY valid JSON.`
 
     const response = await anthropic.messages.create({
       model: MODEL,
