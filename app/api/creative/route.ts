@@ -18,6 +18,32 @@ const anthropic = new Anthropic()
 const MODEL = 'claude-sonnet-4-20250514'
 const MAX_TOKENS = 4096
 
+/**
+ * Clean the VideoSpec before sending to AI for modification.
+ * Removes large base64 image URLs that would exceed token limits.
+ * Keeps only the structural data needed for modification.
+ */
+function cleanSpecForModification(spec: VideoSpec): Partial<VideoSpec> {
+  return {
+    blueprint: spec.blueprint,
+    concept: spec.concept,
+    strategy: spec.strategy,
+    // Remove providedImages entirely - they contain base64 data
+    // The AI only needs to know the image IDs referenced in scenes
+    fps: spec.fps,
+    width: spec.width,
+    height: spec.height,
+    scenes: spec.scenes.map(scene => ({
+      ...scene,
+      // Keep image specs but note they reference external images
+      images: scene.images?.map(img => ({
+        ...img,
+        // imageId is all the AI needs - the actual URL is stored separately
+      }))
+    }))
+  }
+}
+
 interface RequestBody {
   message: string
   providedImages?: ImageIntent[]
@@ -46,6 +72,10 @@ export async function POST(request: Request) {
       // MODIFICATION MODE: Apply specific changes to existing spec
       console.log('[Creative] Modification request:', body.modificationRequest)
 
+      // CRITICAL: Clean the currentSpec to remove large base64 data
+      // We only need the structural data, not the image URLs
+      const cleanedSpec = cleanSpecForModification(body.currentSpec!)
+
       userPrompt = `=== MODIFICATION MODE ===
 
 You have an EXISTING video that the user wants to MODIFY.
@@ -54,7 +84,7 @@ ONLY apply the specific change requested.
 KEEP everything else EXACTLY the same.
 
 === CURRENT VIDEO SPECIFICATION ===
-${JSON.stringify(body.currentSpec, null, 2)}
+${JSON.stringify(cleanedSpec, null, 2)}
 
 === USER'S MODIFICATION REQUEST ===
 "${body.modificationRequest}"
@@ -135,8 +165,16 @@ Output ONLY valid JSON with the complete modified video specification.`
         width: parsed.width || 1080,
         height: parsed.height || 1920,
       }
-    } catch {
-      return NextResponse.json({ success: false, error: 'Invalid JSON', raw_response: textContent.text }, { status: 500 })
+    } catch (parseError) {
+      console.error('[Creative] JSON Parse Error:', parseError)
+      console.error('[Creative] Raw response (first 500 chars):', textContent.text.substring(0, 500))
+      console.error('[Creative] Raw response (last 500 chars):', textContent.text.substring(Math.max(0, textContent.text.length - 500)))
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid JSON',
+        parseError: parseError instanceof Error ? parseError.message : 'Unknown parse error',
+        raw_response_preview: textContent.text.substring(0, 1000),
+      }, { status: 500 })
     }
 
     const validation = validateVideoSpec(videoSpec)

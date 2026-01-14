@@ -242,7 +242,12 @@ Now rendering your video with full visual direction...`
 
       if (!creativeResponse.ok) {
         const errorData = await creativeResponse.json()
-        throw new Error(errorData.error || 'Failed to modify video')
+        console.error('[Generate] Modification error:', errorData)
+        // Show more detailed error if available
+        const errorMessage = errorData.parseError
+          ? `JSON invalide: ${errorData.parseError}`
+          : errorData.error || 'Échec de la modification'
+        throw new Error(errorMessage)
       }
 
       const responseData = await creativeResponse.json()
