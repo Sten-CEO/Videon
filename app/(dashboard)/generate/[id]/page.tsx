@@ -193,17 +193,23 @@ Now rendering your video with full visual direction...`
 
     const userMessage = inputValue
     setInputValue('')
-    addMessage('user', userMessage)
 
-    // Regenerate with the new/modified prompt
-    if (userMessage.toLowerCase().includes('regenerate') ||
-        userMessage.toLowerCase().includes('new') ||
-        userMessage.toLowerCase().includes('try again') ||
-        userMessage.toLowerCase().includes('change')) {
-      const newPrompt = initialPrompt ? `${initialPrompt}\n\nUser modification: ${userMessage}` : userMessage
+    // If we have a video generated (complete or error state), treat ANY message as a modification request
+    // This allows natural conversation like "make it yellow" or "fond jaune" without needing specific keywords
+    if (phase === 'complete' || phase === 'error' || videoSpec !== null || previewScenes.length > 0) {
+      // Combine original prompt with user modification
+      const newPrompt = initialPrompt
+        ? `${initialPrompt}\n\nUser modification request: ${userMessage}`
+        : userMessage
       await startGeneration(newPrompt)
+    } else if (phase === 'idle') {
+      // No video yet - start fresh generation
+      addMessage('user', userMessage)
+      await startGeneration(userMessage)
     } else {
-      addMessage('assistant', 'To modify the video, describe what you\'d like to change and I\'ll generate a new version.')
+      // Currently generating - just add the message, don't interrupt
+      addMessage('user', userMessage)
+      addMessage('assistant', 'Generation en cours... Votre demande sera prise en compte dans la prochaine version.')
     }
   }
 
