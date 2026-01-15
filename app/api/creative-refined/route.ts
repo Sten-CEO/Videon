@@ -61,13 +61,39 @@ Structure requise:
     "palette": "midnight",
     "includeGrain": true,
     "duration": "standard",
-    "visualStyle": { "preset": "modern" }
+    "visualStyle": { "preset": "modern" },
+    "effects": {
+      "preset": "modern",
+      "overrides": { ... }
+    }
   }
 }
+
+## CHOIX DES EFFETS VISUELS
+
+Choisis UN preset d'effets selon la personnalité de la marque:
+
+- "maxImpact" → Startups tech/gaming, IA, crypto. Explosions de particules, glitch, haute énergie.
+- "professional" → B2B SaaS sérieux, fintech, legal. Device mockups, wipes propres.
+- "modern" → La plupart des SaaS. 3D flips, gradient sweeps, équilibré. (DÉFAUT)
+- "playful" → Apps grand public, créatif, éducation. Liquid morphs, rebonds, particules.
+- "luxurious" → Produits premium, design. Parallax zoom, blur focus, light leaks.
+- "minimal" → Dev tools, productivité. Mask wipes, blur subtil, transitions propres.
+
+Tu peux OVERRIDE certains effets par scène si nécessaire:
+- Hook: Vise l'IMPACT MAXIMUM (ex: REVEAL_PARTICLE_EXPLOSION pour images)
+- CTA: Ajoute de l'EMPHASE (ex: EMPHASIS_GLOW_PULSE sur le bouton)
+
+Effets disponibles pour overrides:
+- Image reveals: REVEAL_3D_FLIP, REVEAL_PARTICLE_EXPLOSION, REVEAL_LIQUID_MORPH, REVEAL_DEVICE_MOCKUP, REVEAL_GLITCH
+- Text reveals: REVEAL_TEXT_GLITCH, REVEAL_TEXT_LETTER_BOUNCE, REVEAL_TEXT_GRADIENT_SWEEP
+- Transitions: TRANSITION_ZOOM_THROUGH, TRANSITION_GLITCH, TRANSITION_PARTICLE_DISSOLVE, TRANSITION_LIGHT_LEAK
 
 Règles:
 - Headlines: MAX 6-8 mots, percutants
 - Contenu en FRANÇAIS si prompt en français
+- TOUJOURS inclure "effects" avec au minimum le preset
+- Si le client fournit des images, utiliser un preset avec de bons image reveals
 - Output JSON uniquement`
 
 // =============================================================================
@@ -160,6 +186,10 @@ export async function POST(request: Request) {
     const parsed = JSON.parse(jsonText)
     parsed.templateId = TEMPLATE_ID
 
+    // Determine best effect preset based on context
+    const hasImages = body.providedImages && body.providedImages.length > 0
+    const defaultEffectPreset = hasImages ? 'modern' : 'professional'
+
     let plan: Base44Plan = {
       templateId: TEMPLATE_ID,
       id: `plan_${Date.now()}`,
@@ -175,6 +205,23 @@ export async function POST(request: Request) {
         includeGrain: true,
         duration: parsed.settings?.duration || 'standard',
         visualStyle: parsed.settings?.visualStyle || { preset: 'modern' },
+        // NEW: Include effects from AI response or use smart defaults
+        effects: parsed.settings?.effects || {
+          preset: defaultEffectPreset,
+          // Auto-enhance hook and CTA if images provided
+          overrides: hasImages ? {
+            hook: {
+              imageReveal: 'REVEAL_PARTICLE_EXPLOSION',
+              textReveal: 'REVEAL_TEXT_GLITCH',
+            },
+            demo: {
+              imageReveal: 'REVEAL_DEVICE_MOCKUP',
+            },
+            cta: {
+              emphasis: 'EMPHASIS_GLOW_PULSE',
+            },
+          } : undefined,
+        },
       },
       providedImages: body.providedImages,
     }
