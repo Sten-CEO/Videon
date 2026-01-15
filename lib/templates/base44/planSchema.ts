@@ -205,6 +205,27 @@ export interface Base44Effects {
 }
 
 // =============================================================================
+// SCENE DESIGN CONFIGURATION (NEW)
+// =============================================================================
+
+export type SceneDesignStyle = 'minimal' | 'dynamic' | 'geometric' | 'organic' | 'tech'
+export type SceneDesignIntensity = 'low' | 'medium' | 'high'
+
+export interface SceneDesignConfig {
+  style: SceneDesignStyle
+  intensity: SceneDesignIntensity
+}
+
+export interface Base44SceneDesign {
+  hook?: SceneDesignConfig
+  problem?: SceneDesignConfig
+  solution?: SceneDesignConfig
+  demo?: SceneDesignConfig
+  proof?: SceneDesignConfig
+  cta?: SceneDesignConfig
+}
+
+// =============================================================================
 // SETTINGS
 // =============================================================================
 
@@ -236,6 +257,9 @@ export interface Base44Plan {
   story: Base44Story
   casting: Base44Casting
   settings: Base44Settings
+
+  // NEW: Scene-by-scene design configuration
+  sceneDesign?: Base44SceneDesign
 
   // Raw images data (for renderer)
   providedImages?: Array<{
@@ -368,6 +392,15 @@ export function createDefaultBase44Plan(productName: string = 'Your Product'): B
       effects: {
         preset: 'modern',
       },
+    },
+    // NEW: Scene design configuration
+    sceneDesign: {
+      hook: { style: 'dynamic', intensity: 'high' },
+      problem: { style: 'geometric', intensity: 'medium' },
+      solution: { style: 'dynamic', intensity: 'high' },
+      demo: { style: 'tech', intensity: 'medium' },
+      proof: { style: 'minimal', intensity: 'low' },
+      cta: { style: 'dynamic', intensity: 'high' },
     },
   }
 }
