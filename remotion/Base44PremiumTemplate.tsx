@@ -31,8 +31,8 @@ import { PREMIUM_PALETTES, getGrainOverlayStyle, type ColorPalette } from '../li
 // DEBUG MODE - SET TO 'red' TO VERIFY TEMPLATE IS BEING USED
 // =============================================================================
 
-// ⚠️ TRUTH TEST: If video is NOT this color, template is NOT being used!
-const DEBUG_BG: string | null = 'red'  // Set to null for production
+// ⚠️ TRUTH TEST: Set to 'red' to verify template is being used
+const DEBUG_BG: string | null = null  // Production mode
 
 // =============================================================================
 // SCENE DURATIONS (in frames at 30fps)
