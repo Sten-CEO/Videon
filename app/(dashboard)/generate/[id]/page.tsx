@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Button, Textarea, Card, CreativePreview, TruthTestPreview, BeatDrivenPreview } from '@/components/ui'
+import { Button, Textarea, Card, CreativePreview, TruthTestPreview, BeatDrivenPreview, Base44Preview } from '@/components/ui'
 import type { ChatMessage } from '@/lib/types'
 import type { SceneSpec, VideoSpec, ImageIntent } from '@/lib/creative'
 import { retrieveImages } from '@/lib/imageStore'
@@ -42,6 +42,7 @@ function ConversationContent() {
   const [showPlanJson, setShowPlanJson] = useState(false)
   const [showTruthTest, setShowTruthTest] = useState(false)
   const [showBeatDemo, setShowBeatDemo] = useState(false)
+  const [showBase44, setShowBase44] = useState(false)
   const [planValidation, setPlanValidation] = useState<{ valid: boolean; errors: string[]; warnings: string[] } | null>(null)
 
   // Use ref for images to avoid race conditions with useEffect
@@ -414,6 +415,8 @@ Now rendering your video with full visual direction...`
                 <button
                   onClick={() => {
                     setShowTruthTest(!showTruthTest)
+                    setShowBeatDemo(false)
+                    setShowBase44(false)
                     if (!showTruthTest) {
                       console.log('%c========================================', 'background: #f0f; color: #000;')
                       console.log('%c[DEBUG] TRUTH TEST ACTIVATED', 'background: #f0f; color: #000; font-size: 16px; font-weight: bold;')
@@ -448,6 +451,7 @@ Now rendering your video with full visual direction...`
                   onClick={() => {
                     setShowBeatDemo(!showBeatDemo)
                     setShowTruthTest(false)
+                    setShowBase44(false)
                     if (!showBeatDemo) {
                       console.log('%c========================================', 'background: #0f0; color: #000;')
                       console.log('%c[DEBUG] BEAT-DRIVEN DEMO ACTIVATED', 'background: #0f0; color: #000; font-size: 16px; font-weight: bold;')
@@ -462,6 +466,28 @@ Now rendering your video with full visual direction...`
                   }`}
                 >
                   {showBeatDemo ? '✓ Beat Demo ON' : '🎬 Beat-Driven Demo'}
+                </button>
+
+                {/* BASE44 PREMIUM - 6-Scene Template */}
+                <button
+                  onClick={() => {
+                    setShowBase44(!showBase44)
+                    setShowTruthTest(false)
+                    setShowBeatDemo(false)
+                    if (!showBase44) {
+                      console.log('%c========================================', 'background: #6366F1; color: #fff;')
+                      console.log('%c[DEBUG] BASE44 PREMIUM ACTIVATED', 'background: #6366F1; color: #fff; font-size: 16px; font-weight: bold;')
+                      console.log('%c[DEBUG] 6 Scenes: HOOK → PROBLEM → SOLUTION → DEMO → PROOF → CTA', 'color: #6366F1;')
+                      console.log('%c========================================', 'background: #6366F1; color: #fff;')
+                    }
+                  }}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded ${
+                    showBase44
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-indigo-700 text-white hover:bg-indigo-600'
+                  }`}
+                >
+                  {showBase44 ? '✓ Base44 ON' : '💎 Base44 Premium'}
                 </button>
 
                 {/* Show JSON */}
@@ -494,6 +520,20 @@ Now rendering your video with full visual direction...`
                   <div>Scene 4: <span style={{ color: '#667eea' }}>■</span> PROOF_HIGHLIGHTS</div>
                   <div>Scene 5: <span style={{ color: '#00C853' }}>■</span> CTA_PUNCH</div>
                   <div className="mt-1 text-green-400">Elements appear at beat timing</div>
+                </div>
+              )}
+
+              {/* Base44 Premium Info */}
+              {showBase44 && (
+                <div className="p-2 bg-indigo-500/20 border border-indigo-500/50 rounded text-xs text-indigo-300 mb-2">
+                  <div className="font-bold mb-1">💎 BASE44 PREMIUM (6-Scene Template)</div>
+                  <div>Scene 1: <span style={{ color: '#6366F1' }}>■</span> HOOK - Stop scrolling</div>
+                  <div>Scene 2: <span style={{ color: '#0F0F1A' }}>■</span> PROBLEM - Create tension</div>
+                  <div>Scene 3: <span style={{ color: '#1A1A2E' }}>■</span> SOLUTION - Introduce product</div>
+                  <div>Scene 4: <span style={{ color: '#16213E' }}>■</span> DEMO - Show in action</div>
+                  <div>Scene 5: <span style={{ color: '#8B5CF6' }}>■</span> PROOF - Social proof</div>
+                  <div>Scene 6: <span style={{ color: '#EC4899' }}>■</span> CTA - Call to action</div>
+                  <div className="mt-1 text-indigo-400">Premium effects + glassmorphism</div>
                 </div>
               )}
 
@@ -581,11 +621,13 @@ Now rendering your video with full visual direction...`
 
       {/* Video Preview Section */}
       <div className="w-[480px] flex flex-col gap-4 overflow-y-auto">
-        {/* Debug modes - TRUTH TEST or BEAT-DRIVEN DEMO */}
+        {/* Debug modes - TRUTH TEST, BEAT-DRIVEN, or BASE44 */}
         {showTruthTest ? (
           <TruthTestPreview className="border-2 border-fuchsia-500" />
         ) : showBeatDemo ? (
           <BeatDrivenPreview className="border-2 border-green-500" />
+        ) : showBase44 ? (
+          <Base44Preview className="border-2 border-indigo-500" />
         ) : previewScenes.length > 0 ? (
           <CreativePreview
             scenes={previewScenes}

@@ -5,7 +5,11 @@
  * These make it IMPOSSIBLE for different plans to produce identical visuals.
  */
 
-import type { SceneSpec, VideoSpec } from '@/lib/creative'
+import type { SceneSpec, VideoSpec, ImageSpec } from '@/lib/creative'
+
+// Type helpers for array element types
+type BeatElement = NonNullable<SceneSpec['beats']>[number]
+type ImageElement = NonNullable<SceneSpec['images']>[number]
 
 // =============================================================================
 // ASSERTION ERRORS
@@ -111,7 +115,7 @@ export function assertBeatsProcessed(
  * Assert beat timing is respected
  */
 export function assertBeatTiming(
-  beat: SceneSpec['beats'][0],
+  beat: BeatElement,
   currentFrame: number,
   beatIsVisible: boolean
 ): void {
@@ -136,17 +140,17 @@ export function assertBeatTiming(
  * Assert image pattern is applied
  */
 export function assertImagePatternApplied(
-  image: SceneSpec['images'][0],
+  image: ImageElement,
   sceneIndex: number,
   hasFrame: boolean,
   hasShadow: boolean
 ): void {
-  const shouldHaveShadow = image.style?.shadow && image.style.shadow !== 'none'
+  const shouldHaveShadow = image.treatment?.shadow && image.treatment.shadow !== 'none'
 
   if (shouldHaveShadow && !hasShadow) {
     throw new RendererAssertionError(
       'IMAGE_SHADOW_NOT_APPLIED',
-      `Image ${image.imageId} should have shadow: ${image.style?.shadow}`,
+      `Image ${image.imageId} should have shadow: ${image.treatment?.shadow}`,
       'No shadow rendered',
       { sceneIndex, image }
     )
@@ -157,7 +161,7 @@ export function assertImagePatternApplied(
  * Assert image position interpolation
  */
 export function assertImagePositionInterpolation(
-  image: SceneSpec['images'][0],
+  image: ImageElement & { animation?: { startX: number; endX: number; startY: number; endY: number }; timing: { startFrame: number; endFrame: number } },
   currentFrame: number,
   renderedX: number,
   renderedY: number
@@ -279,12 +283,11 @@ export function validatePlanBeforeRender(spec: VideoSpec): {
         if (!img.imageId) {
           errors.push(`Scene ${index}, Image ${imgIndex}: Missing imageId`)
         }
-        if (img.animation) {
-          if (img.animation.startX !== undefined && img.animation.endX !== undefined) {
-            if (img.animation.startX !== img.animation.endX) {
-              // Image has position animation - this MUST be interpolated
-              warnings.push(`Scene ${index}, Image ${imgIndex}: Has X interpolation (${img.animation.startX} → ${img.animation.endX})`)
-            }
+        // Check if image has motion effect
+        if (img.effect) {
+          const hold = img.effect.hold
+          if (hold && hold !== 'none') {
+            warnings.push(`Scene ${index}, Image ${imgIndex}: Has hold animation (${hold})`)
           }
         }
       })
