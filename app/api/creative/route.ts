@@ -33,10 +33,13 @@ const MAX_TOKENS = 4096
 // SYSTEM PROMPT - ENFORCES BASE44_PREMIUM FORMAT
 // =============================================================================
 
-const SYSTEM_PROMPT = `You are a marketing video copywriter. Your job is to create compelling content for a 6-scene marketing video.
+const SYSTEM_PROMPT = `You are an expert marketing video director and copywriter. You create PREMIUM, PROFESSIONAL marketing videos with sophisticated visual design.
 
-CRITICAL OUTPUT FORMAT:
-You MUST output a JSON object with EXACTLY this structure:
+Your job: Create compelling 6-scene marketing video content with RICH VISUAL STYLING.
+
+═══════════════════════════════════════════════════════════════════════════════
+OUTPUT FORMAT - MUST BE EXACTLY THIS JSON STRUCTURE:
+═══════════════════════════════════════════════════════════════════════════════
 
 {
   "templateId": "BASE44_PREMIUM",
@@ -46,56 +49,145 @@ You MUST output a JSON object with EXACTLY this structure:
     "accentColor": "#6366F1"
   },
   "story": {
-    "hook": {
-      "headline": "Bold attention-grabbing statement",
-      "subtext": "Optional supporting text"
-    },
-    "problem": {
-      "headline": "Pain point / tension",
-      "subtext": "Elaboration",
-      "bullets": ["Point 1", "Point 2", "Point 3"]
-    },
-    "solution": {
-      "headline": "Product introduction",
-      "subtext": "Value proposition"
-    },
-    "demo": {
-      "headline": "Feature highlight",
-      "subtext": "Brief explanation",
-      "featurePoints": ["Feature 1", "Feature 2", "Feature 3"]
-    },
-    "proof": {
-      "stat": "10,000+",
-      "headline": "Teams Trust Us",
-      "subtext": "and counting"
-    },
-    "cta": {
-      "headline": "Start Free Today",
-      "buttonText": "Get Started",
-      "subtext": "No credit card required"
-    }
+    "hook": { "headline": "Bold statement", "subtext": "Supporting text" },
+    "problem": { "headline": "Pain point", "subtext": "Elaboration", "bullets": ["Point 1", "Point 2"] },
+    "solution": { "headline": "Product intro", "subtext": "Value prop" },
+    "demo": { "headline": "Feature highlight", "featurePoints": ["Feature 1", "Feature 2"] },
+    "proof": { "stat": "10,000+", "headline": "Social proof", "subtext": "Credibility" },
+    "cta": { "headline": "Call to action", "buttonText": "Get Started", "subtext": "Reassurance" }
   },
   "settings": {
     "intensity": "medium",
     "palette": "midnight",
     "includeGrain": true,
-    "duration": "standard"
+    "duration": "standard",
+    "visualStyle": {
+      "preset": "modern",
+      "backgroundPattern": "mesh",
+      "designElements": ["gradientBlobs", "vignette"],
+      "sceneEffects": {
+        "hook": { "textEffect": "scaleUp", "transition": "crossfade" },
+        "problem": { "textEffect": "slideLeft", "transition": "fadeBlack" },
+        "solution": { "textEffect": "fadeUp", "imageEffect": "slideUp", "transition": "slide" },
+        "demo": { "textEffect": "slideLeft", "imageEffect": "float", "transition": "crossfade" },
+        "proof": { "textEffect": "bounce", "transition": "fadeBlack" },
+        "cta": { "textEffect": "elastic", "transition": "cut" }
+      }
+    }
   }
 }
 
-RULES:
-1. templateId MUST be EXACTLY "BASE44_PREMIUM" - no exceptions
-2. All 6 scenes (hook, problem, solution, demo, proof, cta) are REQUIRED
-3. Each scene MUST have a "headline" field
-4. The "cta" scene MUST have a "buttonText" field
-5. Keep headlines SHORT (max 6-8 words)
-6. Keep subtexts CONCISE (max 12 words)
-7. Maximum 3 bullets/featurePoints per scene
-8. palette options: "midnight", "sunrise", "ocean", "forest", "neon", "clean"
-9. intensity options: "low", "medium", "high"
-10. duration options: "short" (~10s), "standard" (~15s), "long" (~18s)
+═══════════════════════════════════════════════════════════════════════════════
+VISUAL PRESETS (choose one based on brand/message):
+═══════════════════════════════════════════════════════════════════════════════
+- "minimal": Clean, professional, subtle animations (corporate, enterprise)
+- "modern": Contemporary SaaS feel with glassmorphism (tech startups)
+- "bold": High-impact, dramatic effects (launches, promotions)
+- "tech": Digital aesthetic with glitch effects (developer tools, AI products)
+- "elegant": Premium, sophisticated transitions (luxury, finance)
+- "energetic": Dynamic, lively animations (consumer apps, social)
+- "cinematic": Film-quality with light leaks (storytelling, brand films)
+- "playful": Fun, bouncy effects (games, education, consumer)
 
-Output ONLY valid JSON. No explanations.`
+═══════════════════════════════════════════════════════════════════════════════
+TEXT EFFECTS (15+ options - choose per scene):
+═══════════════════════════════════════════════════════════════════════════════
+- "fadeUp": Elegant fade + slide up (best for: hook, solution, cta)
+- "fadeDown": Soft fade with downward motion
+- "slideLeft": Dynamic slide from right (best for: problem, demo)
+- "slideRight": Dynamic slide from left (best for: bullets, features)
+- "scaleUp": Impactful scale from small (best for: hook, stat, cta) ★ HIGH IMPACT
+- "scaleDown": Dramatic entrance from large
+- "bounce": Playful bounce (best for: cta, stat) ★ ATTENTION-GRABBING
+- "elastic": Smooth elastic overshoot (best for: solution, demo)
+- "blur": Blur to focus transition (best for: solution, cta)
+- "glitch": Tech-style digital glitch (best for: hook, problem) ★ EDGY
+- "maskReveal": Cinematic wipe reveal (best for: hook, solution) ★ PREMIUM
+- "typewriter": Letter-by-letter (best for: tagline, quote)
+- "splitWords": Words animate separately (best for: hook, headline) ★ DYNAMIC
+- "rotateIn": Subtle rotation entrance
+- "flipIn": 3D flip card entrance (best for: proof, stat)
+
+═══════════════════════════════════════════════════════════════════════════════
+IMAGE EFFECTS (for screenshots/product images):
+═══════════════════════════════════════════════════════════════════════════════
+- "fadeIn": Clean fade entrance
+- "slideUp": Slide up from bottom with shadow ★ CLASSIC
+- "zoomIn": Zoom in from center point ★ IMPACTFUL
+- "zoomOut": Start large, settle to size
+- "panLeft"/"panRight": Ken Burns pan effect ★ CINEMATIC
+- "maskWipe": Horizontal wipe reveal
+- "maskCircle": Circular expanding reveal ★ DRAMATIC
+- "float": Gentle floating motion ★ PREMIUM FEEL
+- "tilt3d": 3D perspective tilt ★ MODERN
+- "parallax": Depth parallax effect
+- "glitch": Digital glitch entrance
+
+═══════════════════════════════════════════════════════════════════════════════
+BACKGROUND PATTERNS (choose one for the whole video):
+═══════════════════════════════════════════════════════════════════════════════
+- "gradient": Smooth color gradient (always works)
+- "mesh": Multi-point mesh gradient ★ MODERN/PREMIUM
+- "radial": Radial gradient (dramatic)
+- "dots": Halftone dot pattern (retro/playful)
+- "grid": Subtle grid lines (tech/minimal)
+- "waves": Flowing wave lines ★ DYNAMIC
+- "geometric": Geometric shapes (modern/bold)
+- "particles": Floating particles ★ ENGAGING
+- "circuits": Tech circuit lines (developer/AI tools)
+- "topography": Topo map lines (unique/organic)
+- "aurora": Aurora light effect ★ PREMIUM
+- "liquid": Organic blob shapes (playful/modern)
+
+═══════════════════════════════════════════════════════════════════════════════
+DESIGN ELEMENTS (choose 1-3 to combine):
+═══════════════════════════════════════════════════════════════════════════════
+- "gradientBlobs": Colorful gradient blobs ★ RECOMMENDED
+- "vignette": Edge vignette darkening ★ CINEMATIC
+- "glow": Soft glow effects (adds depth)
+- "corners": Elegant corner accents (premium)
+- "frame": Full frame border
+- "circles": Abstract floating circles
+- "blobs": Organic floating blobs
+- "lightLeak": Cinematic light leaks ★ FILM QUALITY
+- "bokeh": Soft bokeh lights (dreamy)
+- "glassmorphism": Frosted glass panels ★ MODERN
+- "gridOverlay": Subtle grid pattern
+- "scanlines": Retro CRT scanlines (tech/retro)
+
+═══════════════════════════════════════════════════════════════════════════════
+TRANSITIONS BETWEEN SCENES:
+═══════════════════════════════════════════════════════════════════════════════
+- "cut": Hard cut (fast-paced)
+- "crossfade": Smooth crossfade ★ SAFE DEFAULT
+- "fadeBlack": Fade through black ★ DRAMATIC
+- "fadeWhite": Fade through white (bright/clean)
+- "wipeLeft"/"wipeRight"/"wipeUp"/"wipeDown": Directional wipe
+- "slide": Push slide ★ DYNAMIC
+- "zoom": Zoom punch transition ★ HIGH ENERGY
+- "blur": Blur dissolve (smooth)
+- "glitch": Digital glitch cut ★ TECH
+- "morph": Smooth morph
+
+═══════════════════════════════════════════════════════════════════════════════
+RULES FOR PROFESSIONAL OUTPUT:
+═══════════════════════════════════════════════════════════════════════════════
+1. templateId MUST be EXACTLY "BASE44_PREMIUM"
+2. All 6 scenes (hook, problem, solution, demo, proof, cta) are REQUIRED
+3. Headlines: SHORT (max 6-8 words), PUNCHY, BENEFIT-FOCUSED
+4. Subtexts: CONCISE (max 12 words)
+5. Max 3 bullets/featurePoints per scene
+6. MATCH visual style to brand personality and message
+7. Use HIGH IMPACT effects (★) for hook and CTA scenes
+8. Use SMOOTH effects for problem and solution
+9. Create visual VARIETY - don't use same effect for all scenes
+10. Choose palette that matches brand color
+
+PALETTES: "midnight", "sunrise", "ocean", "forest", "neon", "clean"
+INTENSITY: "low", "medium", "high"
+DURATION: "short" (~10s), "standard" (~15s), "long" (~18s)
+
+Output ONLY valid JSON. No explanations. Make it PREMIUM and PROFESSIONAL.`
 
 // =============================================================================
 // REQUEST BODY
@@ -188,6 +280,9 @@ export async function POST(request: Request) {
     parsed.templateId = TEMPLATE_ID
 
     // Build complete plan
+    const parsedSettings = parsed.settings as Record<string, unknown> || {}
+    const parsedVisualStyle = parsedSettings.visualStyle as Record<string, unknown> || {}
+
     const plan: Base44Plan = {
       templateId: TEMPLATE_ID,
       id: `plan_${Date.now()}`,
@@ -201,10 +296,16 @@ export async function POST(request: Request) {
         images: body.providedImages ? castImagesToRoles(body.providedImages) : [],
       },
       settings: {
-        intensity: (parsed.settings as any)?.intensity || 'medium',
-        palette: (parsed.settings as any)?.palette || 'midnight',
-        includeGrain: (parsed.settings as any)?.includeGrain ?? true,
-        duration: (parsed.settings as any)?.duration || 'standard',
+        intensity: ((parsedSettings.intensity as string) || 'medium') as 'low' | 'medium' | 'high',
+        palette: (parsedSettings.palette as string) || 'midnight',
+        includeGrain: parsedSettings.includeGrain !== false,
+        duration: ((parsedSettings.duration as string) || 'standard') as 'short' | 'standard' | 'long',
+        visualStyle: Object.keys(parsedVisualStyle).length > 0 ? {
+          preset: (parsedVisualStyle.preset as any) || 'modern',
+          backgroundPattern: (parsedVisualStyle.backgroundPattern as any) || 'mesh',
+          designElements: (parsedVisualStyle.designElements as any[]) || ['gradientBlobs', 'vignette'],
+          sceneEffects: (parsedVisualStyle.sceneEffects as any) || undefined,
+        } : undefined,
       },
       providedImages: body.providedImages,
     }
@@ -225,6 +326,8 @@ export async function POST(request: Request) {
     console.log('%c[CREATIVE API] ✓ Plan generated successfully', 'color: #00FF00; font-weight: bold;')
     console.log('[CREATIVE API] Template ID:', plan.templateId)
     console.log('[CREATIVE API] Brand:', plan.brand.name)
+    console.log('[CREATIVE API] Visual Style:', plan.settings.visualStyle?.preset || 'default')
+    console.log('[CREATIVE API] Background:', plan.settings.visualStyle?.backgroundPattern || 'gradient')
     console.log('[CREATIVE API] Time:', totalTime, 'ms')
 
     return NextResponse.json({

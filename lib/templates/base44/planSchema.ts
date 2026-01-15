@@ -78,6 +78,62 @@ export interface Base44Casting {
 }
 
 // =============================================================================
+// VISUAL STYLE SETTINGS
+// =============================================================================
+
+export type TextEffectType =
+  | 'fadeUp' | 'fadeDown' | 'slideLeft' | 'slideRight'
+  | 'scaleUp' | 'scaleDown' | 'bounce' | 'elastic'
+  | 'blur' | 'glitch' | 'maskReveal' | 'rotateIn'
+  | 'flipIn' | 'typewriter' | 'splitWords'
+
+export type ImageEffectType =
+  | 'fadeIn' | 'slideUp' | 'slideDown' | 'zoomIn' | 'zoomOut'
+  | 'panLeft' | 'panRight' | 'maskWipe' | 'maskCircle'
+  | 'split' | 'glitch' | 'parallax' | 'float' | 'tilt3d' | 'morph'
+
+export type TransitionType =
+  | 'cut' | 'crossfade' | 'fadeBlack' | 'fadeWhite'
+  | 'wipeLeft' | 'wipeRight' | 'wipeUp' | 'wipeDown'
+  | 'zoom' | 'blur' | 'glitch' | 'slide' | 'cube' | 'flip' | 'morph'
+
+export type BackgroundPatternType =
+  | 'solid' | 'gradient' | 'radial' | 'mesh'
+  | 'noise' | 'grain' | 'dots' | 'grid'
+  | 'waves' | 'geometric' | 'particles' | 'aurora'
+  | 'liquid' | 'circuits' | 'topography'
+
+export type DesignElementType =
+  | 'none' | 'corners' | 'frame' | 'blobs' | 'circles'
+  | 'lines' | 'glow' | 'shadows' | 'glassmorphism'
+  | 'gradientBlobs' | 'gridOverlay' | 'lightLeak'
+  | 'vignette' | 'scanlines' | 'bokeh'
+
+export type VisualPreset =
+  | 'minimal' | 'modern' | 'bold' | 'tech'
+  | 'elegant' | 'energetic' | 'cinematic' | 'playful'
+
+export interface SceneVisualConfig {
+  textEffect?: TextEffectType
+  imageEffect?: ImageEffectType
+  transition?: TransitionType  // Transition TO next scene
+}
+
+export interface Base44VisualStyle {
+  preset?: VisualPreset           // Quick preset selection
+  backgroundPattern: BackgroundPatternType
+  designElements: DesignElementType[]
+  sceneEffects?: {
+    hook?: SceneVisualConfig
+    problem?: SceneVisualConfig
+    solution?: SceneVisualConfig
+    demo?: SceneVisualConfig
+    proof?: SceneVisualConfig
+    cta?: SceneVisualConfig
+  }
+}
+
+// =============================================================================
 // SETTINGS
 // =============================================================================
 
@@ -88,6 +144,7 @@ export interface Base44Settings {
   palette: string                 // 'midnight' | 'sunrise' | 'ocean' | 'forest' | 'neon' | 'clean' | 'auto'
   includeGrain: boolean           // Film grain overlay
   duration: 'short' | 'standard' | 'long'  // ~10s | ~15s | ~18s
+  visualStyle?: Base44VisualStyle // Advanced visual configuration
 }
 
 // =============================================================================
@@ -222,6 +279,19 @@ export function createDefaultBase44Plan(productName: string = 'Your Product'): B
       palette: 'midnight',
       includeGrain: true,
       duration: 'standard',
+      visualStyle: {
+        preset: 'modern',
+        backgroundPattern: 'mesh',
+        designElements: ['gradientBlobs', 'vignette'],
+        sceneEffects: {
+          hook: { textEffect: 'scaleUp', transition: 'crossfade' },
+          problem: { textEffect: 'slideLeft', transition: 'fadeBlack' },
+          solution: { textEffect: 'fadeUp', imageEffect: 'slideUp', transition: 'slide' },
+          demo: { textEffect: 'slideLeft', imageEffect: 'float', transition: 'crossfade' },
+          proof: { textEffect: 'scaleUp', transition: 'fadeBlack' },
+          cta: { textEffect: 'bounce', transition: 'cut' },
+        },
+      },
     },
   }
 }
