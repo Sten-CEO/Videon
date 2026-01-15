@@ -1,15 +1,11 @@
 /**
- * BASE44 PREMIUM TEMPLATE - CINEMATIC EDITION
+ * BASE44 PREMIUM TEMPLATE - EFFECTS EDITION
  *
- * A continuous-flow marketing video system that creates professional,
- * agency-quality videos like Base44, Lovable, and other top SaaS brands.
- *
- * Key differences from traditional templates:
- * - Continuous camera movement (no discrete "slides")
- * - Layered depth with parallax
- * - Orchestrated motion choreography
- * - Asymmetric professional compositions
- * - Persistent evolving design elements
+ * Professional marketing video system with:
+ * - Dynamic visual effects (image reveals, text animations)
+ * - Design elements for empty scenes
+ * - Smart scene compositions
+ * - Smooth scene transitions
  */
 
 import React from 'react'
@@ -24,37 +20,28 @@ import {
   spring,
 } from 'remotion'
 
-import type { Base44Plan, SceneVisualConfig } from '../lib/templates/base44/planSchema'
+import type { Base44Plan, EffectPresetName } from '../lib/templates/base44/planSchema'
 import { PREMIUM_PALETTES, type ColorPalette } from '../lib/templates/base44/effects'
-import { CinematicCanvas, type CameraState } from './components/CinematicCanvas'
-import { MotionOrchestrator, OrchestratedHeadline, OrchestratedSubtext, OrchestratedButton, OrchestratedAccent } from './components/MotionOrchestrator'
-import { CompositionGrid, getLayoutForScene, type LayoutPreset, type ContentBlock } from './components/CompositionGrid'
+
+// Import Effects System
+import {
+  ImageRevealRenderer,
+  TextRevealRenderer,
+  StatRevealRenderer,
+  TransitionRenderer,
+  PRESET_CONFIGS,
+  getEffectForScene,
+} from './effects/EffectRenderer'
+import { SceneBackground } from './effects/DesignElements'
 
 // =============================================================================
 // CONFIG
 // =============================================================================
 
-const DEBUG_BG: string | null = null
-
 const SCENE_DURATIONS = {
   short: { hook: 60, problem: 75, solution: 75, demo: 75, proof: 60, cta: 45 },
   standard: { hook: 75, problem: 90, solution: 90, demo: 90, proof: 75, cta: 60 },
   long: { hook: 90, problem: 105, solution: 105, demo: 105, proof: 90, cta: 75 },
-}
-
-// Motion style based on visual preset
-const getMotionStyle = (preset: string): 'smooth' | 'snappy' | 'elastic' | 'dramatic' => {
-  const map: Record<string, 'smooth' | 'snappy' | 'elastic' | 'dramatic'> = {
-    minimal: 'smooth',
-    modern: 'snappy',
-    bold: 'dramatic',
-    tech: 'snappy',
-    elegant: 'smooth',
-    energetic: 'elastic',
-    cinematic: 'dramatic',
-    playful: 'elastic',
-  }
-  return map[preset] || 'smooth'
 }
 
 // =============================================================================
@@ -64,34 +51,187 @@ const getMotionStyle = (preset: string): 'smooth' | 'snappy' | 'elastic' | 'dram
 const Typography = {
   headline: {
     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-    fontWeight: 800,
+    fontWeight: 800 as const,
     letterSpacing: '-0.03em',
     lineHeight: 1.1,
   },
   subhead: {
     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-    fontWeight: 600,
+    fontWeight: 600 as const,
     letterSpacing: '-0.02em',
     lineHeight: 1.2,
   },
   body: {
     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-    fontWeight: 400,
+    fontWeight: 400 as const,
     letterSpacing: '-0.01em',
     lineHeight: 1.4,
   },
   accent: {
     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-    fontWeight: 500,
+    fontWeight: 500 as const,
     letterSpacing: '0.02em',
     lineHeight: 1.3,
   },
   stat: {
     fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-    fontWeight: 900,
+    fontWeight: 900 as const,
     letterSpacing: '-0.04em',
     lineHeight: 1,
   },
+}
+
+// =============================================================================
+// GRADIENT BACKGROUND
+// =============================================================================
+
+const GradientBackground: React.FC<{
+  colors: string[]
+  primary: string
+}> = ({ colors, primary }) => {
+  const frame = useCurrentFrame()
+  const shimmer = Math.sin(frame * 0.02) * 5
+
+  return (
+    <AbsoluteFill
+      style={{
+        background: `
+          radial-gradient(ellipse at ${50 + shimmer}% ${30 + shimmer}%, ${primary}15 0%, transparent 50%),
+          linear-gradient(135deg, ${colors[0]} 0%, ${colors[1]} 50%, ${colors[2] || colors[0]} 100%)
+        `,
+      }}
+    />
+  )
+}
+
+// =============================================================================
+// ANIMATED TEXT WRAPPER
+// =============================================================================
+
+interface AnimatedTextProps {
+  children: string
+  effect: string
+  delay?: number
+  duration?: number
+  color?: string
+  accentColor?: string
+  fontSize?: number
+  fontWeight?: number
+  style?: React.CSSProperties
+}
+
+const AnimatedText: React.FC<AnimatedTextProps> = ({
+  children,
+  effect,
+  delay = 0,
+  duration = 45,
+  color = '#FFFFFF',
+  accentColor,
+  fontSize = 48,
+  fontWeight = 800,
+  style,
+}) => {
+  return (
+    <TextRevealRenderer
+      effect={effect as any}
+      text={children}
+      startFrame={delay}
+      duration={duration}
+      color={color}
+      accentColor={accentColor}
+      fontSize={fontSize}
+      fontWeight={fontWeight}
+      style={style}
+    />
+  )
+}
+
+// =============================================================================
+// ANIMATED IMAGE WRAPPER
+// =============================================================================
+
+interface AnimatedImageProps {
+  src: string
+  effect: string
+  delay?: number
+  duration?: number
+  accentColor?: string
+  style?: React.CSSProperties
+}
+
+const AnimatedImage: React.FC<AnimatedImageProps> = ({
+  src,
+  effect,
+  delay = 0,
+  duration = 45,
+  accentColor,
+  style,
+}) => {
+  return (
+    <ImageRevealRenderer
+      effect={effect as any}
+      src={src}
+      startFrame={delay}
+      duration={duration}
+      accentColor={accentColor}
+      style={style}
+    />
+  )
+}
+
+// =============================================================================
+// SCENE WRAPPER WITH TRANSITION
+// =============================================================================
+
+interface SceneWrapperProps {
+  children: React.ReactNode
+  palette: ColorPalette
+  sceneDesign?: { style: string; intensity: string }
+  transitionEffect: string
+  transitionDuration?: number
+}
+
+const SceneWrapper: React.FC<SceneWrapperProps> = ({
+  children,
+  palette,
+  sceneDesign,
+  transitionEffect,
+  transitionDuration = 15,
+}) => {
+  const frame = useCurrentFrame()
+  const { durationInFrames } = useVideoConfig()
+
+  // Entry transition
+  const entryProgress = interpolate(frame, [0, transitionDuration], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+    easing: Easing.out(Easing.cubic),
+  })
+
+  // Exit transition
+  const exitStart = durationInFrames - transitionDuration
+  const exitProgress = interpolate(frame, [exitStart, durationInFrames], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+    easing: Easing.in(Easing.cubic),
+  })
+
+  const progress = Math.min(entryProgress, exitProgress)
+
+  return (
+    <AbsoluteFill style={{ opacity: progress }}>
+      {/* Design Background */}
+      {sceneDesign && (
+        <SceneBackground
+          primaryColor={palette.primary}
+          secondaryColor={palette.secondary}
+          style={sceneDesign.style as any}
+          intensity={sceneDesign.intensity as any}
+        />
+      )}
+      {children}
+    </AbsoluteFill>
+  )
 }
 
 // =============================================================================
@@ -132,7 +272,6 @@ export const Base44PremiumTemplate: React.FC<Base44PremiumTemplateProps> = ({ pl
     proof: durations.hook + durations.problem + durations.solution + durations.demo,
     cta: durations.hook + durations.problem + durations.solution + durations.demo + durations.proof,
   }
-  const totalFrames = Object.values(durations).reduce((a, b) => a + b, 0)
 
   // Get images
   const getImageUrl = (role: string): string | undefined => {
@@ -145,119 +284,145 @@ export const Base44PremiumTemplate: React.FC<Base44PremiumTemplateProps> = ({ pl
   const logoUrl = getImageUrl('logo')
   const heroScreenshotUrl = getImageUrl('heroScreenshot')
 
-  // Visual style
-  const visualStyle = plan.settings.visualStyle || { preset: 'modern' }
-  const motionStyle = getMotionStyle(visualStyle.preset || 'modern')
+  // Effects configuration
+  const effectsConfig = plan.settings.effects || { preset: 'modern' as EffectPresetName }
+  const effectPreset = effectsConfig.preset || 'modern'
 
-  // Camera timeline - creates the continuous flow feeling
-  const cameraTimeline: Array<{ frame: number; state: Partial<CameraState> }> = [
-    // Start centered
-    { frame: 0, state: { x: 0, y: 0, zoom: 1, rotation: 0 } },
-    // Slight pull back on hook
-    { frame: sceneStarts.hook + 30, state: { x: 0, y: -5, zoom: 1.02, rotation: 0 } },
-    // Pan left for problem
-    { frame: sceneStarts.problem, state: { x: -8, y: 0, zoom: 1, rotation: -0.5 } },
-    // Pan right and zoom for solution
-    { frame: sceneStarts.solution, state: { x: 8, y: -3, zoom: 1.05, rotation: 0.5 } },
-    // Pull back for demo
-    { frame: sceneStarts.demo, state: { x: 0, y: 5, zoom: 0.98, rotation: 0 } },
-    // Dramatic push for proof
-    { frame: sceneStarts.proof, state: { x: 0, y: 0, zoom: 1.08, rotation: 0 } },
-    // Center and zoom for CTA
-    { frame: sceneStarts.cta, state: { x: 0, y: -2, zoom: 1.03, rotation: 0 } },
-    // Final frame
-    { frame: totalFrames - 1, state: { x: 0, y: 0, zoom: 1, rotation: 0 } },
-  ]
+  // Scene design (from AI or defaults)
+  const sceneDesign = plan.sceneDesign || {
+    hook: { style: 'dynamic', intensity: 'high' },
+    problem: { style: 'geometric', intensity: 'medium' },
+    solution: { style: 'dynamic', intensity: 'high' },
+    demo: { style: 'tech', intensity: 'medium' },
+    proof: { style: 'minimal', intensity: 'low' },
+    cta: { style: 'dynamic', intensity: 'high' },
+  }
+
+  // Get effect for a scene
+  const getTextEffect = (scene: string) => getEffectForScene(scene, 'textReveal', effectsConfig)
+  const getImageEffect = (scene: string) => getEffectForScene(scene, 'imageReveal', effectsConfig)
+  const getTransitionEffect = (scene: string) => getEffectForScene(scene, 'transition', effectsConfig)
+  const getStatEffect = (scene: string) => getEffectForScene(scene, 'statReveal', effectsConfig)
 
   // Log on first frame
   if (frame === 0) {
-    console.log('%c[BASE44 CINEMATIC] Rendering premium video', 'color: #6366F1; font-weight: bold;')
-    console.log('[BASE44 CINEMATIC] Brand:', plan.brand.name)
-    console.log('[BASE44 CINEMATIC] Style:', visualStyle.preset || 'modern')
-    console.log('[BASE44 CINEMATIC] Motion:', motionStyle)
-    console.log('[BASE44 CINEMATIC] Duration:', totalFrames, 'frames')
+    console.log('%c[BASE44 EFFECTS] Rendering with effects system', 'color: #6366F1; font-weight: bold;')
+    console.log('[BASE44 EFFECTS] Brand:', plan.brand.name)
+    console.log('[BASE44 EFFECTS] Effect Preset:', effectPreset)
+    console.log('[BASE44 EFFECTS] Palette:', paletteName)
   }
 
   return (
-    <CinematicCanvas
-      primaryColor={brandPalette.primary}
-      secondaryColor={brandPalette.secondary}
-      backgroundColor={brandPalette.background[0]}
-      cameraTimeline={cameraTimeline}
-      intensity="moderate"
-    >
+    <AbsoluteFill>
+      {/* Base gradient background */}
+      <GradientBackground colors={brandPalette.background} primary={brandPalette.primary} />
+
       {/* SCENE 1: HOOK */}
       <Sequence from={sceneStarts.hook} durationInFrames={durations.hook} name="1-HOOK">
-        <MotionOrchestrator config={{ style: motionStyle, breatheIntensity: 0.3, floatIntensity: 0.2, beatInterval: 15, timing: { headline: 5, subtext: 15, image: 20, accent: 25, button: 30 } }}>
+        <SceneWrapper
+          palette={brandPalette}
+          sceneDesign={sceneDesign.hook}
+          transitionEffect={getTransitionEffect('hook')}
+        >
           <HookScene
             story={plan.story.hook}
             brand={plan.brand}
             palette={brandPalette}
             logoUrl={logoUrl}
+            textEffect={getTextEffect('hook')}
+            imageEffect={getImageEffect('hook')}
           />
-        </MotionOrchestrator>
+        </SceneWrapper>
       </Sequence>
 
       {/* SCENE 2: PROBLEM */}
       <Sequence from={sceneStarts.problem} durationInFrames={durations.problem} name="2-PROBLEM">
-        <MotionOrchestrator config={{ style: motionStyle, breatheIntensity: 0.2, floatIntensity: 0.15, beatInterval: 12, timing: { headline: 5, subtext: 12, image: 18, accent: 8, button: 25 } }}>
+        <SceneWrapper
+          palette={brandPalette}
+          sceneDesign={sceneDesign.problem}
+          transitionEffect={getTransitionEffect('problem')}
+        >
           <ProblemScene
             story={plan.story.problem}
             palette={brandPalette}
+            textEffect={getTextEffect('problem')}
           />
-        </MotionOrchestrator>
+        </SceneWrapper>
       </Sequence>
 
       {/* SCENE 3: SOLUTION */}
       <Sequence from={sceneStarts.solution} durationInFrames={durations.solution} name="3-SOLUTION">
-        <MotionOrchestrator config={{ style: motionStyle, breatheIntensity: 0.25, floatIntensity: 0.2, beatInterval: 15, timing: { headline: 5, subtext: 12, image: 18, accent: 25, button: 30 } }}>
+        <SceneWrapper
+          palette={brandPalette}
+          sceneDesign={sceneDesign.solution}
+          transitionEffect={getTransitionEffect('solution')}
+        >
           <SolutionScene
             story={plan.story.solution}
             brand={plan.brand}
             palette={brandPalette}
             screenshotUrl={heroScreenshotUrl}
+            textEffect={getTextEffect('solution')}
+            imageEffect={getImageEffect('solution')}
           />
-        </MotionOrchestrator>
+        </SceneWrapper>
       </Sequence>
 
       {/* SCENE 4: DEMO */}
       <Sequence from={sceneStarts.demo} durationInFrames={durations.demo} name="4-DEMO">
-        <MotionOrchestrator config={{ style: motionStyle, breatheIntensity: 0.2, floatIntensity: 0.25, beatInterval: 12, timing: { headline: 5, subtext: 10, image: 8, accent: 30, button: 35 } }}>
+        <SceneWrapper
+          palette={brandPalette}
+          sceneDesign={sceneDesign.demo}
+          transitionEffect={getTransitionEffect('demo')}
+        >
           <DemoScene
             story={plan.story.demo}
             palette={brandPalette}
             screenshotUrl={heroScreenshotUrl}
+            textEffect={getTextEffect('demo')}
+            imageEffect={getImageEffect('demo')}
           />
-        </MotionOrchestrator>
+        </SceneWrapper>
       </Sequence>
 
       {/* SCENE 5: PROOF */}
       <Sequence from={sceneStarts.proof} durationInFrames={durations.proof} name="5-PROOF">
-        <MotionOrchestrator config={{ style: motionStyle, breatheIntensity: 0.15, floatIntensity: 0.1, beatInterval: 18, timing: { headline: 8, subtext: 18, image: 25, accent: 5, button: 30 } }}>
+        <SceneWrapper
+          palette={brandPalette}
+          sceneDesign={sceneDesign.proof}
+          transitionEffect={getTransitionEffect('proof')}
+        >
           <ProofScene
             story={plan.story.proof}
             palette={brandPalette}
+            textEffect={getTextEffect('proof')}
+            statEffect={getStatEffect('proof')}
           />
-        </MotionOrchestrator>
+        </SceneWrapper>
       </Sequence>
 
       {/* SCENE 6: CTA */}
       <Sequence from={sceneStarts.cta} durationInFrames={durations.cta} name="6-CTA">
-        <MotionOrchestrator config={{ style: motionStyle, breatheIntensity: 0.2, floatIntensity: 0.15, beatInterval: 10, timing: { headline: 3, subtext: 18, image: 25, accent: 30, button: 10 } }}>
+        <SceneWrapper
+          palette={brandPalette}
+          sceneDesign={sceneDesign.cta}
+          transitionEffect={getTransitionEffect('cta')}
+        >
           <CTAScene
             story={plan.story.cta}
             brand={plan.brand}
             palette={brandPalette}
             logoUrl={logoUrl}
+            textEffect={getTextEffect('cta')}
           />
-        </MotionOrchestrator>
+        </SceneWrapper>
       </Sequence>
-    </CinematicCanvas>
+    </AbsoluteFill>
   )
 }
 
 // =============================================================================
-// SCENE COMPONENTS - Redesigned with professional compositions
+// SCENE COMPONENTS - Redesigned with Effects
 // =============================================================================
 
 // ----- HOOK SCENE -----
@@ -266,19 +431,29 @@ const HookScene: React.FC<{
   brand: Base44Plan['brand']
   palette: ColorPalette
   logoUrl?: string
-}> = ({ story, brand, palette, logoUrl }) => {
+  textEffect: string
+  imageEffect: string
+}> = ({ story, brand, palette, logoUrl, textEffect, imageEffect }) => {
+  const frame = useCurrentFrame()
+
+  // Brand badge fade in
+  const brandOpacity = interpolate(frame, [0, 20], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  })
+
   return (
     <AbsoluteFill style={{ padding: 80 }}>
-      {/* Brand badge - top left for asymmetry */}
-      <OrchestratedAccent
-        delay={0}
+      {/* Brand badge - top left */}
+      <div
         style={{
           position: 'absolute',
-          top: 60,
-          left: 60,
+          top: 80,
+          left: 80,
           display: 'flex',
           alignItems: 'center',
           gap: 12,
+          opacity: brandOpacity,
         }}
       >
         {logoUrl && (
@@ -292,56 +467,57 @@ const HookScene: React.FC<{
         }}>
           {brand.name}
         </span>
-      </OrchestratedAccent>
+      </div>
 
-      {/* Main content - slightly off-center for visual interest */}
+      {/* Main content - centered with proper margins */}
       <AbsoluteFill style={{
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'flex-start',
-        paddingLeft: '8%',
-        paddingRight: '15%',
+        alignItems: 'center',
+        padding: '120px 100px',
       }}>
-        <OrchestratedHeadline style={{
-          ...Typography.headline,
-          fontSize: 72,
-          color: palette.text.primary,
-          maxWidth: '90%',
-          textShadow: `0 4px 60px ${palette.primary}40`,
-        }}>
+        {/* Main headline with effect */}
+        <AnimatedText
+          effect={textEffect}
+          delay={5}
+          duration={45}
+          color={palette.text.primary}
+          accentColor={palette.primary}
+          fontSize={72}
+          fontWeight={800}
+          style={{
+            ...Typography.headline,
+            textAlign: 'center',
+            maxWidth: '90%',
+            textShadow: `0 4px 60px ${palette.primary}40`,
+          }}
+        >
           {story.headline}
-        </OrchestratedHeadline>
+        </AnimatedText>
 
         {story.subtext && (
-          <OrchestratedSubtext
-            delay={5}
+          <AnimatedText
+            effect="REVEAL_TEXT_BLUR_IN"
+            delay={25}
+            duration={30}
+            color={palette.text.secondary}
+            fontSize={28}
+            fontWeight={400}
             style={{
               ...Typography.body,
-              fontSize: 28,
-              color: palette.text.secondary,
+              textAlign: 'center',
               marginTop: 24,
               maxWidth: '70%',
             }}
           >
             {story.subtext}
-          </OrchestratedSubtext>
+          </AnimatedText>
         )}
       </AbsoluteFill>
 
-      {/* Accent line - adds visual interest */}
-      <OrchestratedAccent
-        delay={15}
-        style={{
-          position: 'absolute',
-          bottom: 120,
-          left: '8%',
-          width: 120,
-          height: 4,
-          backgroundColor: palette.primary,
-          borderRadius: 2,
-        }}
-      />
+      {/* Accent line - animated */}
+      <AccentLine color={palette.primary} delay={35} />
     </AbsoluteFill>
   )
 }
@@ -350,71 +526,64 @@ const HookScene: React.FC<{
 const ProblemScene: React.FC<{
   story: Base44Plan['story']['problem']
   palette: ColorPalette
-}> = ({ story, palette }) => {
+  textEffect: string
+}> = ({ story, palette, textEffect }) => {
   return (
-    <AbsoluteFill style={{ padding: 80 }}>
-      {/* Content - right-aligned for variety */}
+    <AbsoluteFill style={{ padding: 100 }}>
+      {/* Content - centered */}
       <AbsoluteFill style={{
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'flex-end',
-        paddingRight: '8%',
-        paddingLeft: '20%',
+        alignItems: 'center',
       }}>
-        <OrchestratedHeadline style={{
-          ...Typography.headline,
-          fontSize: 56,
-          color: palette.text.primary,
-          textAlign: 'right',
-          maxWidth: '85%',
-        }}>
+        <AnimatedText
+          effect={textEffect}
+          delay={5}
+          duration={45}
+          color={palette.text.primary}
+          accentColor={palette.primary}
+          fontSize={56}
+          fontWeight={800}
+          style={{
+            ...Typography.headline,
+            textAlign: 'center',
+            maxWidth: '85%',
+          }}
+        >
           {story.headline}
-        </OrchestratedHeadline>
+        </AnimatedText>
 
         {story.subtext && (
-          <OrchestratedSubtext
-            delay={5}
+          <AnimatedText
+            effect="REVEAL_TEXT_BLUR_IN"
+            delay={20}
+            duration={30}
+            color={palette.text.secondary}
+            fontSize={24}
+            fontWeight={400}
             style={{
               ...Typography.body,
-              fontSize: 24,
-              color: palette.text.secondary,
-              marginTop: 20,
-              textAlign: 'right',
+              marginTop: 24,
+              textAlign: 'center',
               maxWidth: '75%',
             }}
           >
             {story.subtext}
-          </OrchestratedSubtext>
+          </AnimatedText>
         )}
 
         {/* Bullets - staggered appearance */}
         {story.bullets && story.bullets.length > 0 && (
-          <div style={{ marginTop: 40, textAlign: 'right' }}>
+          <div style={{ marginTop: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
             {story.bullets.map((bullet, i) => (
-              <OrchestratedAccent
+              <BulletPoint
                 key={i}
-                delay={15 + i * 8}
-                style={{
-                  ...Typography.accent,
-                  fontSize: 20,
-                  color: palette.text.muted,
-                  marginBottom: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  gap: 12,
-                }}
-              >
-                {bullet}
-                <span style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  backgroundColor: palette.primary,
-                  opacity: 0.6,
-                }} />
-              </OrchestratedAccent>
+                text={bullet}
+                color={palette.primary}
+                textColor={palette.text.muted}
+                delay={35 + i * 10}
+              />
             ))}
           </div>
         )}
@@ -429,90 +598,84 @@ const SolutionScene: React.FC<{
   brand: Base44Plan['brand']
   palette: ColorPalette
   screenshotUrl?: string
-}> = ({ story, brand, palette, screenshotUrl }) => {
-  const frame = useCurrentFrame()
-
+  textEffect: string
+  imageEffect: string
+}> = ({ story, brand, palette, screenshotUrl, textEffect, imageEffect }) => {
   return (
     <AbsoluteFill style={{ padding: 80 }}>
-      {/* Split layout - text left, image right */}
+      {/* Split layout or centered if no image */}
       <AbsoluteFill style={{
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
       }}>
-        {/* Text side */}
+        {/* "Introducing" label */}
         <div style={{
-          flex: '0 0 45%',
-          paddingLeft: '5%',
-          paddingRight: '5%',
+          ...Typography.accent,
+          fontSize: 16,
+          color: palette.primary,
+          textTransform: 'uppercase',
+          marginBottom: 20,
+          letterSpacing: '0.15em',
         }}>
-          <OrchestratedAccent
-            delay={0}
-            style={{
-              ...Typography.accent,
-              fontSize: 14,
-              color: palette.primary,
-              textTransform: 'uppercase',
-              marginBottom: 16,
-              letterSpacing: '0.1em',
-            }}
-          >
-            Introducing
-          </OrchestratedAccent>
-
-          <OrchestratedHeadline style={{
-            ...Typography.headline,
-            fontSize: 48,
-            color: palette.text.primary,
-          }}>
-            {story.headline}
-          </OrchestratedHeadline>
-
-          {story.subtext && (
-            <OrchestratedSubtext
-              delay={8}
-              style={{
-                ...Typography.body,
-                fontSize: 22,
-                color: palette.text.secondary,
-                marginTop: 20,
-                lineHeight: 1.5,
-              }}
-            >
-              {story.subtext}
-            </OrchestratedSubtext>
-          )}
+          Introducing
         </div>
 
-        {/* Image side */}
+        {/* Main headline */}
+        <AnimatedText
+          effect={textEffect}
+          delay={10}
+          duration={40}
+          color={palette.text.primary}
+          accentColor={palette.primary}
+          fontSize={52}
+          fontWeight={800}
+          style={{
+            ...Typography.headline,
+            textAlign: 'center',
+            maxWidth: '80%',
+          }}
+        >
+          {story.headline}
+        </AnimatedText>
+
+        {story.subtext && (
+          <AnimatedText
+            effect="REVEAL_TEXT_BLUR_IN"
+            delay={25}
+            duration={30}
+            color={palette.text.secondary}
+            fontSize={24}
+            fontWeight={400}
+            style={{
+              ...Typography.body,
+              marginTop: 20,
+              textAlign: 'center',
+              maxWidth: '70%',
+              lineHeight: 1.5,
+            }}
+          >
+            {story.subtext}
+          </AnimatedText>
+        )}
+
+        {/* Image with reveal effect */}
         {screenshotUrl && (
-          <div style={{
-            flex: '0 0 50%',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-            <OrchestratedAccent
-              delay={12}
+          <div style={{ marginTop: 40, width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <AnimatedImage
+              src={screenshotUrl}
+              effect={imageEffect}
+              delay={35}
+              duration={45}
+              accentColor={palette.primary}
               style={{
-                padding: 12,
-                background: 'rgba(255,255,255,0.08)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: 20,
-                border: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: `0 20px 60px ${palette.primary}20`,
+                width: 450,
+                height: 'auto',
+                borderRadius: 16,
+                boxShadow: `0 25px 80px ${palette.primary}30`,
               }}
-            >
-              <Img
-                src={screenshotUrl}
-                style={{
-                  width: 420,
-                  height: 'auto',
-                  borderRadius: 12,
-                  display: 'block',
-                }}
-              />
-            </OrchestratedAccent>
+            />
           </div>
         )}
       </AbsoluteFill>
@@ -525,83 +688,76 @@ const DemoScene: React.FC<{
   story: Base44Plan['story']['demo']
   palette: ColorPalette
   screenshotUrl?: string
-}> = ({ story, palette, screenshotUrl }) => {
+  textEffect: string
+  imageEffect: string
+}> = ({ story, palette, screenshotUrl, textEffect, imageEffect }) => {
   return (
-    <AbsoluteFill style={{ padding: 60 }}>
-      {/* Hero image centered, text below */}
+    <AbsoluteFill style={{ padding: 80 }}>
       <AbsoluteFill style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingTop: 60,
+        paddingTop: 100,
       }}>
         {/* Headline */}
-        <OrchestratedHeadline style={{
-          ...Typography.subhead,
-          fontSize: 36,
-          color: palette.text.primary,
-          marginBottom: 30,
-        }}>
+        <AnimatedText
+          effect={textEffect}
+          delay={5}
+          duration={40}
+          color={palette.text.primary}
+          accentColor={palette.primary}
+          fontSize={40}
+          fontWeight={700}
+          style={{
+            ...Typography.subhead,
+            textAlign: 'center',
+            marginBottom: 40,
+          }}
+        >
           {story.headline}
-        </OrchestratedHeadline>
+        </AnimatedText>
 
-        {/* Screenshot - large and prominent */}
+        {/* Screenshot - large with device frame effect */}
         {screenshotUrl && (
-          <OrchestratedAccent
-            delay={5}
+          <AnimatedImage
+            src={screenshotUrl}
+            effect={imageEffect}
+            delay={20}
+            duration={50}
+            accentColor={palette.primary}
             style={{
-              padding: 8,
-              background: 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-              borderRadius: 24,
-              border: '1px solid rgba(255,255,255,0.15)',
+              width: 700,
+              maxWidth: '90%',
+              height: 'auto',
+              borderRadius: 20,
               boxShadow: `
-                0 25px 80px rgba(0,0,0,0.4),
+                0 30px 100px rgba(0,0,0,0.4),
                 0 0 0 1px rgba(255,255,255,0.1),
                 inset 0 1px 0 rgba(255,255,255,0.1)
               `,
             }}
-          >
-            <Img
-              src={screenshotUrl}
-              style={{
-                width: 800,
-                height: 'auto',
-                borderRadius: 18,
-                display: 'block',
-              }}
-            />
-          </OrchestratedAccent>
+          />
         )}
 
         {/* Feature points - horizontal at bottom */}
         {story.featurePoints && story.featurePoints.length > 0 && (
           <div style={{
             position: 'absolute',
-            bottom: 80,
+            bottom: 100,
             display: 'flex',
-            gap: 24,
+            gap: 20,
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            padding: '0 80px',
           }}>
             {story.featurePoints.map((point, i) => (
-              <OrchestratedAccent
+              <FeatureCard
                 key={i}
-                delay={25 + i * 6}
-                style={{
-                  padding: '14px 28px',
-                  background: 'rgba(255,255,255,0.08)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: 12,
-                  border: '1px solid rgba(255,255,255,0.1)',
-                }}
-              >
-                <span style={{
-                  ...Typography.accent,
-                  fontSize: 16,
-                  color: palette.text.secondary,
-                }}>
-                  {point}
-                </span>
-              </OrchestratedAccent>
+                text={point}
+                color={palette.text.secondary}
+                delay={50 + i * 8}
+              />
             ))}
           </div>
         )}
@@ -614,9 +770,15 @@ const DemoScene: React.FC<{
 const ProofScene: React.FC<{
   story: Base44Plan['story']['proof']
   palette: ColorPalette
-}> = ({ story, palette }) => {
+  textEffect: string
+  statEffect: string
+}> = ({ story, palette, textEffect, statEffect }) => {
+  // Parse stat value
+  const statValue = story.stat ? parseInt(story.stat.replace(/[^0-9]/g, '')) || 0 : 0
+  const statSuffix = story.stat?.replace(/[0-9]/g, '').trim() || ''
+
   return (
-    <AbsoluteFill style={{ padding: 80 }}>
+    <AbsoluteFill style={{ padding: 100 }}>
       {/* Centered dramatic stat */}
       <AbsoluteFill style={{
         display: 'flex',
@@ -625,61 +787,71 @@ const ProofScene: React.FC<{
         justifyContent: 'center',
       }}>
         {/* Glass card for premium feel */}
-        <OrchestratedAccent
-          delay={0}
-          style={{
-            padding: '60px 80px',
-            background: 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)',
-            backdropFilter: 'blur(30px)',
-            borderRadius: 32,
-            border: '1px solid rgba(255,255,255,0.2)',
-            textAlign: 'center',
-            boxShadow: `
-              0 30px 100px ${palette.primary}30,
-              inset 0 1px 0 rgba(255,255,255,0.2)
-            `,
-          }}
-        >
-          {/* Big stat */}
+        <div style={{
+          padding: '70px 100px',
+          background: 'linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)',
+          backdropFilter: 'blur(30px)',
+          borderRadius: 32,
+          border: '1px solid rgba(255,255,255,0.2)',
+          textAlign: 'center',
+          boxShadow: `
+            0 30px 100px ${palette.primary}30,
+            inset 0 1px 0 rgba(255,255,255,0.2)
+          `,
+        }}>
+          {/* Big stat with counter effect */}
           {story.stat && (
-            <OrchestratedHeadline style={{
-              ...Typography.stat,
-              fontSize: 120,
-              color: palette.text.primary,
-              textShadow: `0 0 80px ${palette.primary}50`,
-            }}>
-              {story.stat}
-            </OrchestratedHeadline>
+            <StatRevealRenderer
+              effect={statEffect as any}
+              value={statValue}
+              suffix={statSuffix}
+              startFrame={5}
+              duration={50}
+              color={palette.text.primary}
+              accentColor={palette.primary}
+              fontSize={120}
+              fontWeight={900}
+              style={{
+                ...Typography.stat,
+                textShadow: `0 0 80px ${palette.primary}50`,
+              }}
+            />
           )}
 
           {/* Headline */}
-          <OrchestratedSubtext
-            delay={10}
+          <AnimatedText
+            effect={textEffect}
+            delay={30}
+            duration={35}
+            color={palette.text.primary}
+            fontSize={42}
+            fontWeight={800}
             style={{
               ...Typography.headline,
-              fontSize: 40,
-              color: palette.text.primary,
-              marginTop: story.stat ? 16 : 0,
+              marginTop: story.stat ? 20 : 0,
             }}
           >
             {story.headline}
-          </OrchestratedSubtext>
+          </AnimatedText>
 
           {/* Subtext */}
           {story.subtext && (
-            <OrchestratedSubtext
-              delay={18}
+            <AnimatedText
+              effect="REVEAL_TEXT_BLUR_IN"
+              delay={45}
+              duration={25}
+              color={palette.text.secondary}
+              fontSize={22}
+              fontWeight={400}
               style={{
                 ...Typography.body,
-                fontSize: 22,
-                color: palette.text.secondary,
-                marginTop: 12,
+                marginTop: 16,
               }}
             >
               {story.subtext}
-            </OrchestratedSubtext>
+            </AnimatedText>
           )}
-        </OrchestratedAccent>
+        </div>
       </AbsoluteFill>
     </AbsoluteFill>
   )
@@ -691,15 +863,20 @@ const CTAScene: React.FC<{
   brand: Base44Plan['brand']
   palette: ColorPalette
   logoUrl?: string
-}> = ({ story, brand, palette, logoUrl }) => {
+  textEffect: string
+}> = ({ story, brand, palette, logoUrl, textEffect }) => {
   const frame = useCurrentFrame()
   const { fps } = useVideoConfig()
 
   // Pulsing button
-  const pulse = 1 + Math.sin((frame / fps) * Math.PI * 2) * 0.02
+  const pulse = 1 + Math.sin((frame / fps) * Math.PI * 3) * 0.03
+  const buttonOpacity = interpolate(frame, [15, 30], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  })
 
   return (
-    <AbsoluteFill style={{ padding: 80 }}>
+    <AbsoluteFill style={{ padding: 100 }}>
       {/* Centered CTA */}
       <AbsoluteFill style={{
         display: 'flex',
@@ -708,67 +885,79 @@ const CTAScene: React.FC<{
         justifyContent: 'center',
       }}>
         {/* Headline */}
-        <OrchestratedHeadline style={{
-          ...Typography.headline,
-          fontSize: 56,
-          color: palette.text.primary,
-          textAlign: 'center',
-          maxWidth: '80%',
-          textShadow: `0 4px 40px ${palette.primary}30`,
-        }}>
-          {story.headline}
-        </OrchestratedHeadline>
-
-        {/* CTA Button */}
-        <OrchestratedButton
+        <AnimatedText
+          effect={textEffect}
           delay={5}
+          duration={35}
+          color={palette.text.primary}
+          accentColor={palette.primary}
+          fontSize={56}
+          fontWeight={800}
           style={{
-            marginTop: 40,
-            padding: '24px 64px',
+            ...Typography.headline,
+            textAlign: 'center',
+            maxWidth: '80%',
+            textShadow: `0 4px 40px ${palette.primary}30`,
+          }}
+        >
+          {story.headline}
+        </AnimatedText>
+
+        {/* CTA Button with glow */}
+        <div
+          style={{
+            marginTop: 50,
+            padding: '26px 70px',
             backgroundColor: '#fff',
             color: palette.primary,
             ...Typography.subhead,
-            fontSize: 26,
-            borderRadius: 16,
+            fontSize: 28,
+            borderRadius: 20,
             boxShadow: `
               0 15px 50px rgba(0,0,0,0.3),
-              0 0 80px ${palette.primary}30,
+              0 0 100px ${palette.primary}40,
               inset 0 1px 0 rgba(255,255,255,0.5)
             `,
             transform: `scale(${pulse})`,
-            cursor: 'pointer',
+            opacity: buttonOpacity,
           }}
         >
           {story.buttonText}
-        </OrchestratedButton>
+        </div>
 
         {/* Reassurance text */}
         {story.subtext && (
-          <OrchestratedSubtext
-            delay={15}
+          <AnimatedText
+            effect="REVEAL_TEXT_BLUR_IN"
+            delay={35}
+            duration={25}
+            color={palette.text.muted}
+            fontSize={18}
+            fontWeight={400}
             style={{
               ...Typography.body,
-              fontSize: 18,
-              color: palette.text.muted,
-              marginTop: 20,
+              marginTop: 24,
             }}
           >
             {story.subtext}
-          </OrchestratedSubtext>
+          </AnimatedText>
         )}
       </AbsoluteFill>
 
       {/* Brand at bottom */}
-      <OrchestratedAccent
-        delay={20}
+      <div
         style={{
           position: 'absolute',
-          bottom: 60,
+          bottom: 80,
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
           alignItems: 'center',
           gap: 12,
+          opacity: interpolate(frame, [40, 55], [0, 0.8], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          }),
         }}
       >
         {logoUrl && (
@@ -781,8 +970,115 @@ const CTAScene: React.FC<{
         }}>
           {brand.name}
         </span>
-      </OrchestratedAccent>
+      </div>
     </AbsoluteFill>
+  )
+}
+
+// =============================================================================
+// HELPER COMPONENTS
+// =============================================================================
+
+const AccentLine: React.FC<{ color: string; delay: number }> = ({ color, delay }) => {
+  const frame = useCurrentFrame()
+  const progress = interpolate(frame - delay, [0, 25], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+    easing: Easing.out(Easing.cubic),
+  })
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        bottom: 150,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 120 * progress,
+        height: 4,
+        backgroundColor: color,
+        borderRadius: 2,
+        boxShadow: `0 0 20px ${color}`,
+      }}
+    />
+  )
+}
+
+const BulletPoint: React.FC<{
+  text: string
+  color: string
+  textColor: string
+  delay: number
+}> = ({ text, color, textColor, delay }) => {
+  const frame = useCurrentFrame()
+  const progress = interpolate(frame - delay, [0, 20], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+    easing: Easing.out(Easing.back(1.5)),
+  })
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        opacity: progress,
+        transform: `translateY(${(1 - progress) * 20}px)`,
+      }}
+    >
+      <div
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: '50%',
+          backgroundColor: color,
+          boxShadow: `0 0 15px ${color}`,
+        }}
+      />
+      <span style={{
+        ...Typography.accent,
+        fontSize: 20,
+        color: textColor,
+      }}>
+        {text}
+      </span>
+    </div>
+  )
+}
+
+const FeatureCard: React.FC<{
+  text: string
+  color: string
+  delay: number
+}> = ({ text, color, delay }) => {
+  const frame = useCurrentFrame()
+  const progress = interpolate(frame - delay, [0, 20], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+    easing: Easing.out(Easing.back(1.2)),
+  })
+
+  return (
+    <div
+      style={{
+        padding: '16px 28px',
+        background: 'rgba(255,255,255,0.08)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: 14,
+        border: '1px solid rgba(255,255,255,0.1)',
+        opacity: progress,
+        transform: `scale(${0.8 + progress * 0.2}) translateY(${(1 - progress) * 15}px)`,
+      }}
+    >
+      <span style={{
+        ...Typography.accent,
+        fontSize: 16,
+        color,
+      }}>
+        {text}
+      </span>
+    </div>
   )
 }
 

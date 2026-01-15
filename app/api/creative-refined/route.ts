@@ -1,19 +1,10 @@
 /**
  * CREATIVE REFINED API
  *
- * Enhanced video generation with vision feedback loop.
- * The AI "sees" the generated video and refines it automatically.
- *
- * Flow:
- * 1. Generate initial plan (like /api/creative)
- * 2. Render preview frames
- * 3. AI analyzes frames and critiques
- * 4. Apply corrections and re-render
- * 5. Repeat until quality threshold met (max 3 iterations)
- *
- * Progress tracking:
- * - Returns jobId immediately
- * - Client can subscribe to /api/progress/[jobId] for real-time updates
+ * Enhanced video generation with:
+ * - Marketing brain with expert knowledge
+ * - Smart palette and effect selection
+ * - Real-time progress tracking
  */
 
 import { NextResponse } from 'next/server'
@@ -21,108 +12,43 @@ import Anthropic from '@anthropic-ai/sdk'
 import {
   TEMPLATE_ID,
   type Base44Plan,
-  type Base44Brand,
-  type Base44Story,
-  validateBase44Plan,
   castImagesToRoles,
 } from '@/lib/templates/base44'
-import {
-  analyzeVideoFrames,
-  applyCorrections,
-  type SceneFrame,
-  type Critique
-} from '@/lib/services/visionFeedback'
-import { captureSceneFrames } from '@/lib/services/frameCapture'
 import { progressEmitter, createProgressHelper } from '@/lib/services/progressTracker'
+import { getMarketingSystemPrompt } from '@/lib/prompts/marketingBrain'
 
 const anthropic = new Anthropic()
 
 // =============================================================================
-// INITIAL PLAN GENERATION (same as /api/creative)
+// VISION FEEDBACK TYPES (Stubs - feature disabled)
 // =============================================================================
 
-const SYSTEM_PROMPT = `Tu es un DIRECTEUR CRÉATIF d'agence de marketing vidéo haut de gamme.
-Génère un plan de vidéo marketing en JSON pour le template BASE44_PREMIUM.
-
-Structure requise:
-{
-  "templateId": "BASE44_PREMIUM",
-  "brand": { "name": "...", "accentColor": "#..." },
-  "story": {
-    "hook": { "headline": "...", "subtext": "..." },
-    "problem": { "headline": "...", "subtext": "...", "bullets": ["..."] },
-    "solution": { "headline": "...", "subtext": "..." },
-    "demo": { "headline": "...", "featurePoints": ["..."] },
-    "proof": { "stat": "...", "headline": "...", "subtext": "..." },
-    "cta": { "headline": "...", "buttonText": "...", "subtext": "..." }
-  },
-  "settings": {
-    "intensity": "medium",
-    "palette": "...",
-    "includeGrain": true,
-    "duration": "standard",
-    "visualStyle": { "preset": "modern" },
-    "effects": {
-      "preset": "modern",
-      "overrides": { ... }
-    }
-  }
+interface Critique {
+  overallScore: number
+  isAcceptable: boolean
+  sceneIssues: string[]
+  globalIssues: string[]
+  corrections: Record<string, unknown>
 }
 
-## CHOIX DE LA PALETTE DE COULEURS (IMPORTANT!)
+// Stub functions for disabled vision feedback loop
+async function captureSceneFrames(_plan: Base44Plan): Promise<string[]> {
+  return []
+}
 
-Choisis la palette selon le SECTEUR et l'ÉMOTION recherchée:
+async function analyzeVideoFrames(_frames: string[], _plan: Base44Plan, _iteration: number): Promise<Critique> {
+  return { overallScore: 8, isAcceptable: true, sceneIssues: [], globalIssues: [], corrections: {} }
+}
 
-- "midnight" → Tech, SaaS, startups digitales. Fond bleu nuit professionnel.
-- "sunrise" → Énergie, fitness, bien-être, santé. Tons chauds orangés.
-- "ocean" → Finance, assurance, corporate, sérieux. Bleu océan calme.
-- "forest" → Écologie, BTP, construction, immobilier, nature. Vert forêt terreux.
-- "neon" → Gaming, divertissement, jeune public, créatif. Néon vibrant.
-- "clean" → Médical, santé, cliniques, pureté. Blanc immaculé.
+function applyCorrections(plan: Base44Plan, _corrections: Record<string, unknown>): Base44Plan {
+  return plan
+}
 
-IMPORTANT: Adapte la palette au secteur d'activité mentionné!
-- BTP/Construction → "forest" (tons terreux, nature, solidité)
-- Finance/Banque → "ocean" (confiance, stabilité)
-- Tech/SaaS → "midnight" (moderne, pro)
-- Santé/Médical → "clean" (pureté, confiance)
-- Sport/Fitness → "sunrise" (énergie, dynamisme)
+// =============================================================================
+// SYSTEM PROMPT - Uses Marketing Brain
+// =============================================================================
 
-## CHOIX DE LA COULEUR D'ACCENT (accentColor)
-
-La couleur d'accent doit correspondre au secteur:
-- BTP/Construction: "#F97316" (orange chantier) ou "#84CC16" (vert nature)
-- Finance: "#3B82F6" (bleu confiance) ou "#14B8A6" (teal)
-- Tech: "#6366F1" (indigo) ou "#8B5CF6" (violet)
-- Santé: "#06B6D4" (cyan) ou "#10B981" (vert émeraude)
-- Sport: "#EF4444" (rouge énergie) ou "#F59E0B" (orange)
-
-## CHOIX DES EFFETS VISUELS
-
-Choisis UN preset d'effets selon la personnalité de la marque:
-
-- "maxImpact" → Startups tech/gaming, IA, crypto. Explosions de particules, glitch, haute énergie.
-- "professional" → B2B SaaS sérieux, fintech, legal, BTP. Device mockups, wipes propres.
-- "modern" → La plupart des SaaS. 3D flips, gradient sweeps, équilibré. (DÉFAUT)
-- "playful" → Apps grand public, créatif, éducation. Liquid morphs, rebonds, particules.
-- "luxurious" → Produits premium, design, immobilier haut de gamme. Parallax zoom, blur focus, light leaks.
-- "minimal" → Dev tools, productivité. Mask wipes, blur subtil, transitions propres.
-
-Tu peux OVERRIDE certains effets par scène si nécessaire:
-- Hook: Vise l'IMPACT MAXIMUM (ex: REVEAL_PARTICLE_EXPLOSION pour images)
-- CTA: Ajoute de l'EMPHASE (ex: EMPHASIS_GLOW_PULSE sur le bouton)
-
-Effets disponibles pour overrides:
-- Image reveals: REVEAL_3D_FLIP, REVEAL_PARTICLE_EXPLOSION, REVEAL_LIQUID_MORPH, REVEAL_DEVICE_MOCKUP, REVEAL_GLITCH
-- Text reveals: REVEAL_TEXT_GLITCH, REVEAL_TEXT_LETTER_BOUNCE, REVEAL_TEXT_GRADIENT_SWEEP
-- Transitions: TRANSITION_ZOOM_THROUGH, TRANSITION_GLITCH, TRANSITION_PARTICLE_DISSOLVE, TRANSITION_LIGHT_LEAK
-
-Règles:
-- Headlines: MAX 6-8 mots, percutants
-- Contenu en FRANÇAIS si prompt en français
-- TOUJOURS inclure "effects" avec au minimum le preset
-- TOUJOURS adapter la palette au secteur d'activité
-- Si le client fournit des images, utiliser un preset avec de bons image reveals
-- Output JSON uniquement`
+const SYSTEM_PROMPT = getMarketingSystemPrompt()
 
 // =============================================================================
 // REQUEST HANDLER
@@ -233,7 +159,7 @@ export async function POST(request: Request) {
         includeGrain: true,
         duration: parsed.settings?.duration || 'standard',
         visualStyle: parsed.settings?.visualStyle || { preset: 'modern' },
-        // NEW: Include effects from AI response or use smart defaults
+        // Include effects from AI response or use smart defaults
         effects: parsed.settings?.effects || {
           preset: defaultEffectPreset,
           // Auto-enhance hook and CTA if images provided
@@ -250,6 +176,15 @@ export async function POST(request: Request) {
             },
           } : undefined,
         },
+      },
+      // Include scene design from AI or use defaults
+      sceneDesign: parsed.sceneDesign || {
+        hook: { style: 'dynamic', intensity: 'high' },
+        problem: { style: 'geometric', intensity: 'medium' },
+        solution: { style: 'dynamic', intensity: 'high' },
+        demo: { style: 'tech', intensity: 'medium' },
+        proof: { style: 'minimal', intensity: 'low' },
+        cta: { style: 'dynamic', intensity: 'high' },
       },
       providedImages: body.providedImages,
     }
