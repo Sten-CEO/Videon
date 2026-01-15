@@ -10,7 +10,7 @@ export default async function DashboardLayout({
   const user = await getUser()
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#FAFAF9]">
       {/* Sidebar */}
       <Sidebar
         user={{
@@ -19,9 +19,11 @@ export default async function DashboardLayout({
         }}
       />
 
-      {/* Main content */}
-      <main className="ml-64 min-h-screen p-8">
-        {children}
+      {/* Main content - adjusts based on sidebar width */}
+      <main className="ml-[260px] min-h-screen transition-all duration-300">
+        <div className="p-8">
+          {children}
+        </div>
       </main>
     </div>
   )

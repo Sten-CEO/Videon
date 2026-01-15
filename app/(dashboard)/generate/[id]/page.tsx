@@ -29,16 +29,16 @@ function generateMessageId(role: string): string {
 
 // Progress stages messages
 const STAGE_MESSAGES: Record<string, string> = {
-  initializing: 'Initialisation...',
-  analyzing: 'Analyse de votre demande...',
-  generating_plan: 'Création du plan créatif...',
-  plan_complete: 'Plan généré!',
-  rendering_frames: 'Rendu des scènes...',
-  vision_analysis: 'Analyse qualité par IA...',
-  applying_fixes: 'Optimisation en cours...',
-  finalizing: 'Finalisation...',
-  complete: 'Terminé!',
-  error: 'Erreur',
+  initializing: 'Initializing...',
+  analyzing: 'Analyzing your request...',
+  generating_plan: 'Creating creative plan...',
+  plan_complete: 'Plan generated!',
+  rendering_frames: 'Rendering scenes...',
+  vision_analysis: 'AI quality analysis...',
+  applying_fixes: 'Optimizing...',
+  finalizing: 'Finalizing...',
+  complete: 'Complete!',
+  error: 'Error',
 }
 
 // Main content component
@@ -147,16 +147,16 @@ function ConversationContent() {
     setPlan(null)
     setError(null)
     setProgress(0)
-    setProgressMessage('Démarrage...')
+    setProgressMessage('Starting...')
     setQualityScore(null)
 
     addMessage('user', prompt)
 
     const images = imagesRef.current
     if (images.length > 0) {
-      addMessage('assistant', `${images.length} image(s) détectée(s). Création de votre vidéo avec effets optimisés...`)
+      addMessage('assistant', `${images.length} image(s) detected. Creating your video with optimized effects...`)
     } else {
-      addMessage('assistant', 'Création de votre vidéo marketing avec effets cinématiques...')
+      addMessage('assistant', 'Creating your marketing video with cinematic effects...')
     }
 
     try {
@@ -204,19 +204,19 @@ function ConversationContent() {
       setProgress(100)
 
       const refinementInfo = data.refinement?.enabled
-        ? `\n**Qualité:** ${data.refinement.finalScore}/10 (${data.refinement.iterations} itération${data.refinement.iterations > 1 ? 's' : ''})`
+        ? `\n**Quality:** ${data.refinement.finalScore}/10 (${data.refinement.iterations} iteration${data.refinement.iterations > 1 ? 's' : ''})`
         : ''
 
       const effectsInfo = generatedPlan.settings.effects
-        ? `\n**Style effets:** ${generatedPlan.settings.effects.preset}`
+        ? `\n**Effects style:** ${generatedPlan.settings.effects.preset}`
         : ''
 
-      addMessage('assistant', `✅ **Vidéo créée avec succès!**
+      addMessage('assistant', `✅ **Video created successfully!**
 
-**Produit:** ${generatedPlan.brand.name}
+**Product:** ${generatedPlan.brand.name}
 **Palette:** ${generatedPlan.settings.palette}${effectsInfo}${refinementInfo}
 
-**6 scènes générées:**
+**6 scenes generated:**
 1. **HOOK:** ${generatedPlan.story.hook.headline}
 2. **PROBLEM:** ${generatedPlan.story.problem.headline}
 3. **SOLUTION:** ${generatedPlan.story.solution.headline}
@@ -228,7 +228,7 @@ function ConversationContent() {
       console.error('[Generate] Error:', err)
       setPhase('error')
       setError(err instanceof Error ? err.message : 'An error occurred')
-      addMessage('assistant', `❌ Erreur: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      addMessage('assistant', `❌ Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
 
       // Close progress subscription on error
       if (eventSourceRef.current) {
@@ -254,19 +254,21 @@ function ConversationContent() {
   return (
     <div className="h-[calc(100vh-4rem)] flex gap-6 -m-8 p-8">
       {/* Chat Section */}
-      <div className="flex-1 flex flex-col bg-background-secondary rounded-2xl border border-border overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white rounded-2xl border border-[#E4E4E7] shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-[#E4E4E7] bg-gradient-to-r from-[#F0FDFA] to-[#FFF7ED]">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-semibold">Génération Vidéo</h2>
-              <p className="text-sm text-foreground-muted">
-                {isGenerating ? progressMessage || 'Génération en cours...' : 'Vidéos marketing professionnelles'}
+              <h2 className="font-semibold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
+                Video Generation
+              </h2>
+              <p className="text-sm text-[#52525B]">
+                {isGenerating ? progressMessage || 'Generating...' : 'Professional marketing videos'}
               </p>
             </div>
             {qualityScore !== null && (
-              <div className="px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg text-sm font-medium">
-                Score qualité: {qualityScore}/10
+              <div className="px-3 py-1.5 bg-[#D1FAE5] text-[#059669] rounded-lg text-sm font-medium">
+                Quality score: {qualityScore}/10
               </div>
             )}
           </div>
@@ -274,13 +276,13 @@ function ConversationContent() {
           {/* Progress bar */}
           {isGenerating && (
             <div className="mt-3">
-              <div className="flex justify-between text-xs text-foreground-muted mb-1">
+              <div className="flex justify-between text-xs text-[#52525B] mb-1">
                 <span>{progressMessage}</span>
                 <span>{Math.round(progress)}%</span>
               </div>
-              <div className="h-2 bg-background-tertiary rounded-full overflow-hidden">
+              <div className="h-2 bg-white rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300 ease-out"
+                  className="h-full bg-gradient-to-r from-[#0D9488] to-[#14B8A6] transition-all duration-300 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -289,7 +291,7 @@ function ConversationContent() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#FAFAF9]">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -298,8 +300,8 @@ function ConversationContent() {
               <div
                 className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-medium ${
                   message.role === 'user'
-                    ? 'bg-primary/20 text-primary'
-                    : 'bg-accent/20 text-accent'
+                    ? 'bg-gradient-to-br from-[#0D9488] to-[#14B8A6] text-white'
+                    : 'bg-gradient-to-br from-[#F97316] to-[#FB923C] text-white'
                 }`}
               >
                 {message.role === 'user' ? 'U' : 'AI'}
@@ -307,8 +309,8 @@ function ConversationContent() {
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   message.role === 'user'
-                    ? 'bg-primary text-white rounded-tr-none'
-                    : 'bg-background-tertiary rounded-tl-none'
+                    ? 'bg-gradient-to-r from-[#0D9488] to-[#14B8A6] text-white rounded-tr-sm'
+                    : 'bg-white border border-[#E4E4E7] text-[#18181B] rounded-tl-sm shadow-sm'
                 }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -318,17 +320,17 @@ function ConversationContent() {
 
           {isGenerating && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-sm font-medium text-accent">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F97316] to-[#FB923C] flex items-center justify-center text-sm font-medium text-white">
                 AI
               </div>
-              <div className="bg-background-tertiary rounded-2xl rounded-tl-none px-4 py-3">
+              <div className="bg-white border border-[#E4E4E7] rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-foreground-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-foreground-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 bg-foreground-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className="w-2 h-2 bg-[#0D9488] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-[#0D9488] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 bg-[#0D9488] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
-                  <span className="text-xs text-foreground-muted">{progressMessage}</span>
+                  <span className="text-xs text-[#52525B]">{progressMessage}</span>
                 </div>
               </div>
             </div>
@@ -338,16 +340,16 @@ function ConversationContent() {
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-[#E4E4E7] bg-white">
           <div className="flex gap-3">
             <Textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Décrivez votre produit et votre vidéo marketing idéale..."
+              placeholder="Describe your product and ideal marketing video..."
               disabled={isGenerating}
               rows={1}
-              className="resize-none"
+              className="resize-none bg-[#FAFAF9] border-[#E4E4E7] focus:border-[#0D9488] focus:ring-[#0D9488]"
             />
             <Button
               variant="primary"
@@ -368,7 +370,7 @@ function ConversationContent() {
         {plan ? (
           <VideoPreviewPlayer plan={plan} />
         ) : (
-          <div className="relative rounded-2xl overflow-hidden bg-background-tertiary border border-border" style={{ aspectRatio: '9/16', maxHeight: '600px', minHeight: '400px' }}>
+          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#F0FDFA] to-[#FFF7ED] border border-[#E4E4E7]" style={{ aspectRatio: '9/16', maxHeight: '600px', minHeight: '400px' }}>
             <div className="absolute inset-0 flex items-center justify-center">
               {isGenerating ? (
                 <div className="flex flex-col items-center gap-4">
@@ -381,9 +383,8 @@ function ConversationContent() {
                         cy="50"
                         r="45"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#E4E4E7"
                         strokeWidth="8"
-                        className="text-background-tertiary"
                       />
                       {/* Progress circle */}
                       <circle
@@ -399,29 +400,31 @@ function ConversationContent() {
                       />
                       <defs>
                         <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#6366F1" />
-                          <stop offset="100%" stopColor="#A855F7" />
+                          <stop offset="0%" stopColor="#0D9488" />
+                          <stop offset="100%" stopColor="#14B8A6" />
                         </linearGradient>
                       </defs>
                     </svg>
                     {/* Percentage text */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-foreground">{Math.round(progress)}%</span>
+                      <span className="text-2xl font-bold text-[#18181B]">{Math.round(progress)}%</span>
                     </div>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-medium text-foreground">{progressMessage}</p>
-                    <p className="text-xs text-foreground-muted mt-1">
-                      {phase === 'refining' ? 'Optimisation IA en cours...' : 'Génération en cours...'}
+                    <p className="text-sm font-medium text-[#18181B]">{progressMessage}</p>
+                    <p className="text-xs text-[#52525B] mt-1">
+                      {phase === 'refining' ? 'AI optimization in progress...' : 'Generating...'}
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="text-foreground-subtle flex flex-col items-center gap-2">
-                  <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  <span className="text-sm">Décrivez votre vidéo pour commencer</span>
+                <div className="text-[#A1A1AA] flex flex-col items-center gap-2">
+                  <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center">
+                    <svg className="w-8 h-8 text-[#0D9488]" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                  <span className="text-sm text-[#52525B]">Describe your video to start</span>
                 </div>
               )}
             </div>
@@ -430,43 +433,45 @@ function ConversationContent() {
 
         {/* Error display */}
         {phase === 'error' && error && (
-          <Card padding="md" className="border-red-500/50 bg-red-500/10">
-            <h3 className="font-semibold text-red-500 mb-2">Erreur</h3>
-            <p className="text-sm text-foreground-muted">{error}</p>
+          <Card variant="elevated" padding="md" className="border-[#DC2626]/30 bg-[#FEE2E2]">
+            <h3 className="font-semibold text-[#DC2626] mb-2">Error</h3>
+            <p className="text-sm text-[#52525B]">{error}</p>
           </Card>
         )}
 
         {/* Plan details */}
         {plan && (
-          <Card padding="md">
-            <h3 className="font-semibold mb-3">Détails du plan</h3>
+          <Card variant="elevated" padding="md">
+            <h3 className="font-semibold text-[#18181B] mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              Plan Details
+            </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-foreground-muted">Marque</span>
-                <span>{plan.brand.name}</span>
+                <span className="text-[#52525B]">Brand</span>
+                <span className="text-[#18181B] font-medium">{plan.brand.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-foreground-muted">Palette</span>
-                <span className="capitalize">{plan.settings.palette}</span>
+                <span className="text-[#52525B]">Palette</span>
+                <span className="text-[#18181B] font-medium capitalize">{plan.settings.palette}</span>
               </div>
               {plan.settings.effects && (
                 <div className="flex justify-between">
-                  <span className="text-foreground-muted">Style effets</span>
-                  <span className="capitalize">{plan.settings.effects.preset}</span>
+                  <span className="text-[#52525B]">Effects style</span>
+                  <span className="text-[#18181B] font-medium capitalize">{plan.settings.effects.preset}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-foreground-muted">Durée</span>
-                <span className="capitalize">{plan.settings.duration}</span>
+                <span className="text-[#52525B]">Duration</span>
+                <span className="text-[#18181B] font-medium capitalize">{plan.settings.duration}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-foreground-muted">Images</span>
-                <span>{plan.casting.images.length}</span>
+                <span className="text-[#52525B]">Images</span>
+                <span className="text-[#18181B] font-medium">{plan.casting.images.length}</span>
               </div>
               {qualityScore !== null && (
                 <div className="flex justify-between">
-                  <span className="text-foreground-muted">Score qualité</span>
-                  <span className="text-green-400 font-medium">{qualityScore}/10</span>
+                  <span className="text-[#52525B]">Quality score</span>
+                  <span className="text-[#059669] font-semibold">{qualityScore}/10</span>
                 </div>
               )}
             </div>
@@ -475,15 +480,17 @@ function ConversationContent() {
 
         {/* Story scenes */}
         {plan && (
-          <Card padding="md">
-            <h3 className="font-semibold mb-3">Scènes</h3>
+          <Card variant="elevated" padding="md">
+            <h3 className="font-semibold text-[#18181B] mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              Scenes
+            </h3>
             <div className="space-y-2">
               {Object.entries(plan.story).map(([key, scene]) => (
-                <div key={key} className="p-2 rounded bg-background-tertiary">
-                  <div className="text-xs font-semibold text-indigo-400 uppercase mb-1">{key}</div>
-                  <div className="text-sm">{scene.headline}</div>
+                <div key={key} className="p-3 rounded-xl bg-[#FAFAF9]">
+                  <div className="text-xs font-semibold text-[#0D9488] uppercase mb-1">{key}</div>
+                  <div className="text-sm text-[#18181B] font-medium">{scene.headline}</div>
                   {scene.subtext && (
-                    <div className="text-xs text-foreground-muted mt-1">{scene.subtext}</div>
+                    <div className="text-xs text-[#52525B] mt-1">{scene.subtext}</div>
                   )}
                 </div>
               ))}
@@ -499,10 +506,10 @@ function ConversationContent() {
 function ConversationLoading() {
   return (
     <div className="h-[calc(100vh-4rem)] flex gap-6 -m-8 p-8">
-      <div className="flex-1 bg-background-secondary rounded-2xl border border-border animate-pulse" />
+      <div className="flex-1 bg-white rounded-2xl border border-[#E4E4E7] animate-pulse" />
       <div className="w-[480px] space-y-4">
-        <div className="aspect-[9/16] bg-background-secondary rounded-2xl animate-pulse" />
-        <div className="h-32 bg-background-secondary rounded-2xl animate-pulse" />
+        <div className="aspect-[9/16] bg-gradient-to-br from-[#F0FDFA] to-[#FFF7ED] rounded-2xl animate-pulse" />
+        <div className="h-32 bg-white rounded-2xl border border-[#E4E4E7] animate-pulse" />
       </div>
     </div>
   )

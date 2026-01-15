@@ -1,7 +1,5 @@
-'use client'
-
+import Link from 'next/link'
 import { Button } from '@/components/ui'
-import { signOut } from '@/lib/actions/auth'
 
 interface DashboardHeaderProps {
   title: string
@@ -10,6 +8,7 @@ interface DashboardHeaderProps {
     label: string
     href?: string
     onClick?: () => void
+    icon?: React.ReactNode
   }
 }
 
@@ -17,34 +16,29 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
   return (
     <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        <h1 className="text-2xl font-bold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
+          {title}
+        </h1>
         {description && (
-          <p className="text-foreground-muted mt-1">{description}</p>
+          <p className="text-[#52525B] mt-1">{description}</p>
         )}
       </div>
 
-      <div className="flex items-center gap-3">
-        {action && (
-          action.href ? (
-            <a href={action.href}>
-              <Button variant="primary" size="sm">
-                {action.label}
-              </Button>
-            </a>
-          ) : (
-            <Button variant="primary" size="sm" onClick={action.onClick}>
+      {action && (
+        action.href ? (
+          <Link href={action.href}>
+            <Button variant="primary" size="lg">
+              {action.icon}
               {action.label}
             </Button>
-          )
-        )}
-
-        {/* Sign out button */}
-        <form action={signOut}>
-          <Button type="submit" variant="ghost" size="sm">
-            Sign out
+          </Link>
+        ) : (
+          <Button variant="primary" size="lg" onClick={action.onClick}>
+            {action.icon}
+            {action.label}
           </Button>
-        </form>
-      </div>
+        )
+      )}
     </header>
   )
 }
