@@ -211,6 +211,55 @@ export const Base44PremiumTemplate: React.FC<Base44PremiumTemplateProps> = ({ pl
 // SCENE COMPONENTS
 // =============================================================================
 
+// ----- BRAND LOCKUP (Logo + Name together) -----
+const BrandLockup: React.FC<{
+  logoUrl?: string
+  brandName: string
+  palette: ColorPalette
+  opacity: number
+  size?: 'small' | 'medium' | 'large'
+}> = ({ logoUrl, brandName, palette, opacity, size = 'medium' }) => {
+  const sizes = {
+    small: { logo: 32, text: 18, gap: 10 },
+    medium: { logo: 48, text: 24, gap: 14 },
+    large: { logo: 64, text: 32, gap: 18 },
+  }
+  const s = sizes[size]
+
+  return (
+    <div
+      style={{
+        opacity,
+        display: 'flex',
+        alignItems: 'center',
+        gap: s.gap,
+      }}
+    >
+      {logoUrl && (
+        <Img
+          src={logoUrl}
+          style={{
+            height: s.logo,
+            width: 'auto',
+            objectFit: 'contain',
+          }}
+        />
+      )}
+      <div
+        style={{
+          fontFamily: 'Inter, system-ui, sans-serif',
+          fontSize: s.text,
+          fontWeight: 700,
+          color: palette.text.primary,
+          letterSpacing: '-0.02em',
+        }}
+      >
+        {brandName}
+      </div>
+    </div>
+  )
+}
+
 // ----- HOOK SCENE -----
 const HookScene: React.FC<{
   story: Base44Plan['story']['hook']
@@ -245,18 +294,16 @@ const HookScene: React.FC<{
         padding: 60,
       }}
     >
-      {/* Logo */}
-      {logoUrl && (
-        <div style={{ position: 'absolute', top: 80, opacity: logoOpacity }}>
-          <Img
-            src={logoUrl}
-            style={{
-              height: 60,
-              objectFit: 'contain',
-            }}
-          />
-        </div>
-      )}
+      {/* Brand Lockup (Logo + Name) at top */}
+      <div style={{ position: 'absolute', top: 80 }}>
+        <BrandLockup
+          logoUrl={logoUrl}
+          brandName={brand.name}
+          palette={palette}
+          opacity={logoOpacity}
+          size="medium"
+        />
+      </div>
 
       {/* Headline */}
       <div
@@ -773,25 +820,16 @@ const CTAScene: React.FC<{
         </div>
       )}
 
-      {/* Logo */}
-      {logoUrl && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 80,
-            opacity: logoOpacity,
-          }}
-        >
-          <Img
-            src={logoUrl}
-            style={{
-              height: 40,
-              objectFit: 'contain',
-              opacity: 0.8,
-            }}
-          />
-        </div>
-      )}
+      {/* Brand Lockup (Logo + Name) at bottom */}
+      <div style={{ position: 'absolute', bottom: 80 }}>
+        <BrandLockup
+          logoUrl={logoUrl}
+          brandName={brand.name}
+          palette={palette}
+          opacity={logoOpacity}
+          size="small"
+        />
+      </div>
     </AbsoluteFill>
   )
 }
