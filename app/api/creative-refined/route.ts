@@ -58,7 +58,7 @@ Structure requise:
   },
   "settings": {
     "intensity": "medium",
-    "palette": "midnight",
+    "palette": "...",
     "includeGrain": true,
     "duration": "standard",
     "visualStyle": { "preset": "modern" },
@@ -69,15 +69,42 @@ Structure requise:
   }
 }
 
+## CHOIX DE LA PALETTE DE COULEURS (IMPORTANT!)
+
+Choisis la palette selon le SECTEUR et l'ÉMOTION recherchée:
+
+- "midnight" → Tech, SaaS, startups digitales. Fond bleu nuit professionnel.
+- "sunrise" → Énergie, fitness, bien-être, santé. Tons chauds orangés.
+- "ocean" → Finance, assurance, corporate, sérieux. Bleu océan calme.
+- "forest" → Écologie, BTP, construction, immobilier, nature. Vert forêt terreux.
+- "neon" → Gaming, divertissement, jeune public, créatif. Néon vibrant.
+- "clean" → Médical, santé, cliniques, pureté. Blanc immaculé.
+
+IMPORTANT: Adapte la palette au secteur d'activité mentionné!
+- BTP/Construction → "forest" (tons terreux, nature, solidité)
+- Finance/Banque → "ocean" (confiance, stabilité)
+- Tech/SaaS → "midnight" (moderne, pro)
+- Santé/Médical → "clean" (pureté, confiance)
+- Sport/Fitness → "sunrise" (énergie, dynamisme)
+
+## CHOIX DE LA COULEUR D'ACCENT (accentColor)
+
+La couleur d'accent doit correspondre au secteur:
+- BTP/Construction: "#F97316" (orange chantier) ou "#84CC16" (vert nature)
+- Finance: "#3B82F6" (bleu confiance) ou "#14B8A6" (teal)
+- Tech: "#6366F1" (indigo) ou "#8B5CF6" (violet)
+- Santé: "#06B6D4" (cyan) ou "#10B981" (vert émeraude)
+- Sport: "#EF4444" (rouge énergie) ou "#F59E0B" (orange)
+
 ## CHOIX DES EFFETS VISUELS
 
 Choisis UN preset d'effets selon la personnalité de la marque:
 
 - "maxImpact" → Startups tech/gaming, IA, crypto. Explosions de particules, glitch, haute énergie.
-- "professional" → B2B SaaS sérieux, fintech, legal. Device mockups, wipes propres.
+- "professional" → B2B SaaS sérieux, fintech, legal, BTP. Device mockups, wipes propres.
 - "modern" → La plupart des SaaS. 3D flips, gradient sweeps, équilibré. (DÉFAUT)
 - "playful" → Apps grand public, créatif, éducation. Liquid morphs, rebonds, particules.
-- "luxurious" → Produits premium, design. Parallax zoom, blur focus, light leaks.
+- "luxurious" → Produits premium, design, immobilier haut de gamme. Parallax zoom, blur focus, light leaks.
 - "minimal" → Dev tools, productivité. Mask wipes, blur subtil, transitions propres.
 
 Tu peux OVERRIDE certains effets par scène si nécessaire:
@@ -93,6 +120,7 @@ Règles:
 - Headlines: MAX 6-8 mots, percutants
 - Contenu en FRANÇAIS si prompt en français
 - TOUJOURS inclure "effects" avec au minimum le preset
+- TOUJOURS adapter la palette au secteur d'activité
 - Si le client fournit des images, utiliser un preset avec de bons image reveals
 - Output JSON uniquement`
 
@@ -236,7 +264,11 @@ export async function POST(request: Request) {
     const critiques: Critique[] = []
     let finalScore = 7
 
-    if (enableRefinement) {
+    // NOTE: Vision refinement is disabled temporarily - requires complex Remotion setup
+    // The AI already generates optimized plans based on the enhanced prompt
+    const visionRefinementEnabled = false
+
+    if (enableRefinement && visionRefinementEnabled) {
       console.log('[CREATIVE-REFINED] Starting vision refinement loop...')
 
       for (let iteration = 1; iteration <= maxIterations; iteration++) {
