@@ -13,7 +13,7 @@
 import { NextResponse } from 'next/server'
 import { CreativePipeline, type PipelineInput } from '@/lib/creative/brains'
 import { runVisualFeedbackLoop, type FeedbackLoopConfig } from '@/lib/visual-feedback'
-import { validateVideoSpec, type VideoSpec, type ImageIntent } from '@/lib/creative'
+import { validateVideoSpec, type VideoSpec, type ImageIntent, type SceneSpec } from '@/lib/creative'
 
 // =============================================================================
 // TYPES
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
         : 'http://localhost:3000'
 
       feedbackResults = await runVisualFeedbackLoop(
-        pipelineOutput.videoSpec.scenes,
+        pipelineOutput.videoSpec.scenes as unknown as SceneSpec[],
         body.providedImages,
         {
           maxIterations: body.feedbackConfig?.maxIterations ?? 2,
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
       )
 
       if (feedbackResults.success) {
-        finalScenes = feedbackResults.improvedScenes
+        finalScenes = feedbackResults.improvedScenes as unknown as typeof finalScenes
         console.log(`[Premium Creative] Feedback loop complete`)
         console.log(`[Premium Creative] Scenes improved: ${feedbackResults.scenesImproved}`)
         console.log(`[Premium Creative] Scenes fallback: ${feedbackResults.scenesFallback}`)
@@ -172,21 +172,22 @@ export async function POST(request: Request) {
 
     const videoSpec: VideoSpec = {
       blueprint: {
-        designPack: artDirection.designPack,
         conceptLock: marketingStrategy.corePromise,
+        conceptValidation: 'Auto-generated from marketing strategy',
+        creativeAngle: artDirection.designPack,
+        aggressiveness: 'medium' as const,
         emotionArc: marketingStrategy.emotionalArc.join(' → '),
-        visualIdentity: `${artDirection.designPack} - ${artDirection.palette.primary} accent`,
-        accentColor: artDirection.palette.accent,
+        differentiator: marketingStrategy.differentiator,
       },
       concept: marketingStrategy.corePromise,
       strategy: {
-        corePromise: marketingStrategy.corePromise,
-        hookIntent: marketingStrategy.hookIntent,
-        emotionalArc: marketingStrategy.emotionalArc,
-        differentiator: marketingStrategy.differentiator,
+        audienceState: marketingStrategy.hookIntent,
+        coreProblem: marketingStrategy.corePromise,
+        mainTension: marketingStrategy.differentiator,
+        conversionTrigger: marketingStrategy.hookIntent,
       },
       providedImages: body.providedImages,
-      scenes: finalScenes,
+      scenes: finalScenes as unknown as SceneSpec[],
       fps: pipelineOutput.videoSpec.fps,
       width: pipelineOutput.videoSpec.width,
       height: pipelineOutput.videoSpec.height,

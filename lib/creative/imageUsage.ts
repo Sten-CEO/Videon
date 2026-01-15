@@ -60,7 +60,7 @@ export interface ImageUsagePreset {
       type: 'fade' | 'slide_up' | 'slide_down' | 'slide_left' | 'slide_right' | 'scale' | 'pop' | 'blur' | 'none'
       duration: number      // Frames
       delay: number         // Frames before entry starts
-      easing: 'linear' | 'ease_out' | 'ease_in_out' | 'spring' | 'bounce'
+      easing: 'linear' | 'ease_out' | 'ease_in' | 'ease_in_out' | 'spring' | 'bounce'
     }
     hold: {
       type: 'static' | 'float' | 'zoom_slow' | 'pan' | 'pulse' | 'parallax'

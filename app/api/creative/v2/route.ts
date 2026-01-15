@@ -11,7 +11,7 @@
 
 import { NextResponse } from 'next/server'
 import { CreativePipeline, type PipelineInput, type PipelineError } from '@/lib/creative/brains'
-import { validateVideoSpec, type VideoSpec, type ImageIntent } from '@/lib/creative'
+import { validateVideoSpec, type VideoSpec, type ImageIntent, type SceneSpec } from '@/lib/creative'
 
 // =============================================================================
 // TYPES
@@ -113,24 +113,25 @@ function convertToVideoSpec(
   return {
     // Blueprint from pipeline
     blueprint: {
-      designPack: artDirection.designPack,
       conceptLock: marketingStrategy.corePromise,
+      conceptValidation: 'Auto-generated from marketing strategy',
+      creativeAngle: artDirection.designPack,
+      aggressiveness: 'medium' as const,
       emotionArc: marketingStrategy.emotionalArc.join(' → '),
-      visualIdentity: `${artDirection.designPack} - ${artDirection.palette.primary} accent`,
-      accentColor: artDirection.palette.accent,
+      differentiator: marketingStrategy.differentiator,
     },
     concept: marketingStrategy.corePromise,
     // Strategy from marketing brain
     strategy: {
-      corePromise: marketingStrategy.corePromise,
-      hookIntent: marketingStrategy.hookIntent,
-      emotionalArc: marketingStrategy.emotionalArc,
-      differentiator: marketingStrategy.differentiator,
+      audienceState: marketingStrategy.hookIntent,
+      coreProblem: marketingStrategy.corePromise,
+      mainTension: marketingStrategy.differentiator,
+      conversionTrigger: marketingStrategy.hookIntent,
     },
     // User-provided images
     providedImages,
-    // Scenes from executor
-    scenes: videoSpec.scenes,
+    // Scenes from executor (cast to schema type)
+    scenes: videoSpec.scenes as unknown as SceneSpec[],
     // Video settings
     fps: videoSpec.fps,
     width: videoSpec.width,

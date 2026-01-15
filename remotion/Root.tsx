@@ -12,6 +12,8 @@ import { Composition } from 'remotion'
 import { CreativeVideo, CREATIVE_VIDEO_CONFIG } from './CreativeVideo'
 import { TruthTestVideo, TRUTH_TEST_CONFIG } from './TruthTestVideo'
 import { BeatDrivenDemo, BEAT_DRIVEN_DEMO_CONFIG } from './BeatDrivenDemo'
+import { Base44Video, BASE44_VIDEO_CONFIG } from './Base44Video'
+import { createDefaultPlan, castImagesToScenes } from '../lib/templates/base44'
 import type { SceneSpec } from '../lib/creative'
 
 // Default scenes for preview (required by Remotion bundler)
@@ -95,6 +97,28 @@ export const RemotionRoot: React.FC = () => {
         width={BEAT_DRIVEN_DEMO_CONFIG.width}
         height={BEAT_DRIVEN_DEMO_CONFIG.height}
         defaultProps={{}}
+      />
+
+      {/* BASE44 PREMIUM - 6-scene marketing video template */}
+      <Composition
+        id={BASE44_VIDEO_CONFIG.id}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        component={Base44Video as any}
+        durationInFrames={BASE44_VIDEO_CONFIG.defaultDurationInFrames}
+        fps={BASE44_VIDEO_CONFIG.fps}
+        width={BASE44_VIDEO_CONFIG.width}
+        height={BASE44_VIDEO_CONFIG.height}
+        defaultProps={{
+          plan: createDefaultPlan('Acme'),
+          imageCastings: castImagesToScenes([]),
+        }}
+        calculateMetadata={({ props }) => {
+          // Calculate duration based on plan settings
+          const baseDuration = BASE44_VIDEO_CONFIG.defaultDurationInFrames
+          const multiplier = props.plan?.settings?.duration === 'short' ? 0.8
+            : props.plan?.settings?.duration === 'long' ? 1.25 : 1
+          return { durationInFrames: Math.round(baseDuration * multiplier) }
+        }}
       />
     </>
   )
