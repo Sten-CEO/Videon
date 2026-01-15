@@ -1,3 +1,6 @@
+/* Google Fonts - Must be first */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
 /* ============================================================================
@@ -7,9 +10,6 @@
    Primary: Teal (#0D9488) - Trust, growth, innovation
    Accent: Coral (#F97316) - Energy, creativity, action
    ============================================================================ */
-
-/* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
   /* ========== BACKGROUND COLORS ========== */
