@@ -10,6 +10,10 @@
  * 3. AI analyzes frames and critiques
  * 4. Apply corrections and re-render
  * 5. Repeat until quality threshold met (max 3 iterations)
+ *
+ * Progress tracking:
+ * - Returns jobId immediately
+ * - Client can subscribe to /api/progress/[jobId] for real-time updates
  */
 
 import { NextResponse } from 'next/server'
@@ -29,6 +33,7 @@ import {
   type Critique
 } from '@/lib/services/visionFeedback'
 import { captureSceneFrames } from '@/lib/services/frameCapture'
+import { progressEmitter, createProgressHelper } from '@/lib/services/progressTracker'
 
 const anthropic = new Anthropic()
 
@@ -79,22 +84,36 @@ interface RequestBody {
   }>
   enableRefinement?: boolean  // Enable vision feedback loop
   maxIterations?: number      // Max refinement iterations (default: 2)
+  jobId?: string              // Optional: provide your own job ID
 }
 
 export async function POST(request: Request) {
   const startTime = Date.now()
 
+  // Create job for progress tracking
+  let body: RequestBody
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ success: false, error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  if (!body.message) {
+    return NextResponse.json({ success: false, error: 'Missing message' }, { status: 400 })
+  }
+
+  // Create or use provided job ID
+  const jobId = progressEmitter.createJob(body.jobId)
+  const progress = createProgressHelper(jobId)
+
   console.log('═══════════════════════════════════════════════════════════')
-  console.log('[CREATIVE-REFINED] Starting enhanced generation with vision feedback')
+  console.log(`[CREATIVE-REFINED] Job ${jobId} - Starting generation`)
   console.log('═══════════════════════════════════════════════════════════')
+
+  // Start progress tracking
+  progress.start()
 
   try {
-    const body: RequestBody = await request.json()
-
-    if (!body.message) {
-      return NextResponse.json({ success: false, error: 'Missing message' }, { status: 400 })
-    }
-
     const enableRefinement = body.enableRefinement !== false // Default: true
     const maxIterations = Math.min(body.maxIterations || 2, 3) // Cap at 3
 
@@ -102,10 +121,18 @@ export async function POST(request: Request) {
     console.log('[CREATIVE-REFINED] Max iterations:', maxIterations)
 
     // =========================================================================
-    // STEP 1: Generate initial plan
+    // STEP 1: Analyze request
     // =========================================================================
 
-    console.log('[CREATIVE-REFINED] Step 1: Generating initial plan...')
+    progress.analyzing()
+    await sleep(300) // Small delay for UX
+
+    // =========================================================================
+    // STEP 2: Generate initial plan
+    // =========================================================================
+
+    progress.generatingPlan()
+    console.log('[CREATIVE-REFINED] Generating initial plan...')
 
     let userPrompt = `Crée une vidéo marketing pour:\n\n${body.message}\n\n`
     if (body.providedImages?.length) {
@@ -152,27 +179,35 @@ export async function POST(request: Request) {
       providedImages: body.providedImages,
     }
 
+    progress.planComplete()
     console.log('[CREATIVE-REFINED] Initial plan generated:', plan.id)
 
     // =========================================================================
-    // STEP 2: Vision refinement loop (if enabled)
+    // STEP 3: Vision refinement loop (if enabled)
     // =========================================================================
 
     const critiques: Critique[] = []
-    let finalScore = 0
+    let finalScore = 7
 
     if (enableRefinement) {
-      console.log('[CREATIVE-REFINED] Step 2: Starting vision refinement loop...')
+      console.log('[CREATIVE-REFINED] Starting vision refinement loop...')
 
       for (let iteration = 1; iteration <= maxIterations; iteration++) {
         console.log(`[CREATIVE-REFINED] --- Iteration ${iteration}/${maxIterations} ---`)
 
         try {
           // Capture frames
+          const totalScenes = 6
+          for (let i = 1; i <= totalScenes; i++) {
+            progress.renderingFrames(i, totalScenes)
+            await sleep(100) // Small delay between frame updates
+          }
+
           console.log('[CREATIVE-REFINED] Capturing frames...')
           const frames = await captureSceneFrames(plan)
 
-          // Analyze with vision
+          // Vision analysis
+          progress.visionAnalysis(iteration, maxIterations)
           console.log('[CREATIVE-REFINED] Analyzing with vision...')
           const critique = await analyzeVideoFrames(frames, plan, iteration)
           critiques.push(critique)
@@ -188,8 +223,16 @@ export async function POST(request: Request) {
 
           // Apply corrections if not last iteration
           if (iteration < maxIterations && Object.keys(critique.corrections).length > 0) {
+            progress.applyingFixes(iteration, critique.overallScore)
             console.log('[CREATIVE-REFINED] Applying corrections...')
             plan = applyCorrections(plan, critique.corrections)
+
+            // Update progress for next iteration
+            if (iteration === 1) {
+              progress.iteration(2)
+            } else if (iteration === 2) {
+              progress.iteration(3)
+            }
           }
 
         } catch (renderError) {
@@ -200,14 +243,17 @@ export async function POST(request: Request) {
       }
     } else {
       console.log('[CREATIVE-REFINED] Refinement disabled, using initial plan')
-      finalScore = 7 // Default score
     }
 
     // =========================================================================
-    // STEP 3: Return final plan
+    // STEP 4: Finalize and return
     // =========================================================================
 
+    progress.finalizing()
+    await sleep(200)
+
     const totalTime = Date.now() - startTime
+    progress.complete(finalScore)
 
     console.log('═══════════════════════════════════════════════════════════')
     console.log('[CREATIVE-REFINED] Generation complete!')
@@ -216,8 +262,12 @@ export async function POST(request: Request) {
     console.log('[CREATIVE-REFINED] Total time:', totalTime, 'ms')
     console.log('═══════════════════════════════════════════════════════════')
 
+    // Mark job as complete
+    progressEmitter.completeJob(jobId, plan)
+
     return NextResponse.json({
       success: true,
+      jobId,
       data: plan,
       refinement: {
         enabled: enableRefinement,
@@ -236,9 +286,18 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('[CREATIVE-REFINED] Error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Server error'
+    progress.error(errorMessage)
+
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Server error'
+      jobId,
+      error: errorMessage
     }, { status: 500 })
   }
+}
+
+// Helper function for small delays
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
