@@ -1,125 +1,79 @@
 /**
- * Remotion Root Component
+ * REMOTION ROOT CONFIGURATION
  *
- * Registers all compositions for the Remotion bundler.
- * Uses CreativeVideo which renders AI specs EXACTLY as specified.
+ * CRITICAL: Only ONE video composition is registered.
+ * All video rendering goes through VideoRenderer.
+ * VideoRenderer will CRASH if templateId !== "BASE44_PREMIUM".
  *
- * TRUTH TEST: Also registers TruthTestVideo for debugging.
+ * NO LEGACY COMPOSITIONS. NO ALTERNATIVES.
  */
 
 import React from 'react'
 import { Composition } from 'remotion'
-import { CreativeVideo, CREATIVE_VIDEO_CONFIG } from './CreativeVideo'
-import { TruthTestVideo, TRUTH_TEST_CONFIG } from './TruthTestVideo'
-import { BeatDrivenDemo, BEAT_DRIVEN_DEMO_CONFIG } from './BeatDrivenDemo'
-import { Base44Video, BASE44_VIDEO_CONFIG } from './Base44Video'
-import { createDefaultPlan, castImagesToScenes } from '../lib/templates/base44'
-import type { SceneSpec } from '../lib/creative'
+import { VideoRenderer, VIDEO_RENDERER_CONFIG } from './VideoRenderer'
+import { Base44PremiumTemplate, BASE44_PREMIUM_TEMPLATE_CONFIG } from './Base44PremiumTemplate'
+import { createDefaultBase44Plan } from '../lib/templates/base44'
 
-// Default scenes for preview (required by Remotion bundler)
-const defaultScenes: SceneSpec[] = [
-  {
-    sceneType: 'HOOK',
-    emotionalGoal: 'Interrupt scrolling with bold statement',
-    headline: 'Stop Wasting Time',
-    subtext: 'on manual planning',
-    layout: 'TEXT_CENTER',
-    background: {
-      type: 'gradient',
-      gradientColors: ['#FF3366', '#FF6B35'],
-      gradientAngle: 135,
-      texture: 'grain',
-      textureOpacity: 0.08,
-    },
-    typography: {
-      headlineFont: 'Inter',
-      headlineSize: 'large',
-      headlineWeight: 700,
-      headlineColor: '#ffffff',
-      subtextFont: 'Inter',
-      subtextSize: 'medium',
-      subtextWeight: 400,
-      subtextColor: 'rgba(255,255,255,0.85)',
-    },
-    motion: {
-      entry: 'scale_up',
-      exit: 'fade_out',
-      entryDuration: 18,
-      exitDuration: 12,
-      holdAnimation: 'subtle_float',
-      rhythm: 'punchy',
-    },
-    durationFrames: 75,
-  },
-]
+// =============================================================================
+// ROOT COMPONENT
+// =============================================================================
 
 export const RemotionRoot: React.FC = () => {
+  // Create default plan for preview
+  const defaultPlan = createDefaultBase44Plan('Demo Product')
+
   return (
     <>
-      {/* Main Creative Video Composition */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          MAIN VIDEO RENDERER - THE ONLY WAY TO RENDER VIDEOS
+          All other compositions are DEPRECATED and will be removed.
+          ═══════════════════════════════════════════════════════════════════════ */}
       <Composition
-        id={CREATIVE_VIDEO_CONFIG.id}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        component={CreativeVideo as any}
-        durationInFrames={300}
-        fps={CREATIVE_VIDEO_CONFIG.fps}
-        width={CREATIVE_VIDEO_CONFIG.width}
-        height={CREATIVE_VIDEO_CONFIG.height}
-        defaultProps={{ scenes: defaultScenes, providedImages: [] }}
-        calculateMetadata={({ props }) => {
-          const totalFrames = props.scenes?.reduce(
-            (sum: number, s: SceneSpec) => sum + (s.durationFrames || 75),
-            0
-          ) || 300
-          return { durationInFrames: totalFrames }
-        }}
-      />
-
-      {/* TRUTH TEST Composition - 100% hardcoded, ignores all props */}
-      <Composition
-        id={TRUTH_TEST_CONFIG.id}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        component={TruthTestVideo as any}
-        durationInFrames={TRUTH_TEST_CONFIG.durationInFrames}
-        fps={TRUTH_TEST_CONFIG.fps}
-        width={TRUTH_TEST_CONFIG.width}
-        height={TRUTH_TEST_CONFIG.height}
-        defaultProps={{ scenes: [], providedImages: [] }}
-      />
-
-      {/* BEAT-DRIVEN DEMO - Shows all 5 patterns with timed beats */}
-      <Composition
-        id={BEAT_DRIVEN_DEMO_CONFIG.id}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        component={BeatDrivenDemo as any}
-        durationInFrames={BEAT_DRIVEN_DEMO_CONFIG.durationInFrames}
-        fps={BEAT_DRIVEN_DEMO_CONFIG.fps}
-        width={BEAT_DRIVEN_DEMO_CONFIG.width}
-        height={BEAT_DRIVEN_DEMO_CONFIG.height}
-        defaultProps={{}}
-      />
-
-      {/* BASE44 PREMIUM - 6-scene marketing video template */}
-      <Composition
-        id={BASE44_VIDEO_CONFIG.id}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        component={Base44Video as any}
-        durationInFrames={BASE44_VIDEO_CONFIG.defaultDurationInFrames}
-        fps={BASE44_VIDEO_CONFIG.fps}
-        width={BASE44_VIDEO_CONFIG.width}
-        height={BASE44_VIDEO_CONFIG.height}
+        id="VideoRenderer"
+        component={VideoRenderer}
+        durationInFrames={480}
+        fps={VIDEO_RENDERER_CONFIG.fps}
+        width={VIDEO_RENDERER_CONFIG.width}
+        height={VIDEO_RENDERER_CONFIG.height}
         defaultProps={{
-          plan: createDefaultPlan('Acme'),
-          imageCastings: castImagesToScenes([]),
+          plan: defaultPlan,
         }}
         calculateMetadata={({ props }) => {
-          // Calculate duration based on plan settings
-          const baseDuration = BASE44_VIDEO_CONFIG.defaultDurationInFrames
-          const multiplier = props.plan?.settings?.duration === 'short' ? 0.8
-            : props.plan?.settings?.duration === 'long' ? 1.25 : 1
+          const plan = props.plan as any
+          const baseDuration = 480
+          const multiplier = plan?.settings?.duration === 'short' ? 0.67
+            : plan?.settings?.duration === 'long' ? 1.17 : 1
           return { durationInFrames: Math.round(baseDuration * multiplier) }
         }}
       />
+
+      {/* Direct template access for Remotion Studio preview */}
+      <Composition
+        id="Base44PremiumTemplate"
+        component={Base44PremiumTemplate}
+        durationInFrames={BASE44_PREMIUM_TEMPLATE_CONFIG.defaultDurationInFrames}
+        fps={BASE44_PREMIUM_TEMPLATE_CONFIG.fps}
+        width={BASE44_PREMIUM_TEMPLATE_CONFIG.width}
+        height={BASE44_PREMIUM_TEMPLATE_CONFIG.height}
+        defaultProps={{
+          plan: defaultPlan,
+        }}
+        calculateMetadata={({ props }) => {
+          const plan = props.plan as any
+          const baseDuration = 480
+          const multiplier = plan?.settings?.duration === 'short' ? 0.67
+            : plan?.settings?.duration === 'long' ? 1.17 : 1
+          return { durationInFrames: Math.round(baseDuration * multiplier) }
+        }}
+      />
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          ⚠️ NO OTHER COMPOSITIONS ALLOWED ⚠️
+          If you add legacy compositions here, you're doing it WRONG.
+          Everything must go through VideoRenderer with templateId: "BASE44_PREMIUM"
+          ═══════════════════════════════════════════════════════════════════════ */}
     </>
   )
 }
+
+export default RemotionRoot

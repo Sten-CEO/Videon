@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Button, VideoPreview, Card } from '@/components/ui'
+import { Button, Card } from '@/components/ui'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 
@@ -170,9 +170,17 @@ export default function LandingPage() {
                 </Link>
               </div>
 
-              {/* Video Preview */}
+              {/* Video Preview Placeholder */}
               <div className="max-w-3xl mx-auto">
-                <VideoPreview showControls={true} progress={35} />
+                <div className="aspect-video bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl border border-border overflow-hidden flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <svg className="w-16 h-16 text-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-foreground-muted">AI-generated marketing video demo</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
