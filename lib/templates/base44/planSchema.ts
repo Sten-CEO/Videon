@@ -134,6 +134,77 @@ export interface Base44VisualStyle {
 }
 
 // =============================================================================
+// EFFECTS CONFIGURATION (NEW)
+// =============================================================================
+
+export type EffectPresetName =
+  | 'maxImpact'    // Particle explosions, glitch effects, high energy
+  | 'professional' // Device mockups, clean wipes, understated
+  | 'modern'       // 3D flips, gradient sweeps, balanced
+  | 'playful'      // Liquid morphs, bouncy text, particles
+  | 'luxurious'    // Parallax zoom, blur focus, light leaks
+  | 'minimal'      // Mask wipes, subtle blur, clean
+
+export type ImageRevealEffect =
+  | 'REVEAL_3D_FLIP'           // 3D perspective flip
+  | 'REVEAL_PARTICLE_EXPLOSION' // Particles converge and explode
+  | 'REVEAL_LIQUID_MORPH'      // Liquid blob morphing
+  | 'REVEAL_MASK_WIPE'         // Geometric mask reveal
+  | 'REVEAL_GLITCH'            // Digital glitch distortion
+  | 'REVEAL_DEVICE_MOCKUP'     // 3D device frame
+  | 'REVEAL_PARALLAX_ZOOM'     // Blur to sharp with depth
+  | 'REVEAL_SPLIT_MERGE'       // Pieces fly in and merge
+
+export type TextRevealEffect =
+  | 'REVEAL_TEXT_TYPEWRITER'    // Character by character
+  | 'REVEAL_TEXT_LETTER_BOUNCE' // Letters bounce with spring
+  | 'REVEAL_TEXT_GLITCH'        // Digital glitch with RGB
+  | 'REVEAL_TEXT_GRADIENT_SWEEP'// Gradient sweeps to reveal
+  | 'REVEAL_TEXT_WORD_CASCADE'  // Words cascade in
+  | 'REVEAL_TEXT_BLUR_IN'       // Blur to sharp focus
+
+export type StatRevealEffect =
+  | 'REVEAL_COUNTER_ROLL'       // Numbers roll up
+  | 'REVEAL_STAT_PULSE'         // Pulse ring expansion
+
+export type SceneTransitionEffect =
+  | 'TRANSITION_ZOOM_THROUGH'    // Camera zooms through
+  | 'TRANSITION_MORPH'           // Shape morphing
+  | 'TRANSITION_GLITCH'          // Glitchy digital cut
+  | 'TRANSITION_SLICE'           // Scene slices apart
+  | 'TRANSITION_LIGHT_LEAK'      // Light flare transition
+  | 'TRANSITION_PARTICLE_DISSOLVE' // Particles dissolve
+  | 'TRANSITION_WIPE_GEOMETRIC'  // Clean geometric wipe
+  | 'TRANSITION_BLUR_CROSS'      // Blur crossfade
+
+export type EmphasisEffect =
+  | 'EMPHASIS_GLOW_PULSE'        // Pulsing glow aura
+  | 'EMPHASIS_SHAKE'             // Attention shake
+  | 'EMPHASIS_SCALE_BOUNCE'      // Bouncy scale
+  | 'EMPHASIS_UNDERLINE_DRAW'    // Animated underline
+  | 'EMPHASIS_HIGHLIGHT_SWEEP'   // Color highlight sweep
+
+export interface SceneEffectConfig {
+  imageReveal?: ImageRevealEffect
+  textReveal?: TextRevealEffect
+  statReveal?: StatRevealEffect
+  transition?: SceneTransitionEffect
+  emphasis?: EmphasisEffect
+}
+
+export interface Base44Effects {
+  preset: EffectPresetName           // Base preset to use
+  overrides?: {                      // Optional per-scene overrides
+    hook?: Partial<SceneEffectConfig>
+    problem?: Partial<SceneEffectConfig>
+    solution?: Partial<SceneEffectConfig>
+    demo?: Partial<SceneEffectConfig>
+    proof?: Partial<SceneEffectConfig>
+    cta?: Partial<SceneEffectConfig>
+  }
+}
+
+// =============================================================================
 // SETTINGS
 // =============================================================================
 
@@ -145,6 +216,7 @@ export interface Base44Settings {
   includeGrain: boolean           // Film grain overlay
   duration: 'short' | 'standard' | 'long'  // ~10s | ~15s | ~18s
   visualStyle?: Base44VisualStyle // Advanced visual configuration
+  effects?: Base44Effects         // NEW: Advanced effects configuration
 }
 
 // =============================================================================
@@ -291,6 +363,10 @@ export function createDefaultBase44Plan(productName: string = 'Your Product'): B
           proof: { textEffect: 'scaleUp', transition: 'fadeBlack' },
           cta: { textEffect: 'bounce', transition: 'cut' },
         },
+      },
+      // NEW: Effects configuration
+      effects: {
+        preset: 'modern',
       },
     },
   }
