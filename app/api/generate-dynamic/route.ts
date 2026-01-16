@@ -18,6 +18,7 @@ interface GenerateRequest {
     primary?: string
     secondary?: string
   }
+  logoUrl?: string  // URL of the brand logo
 }
 
 export async function POST(request: NextRequest) {
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: getDynamicVideoUserPrompt(body.description, body.brandColors),
+          content: getDynamicVideoUserPrompt(body.description, body.brandColors, body.logoUrl),
         },
       ],
       system: getDynamicVideoSystemPrompt(),
@@ -98,6 +99,11 @@ export async function POST(request: NextRequest) {
     videoPlan.id = videoPlan.id || `video_${Date.now()}`
     videoPlan.createdAt = videoPlan.createdAt || new Date().toISOString()
     videoPlan.version = '2.0'
+
+    // Add logo URL to brand if provided
+    if (body.logoUrl && videoPlan.brand) {
+      videoPlan.brand.logoUrl = body.logoUrl
+    }
 
     // Ensure each scene has required properties including layout
     videoPlan.scenes = videoPlan.scenes.map((scene, index) => ({

@@ -1350,6 +1350,50 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Subtle pulse for decorative elements */
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Shimmer line effect for vertical accents */
+@keyframes shimmerLine {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scaleY(1.1);
+  }
+}
+
+/* Smooth logo glow pulse */
+@keyframes logoGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.4));
+  }
+}
+
+/* Gentle rotation for decorative elements */
+@keyframes gentleRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 /* Animation Classes */
 .animate-fade-in {
   animation: fadeIn var(--transition-base) ease-out;

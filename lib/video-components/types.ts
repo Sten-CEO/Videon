@@ -196,7 +196,7 @@ export type Background =
 // ÉLÉMENTS (composants visuels)
 // ============================================================================
 
-export type ElementType = 'text' | 'image' | 'shape' | 'icon' | 'badge' | 'divider' | 'spacer'
+export type ElementType = 'text' | 'image' | 'shape' | 'icon' | 'badge' | 'divider' | 'spacer' | 'logo'
 
 // Élément de base (propriétés communes)
 export interface BaseElement {
@@ -266,6 +266,14 @@ export interface SpacerElement extends BaseElement {
   height: number                // en pixels ou pourcentage
 }
 
+// Élément Logo (logo de marque)
+export interface LogoElement extends BaseElement {
+  type: 'logo'
+  src: string                   // URL du logo
+  size?: 'small' | 'medium' | 'large' | number  // Taille (défaut: medium)
+  style?: 'normal' | 'glow' | 'glass'           // Style visuel
+}
+
 // Union de tous les éléments
 export type SceneElement =
   | TextElement
@@ -275,6 +283,7 @@ export type SceneElement =
   | BadgeElement
   | DividerElement
   | SpacerElement
+  | LogoElement
 
 // ============================================================================
 // SCÈNE (une "slide" de la vidéo)
@@ -318,6 +327,7 @@ export interface VideoPlan {
   brand: {
     name: string
     tagline?: string
+    logoUrl?: string            // URL du logo de la marque
     colors: {
       primary: string
       secondary: string
