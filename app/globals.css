@@ -455,6 +455,139 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* ============================================================================
+   BASE44-STYLE DRAMATIC TRANSITIONS
+   ============================================================================ */
+
+/* Sunburst - Radial explosion from center */
+@keyframes sunburstExpand {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* Wipe - Directional sweep across screen */
+@keyframes wipeAcross {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  50% {
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+/* Dissolve - Flash and fade */
+@keyframes dissolveFlash {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Zoom burst - Scale explosion */
+@keyframes zoomBurst {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Morph wave - Diagonal sweep */
+@keyframes morphWave {
+  0% {
+    background-position: 200% 200%;
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    background-position: -100% -100%;
+    opacity: 0;
+  }
+}
+
+/* Mesh gradient animation */
+@keyframes meshFloat {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(2%, 3%) rotate(1deg);
+  }
+  50% {
+    transform: translate(-1%, 2%) rotate(-1deg);
+  }
+  75% {
+    transform: translate(-3%, -1%) rotate(0.5deg);
+  }
+}
+
+/* Color burst - Multiple color flash */
+@keyframes colorBurst {
+  0% {
+    background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 100%);
+  }
+  20% {
+    background: radial-gradient(circle at 50% 50%, rgba(255,107,107,0.8) 0%, transparent 50%);
+  }
+  40% {
+    background: radial-gradient(circle at 50% 50%, rgba(255,230,109,0.8) 0%, transparent 60%);
+  }
+  60% {
+    background: radial-gradient(circle at 50% 50%, rgba(78,205,196,0.8) 0%, transparent 70%);
+  }
+  80% {
+    background: radial-gradient(circle at 50% 50%, rgba(102,126,234,0.8) 0%, transparent 80%);
+  }
+  100% {
+    background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 100%);
+  }
+}
+
+/* Iris wipe - Circular reveal */
+@keyframes irisWipe {
+  0% {
+    clip-path: circle(0% at 50% 50%);
+  }
+  100% {
+    clip-path: circle(100% at 50% 50%);
+  }
+}
+
+/* Diamond wipe */
+@keyframes diamondWipe {
+  0% {
+    clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%);
+  }
+  100% {
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  }
+}
+
 /* Animation Classes */
 .animate-fade-in {
   animation: fadeIn var(--transition-base) ease-out;
