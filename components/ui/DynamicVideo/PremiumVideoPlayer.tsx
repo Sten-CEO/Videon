@@ -1,15 +1,16 @@
 'use client'
 
 /**
- * PREMIUM VIDEO PLAYER - BASE44 STYLE
+ * PREMIUM VIDEO PLAYER - SEAMLESS CINEMATIC TRANSITIONS
  *
  * Features:
  * - Word-by-word text animation
  * - Gradient text colors
- * - Dramatic sunburst/wipe transitions
- * - Mesh gradient backgrounds
+ * - SEAMLESS background morphing between scenes (crossfade)
+ * - Dramatic full-screen transition effects
+ * - Mesh gradient backgrounds with continuous animation
  * - Glassmorphism mockups
- * - No slide transitions - elements animate independently
+ * - NO visible slide transitions - everything flows organically
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
@@ -208,7 +209,7 @@ function WordByWordText({
 }
 
 // ============================================================================
-// DRAMATIC TRANSITION OVERLAY
+// DRAMATIC CINEMATIC TRANSITION OVERLAY
 // ============================================================================
 
 interface TransitionOverlayProps {
@@ -227,71 +228,158 @@ function TransitionOverlay({ isActive, type, color = '#ffffff' }: TransitionOver
     pointerEvents: 'none',
   }
 
-  // Sunburst effect - radial wipe from center
+  // SUNBURST - Explosive radial burst from center
   if (type === 'sunburst') {
     return (
-      <div
-        style={{
-          ...baseStyle,
-          background: `radial-gradient(circle at 50% 50%, ${color} 0%, transparent 70%)`,
-          animation: 'sunburstExpand 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        }}
-      />
+      <>
+        {/* Primary sunburst */}
+        <div
+          style={{
+            ...baseStyle,
+            background: `radial-gradient(circle at 50% 50%, ${color} 0%, ${color}80 20%, transparent 60%)`,
+            animation: 'sunburstExpand 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          }}
+        />
+        {/* Secondary ring */}
+        <div
+          style={{
+            ...baseStyle,
+            background: `radial-gradient(circle at 50% 50%, transparent 20%, ${color}60 40%, transparent 60%)`,
+            animation: 'sunburstExpand 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
+          }}
+        />
+        {/* Light flash */}
+        <div
+          style={{
+            ...baseStyle,
+            background: 'rgba(255,255,255,0.4)',
+            animation: 'flashPulse 0.6s ease-out forwards',
+          }}
+        />
+      </>
     )
   }
 
-  // Wipe effect - directional reveal
+  // WIPE - Smooth diagonal sweep across screen
   if (type === 'wipe') {
     return (
-      <div
-        style={{
-          ...baseStyle,
-          background: color,
-          animation: 'wipeAcross 0.6s cubic-bezier(0.87, 0, 0.13, 1) forwards',
-        }}
-      />
+      <>
+        <div
+          style={{
+            ...baseStyle,
+            background: `linear-gradient(135deg, ${color} 0%, ${color}90 45%, transparent 55%)`,
+            animation: 'diagonalWipe 0.9s cubic-bezier(0.87, 0, 0.13, 1) forwards',
+          }}
+        />
+        {/* Trail glow */}
+        <div
+          style={{
+            ...baseStyle,
+            background: `linear-gradient(135deg, transparent 40%, ${color}40 50%, transparent 60%)`,
+            animation: 'diagonalWipe 0.9s cubic-bezier(0.87, 0, 0.13, 1) 0.05s forwards',
+          }}
+        />
+      </>
     )
   }
 
-  // Dissolve effect - soft blur transition
+  // DISSOLVE - Soft ethereal fade with particles
   if (type === 'dissolve') {
     return (
-      <div
-        style={{
-          ...baseStyle,
-          background: color,
-          opacity: 0,
-          animation: 'dissolveFlash 0.5s ease-out forwards',
-        }}
-      />
+      <>
+        <div
+          style={{
+            ...baseStyle,
+            background: `radial-gradient(ellipse at center, ${color}80 0%, ${color}40 50%, transparent 80%)`,
+            animation: 'dissolvePulse 1s ease-in-out forwards',
+          }}
+        />
+        {/* Soft blur overlay */}
+        <div
+          style={{
+            ...baseStyle,
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            animation: 'blurFade 1s ease-in-out forwards',
+          }}
+        />
+      </>
     )
   }
 
-  // Zoom effect - scale burst
+  // ZOOM - Impactful scale burst with rings
   if (type === 'zoom') {
     return (
-      <div
-        style={{
-          ...baseStyle,
-          background: `radial-gradient(circle at 50% 50%, ${color} 0%, transparent 60%)`,
-          transform: 'scale(0)',
-          animation: 'zoomBurst 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-        }}
-      />
+      <>
+        {/* Central burst */}
+        <div
+          style={{
+            ...baseStyle,
+            background: `radial-gradient(circle at 50% 50%, ${color} 0%, ${color}80 15%, transparent 50%)`,
+            animation: 'zoomBurst 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+          }}
+        />
+        {/* Expanding ring 1 */}
+        <div
+          style={{
+            ...baseStyle,
+            border: `3px solid ${color}60`,
+            borderRadius: '50%',
+            width: '50%',
+            height: '50%',
+            top: '25%',
+            left: '25%',
+            animation: 'ringExpand 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          }}
+        />
+        {/* Expanding ring 2 */}
+        <div
+          style={{
+            ...baseStyle,
+            border: `2px solid ${color}40`,
+            borderRadius: '50%',
+            width: '30%',
+            height: '30%',
+            top: '35%',
+            left: '35%',
+            animation: 'ringExpand 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
+          }}
+        />
+      </>
     )
   }
 
-  // Morph effect - color wave
+  // MORPH - Organic color wave transformation
   if (type === 'morph') {
     return (
-      <div
-        style={{
-          ...baseStyle,
-          background: `linear-gradient(135deg, transparent 0%, ${color} 50%, transparent 100%)`,
-          backgroundSize: '200% 200%',
-          animation: 'morphWave 0.8s ease-in-out forwards',
-        }}
-      />
+      <>
+        {/* Wave 1 */}
+        <div
+          style={{
+            ...baseStyle,
+            background: `linear-gradient(135deg, ${color}90 0%, transparent 50%, ${color}60 100%)`,
+            backgroundSize: '400% 400%',
+            animation: 'morphWave 1.1s ease-in-out forwards',
+          }}
+        />
+        {/* Wave 2 - offset */}
+        <div
+          style={{
+            ...baseStyle,
+            background: `linear-gradient(225deg, transparent 0%, ${color}50 50%, transparent 100%)`,
+            backgroundSize: '300% 300%',
+            animation: 'morphWave 1.1s ease-in-out 0.1s forwards',
+          }}
+        />
+        {/* Central glow */}
+        <div
+          style={{
+            ...baseStyle,
+            background: `radial-gradient(ellipse at center, ${color}50 0%, transparent 70%)`,
+            animation: 'glowPulse 0.8s ease-out forwards',
+          }}
+        />
+      </>
     )
   }
 
@@ -299,7 +387,7 @@ function TransitionOverlay({ isActive, type, color = '#ffffff' }: TransitionOver
 }
 
 // ============================================================================
-// MESH GRADIENT BACKGROUND
+// DYNAMIC MESH GRADIENT BACKGROUND - Continuous organic animation
 // ============================================================================
 
 interface MeshGradientProps {
@@ -320,29 +408,66 @@ function MeshGradientBackground({ colors, animated = true }: MeshGradientProps) 
         overflow: 'hidden',
       }}
     >
-      {/* Base gradient */}
+      {/* Primary floating orbs - continuously animated */}
       <div
         style={{
           position: 'absolute',
-          inset: '-50%',
-          width: '200%',
-          height: '200%',
+          inset: '-60%',
+          width: '220%',
+          height: '220%',
           background: `
-            radial-gradient(circle at 20% 20%, ${color1}66 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, ${color2}66 0%, transparent 50%),
-            radial-gradient(circle at 40% 80%, ${color3}66 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, ${color4}66 0%, transparent 50%)
+            radial-gradient(ellipse at 20% 30%, ${color1}55 0%, transparent 45%),
+            radial-gradient(ellipse at 75% 25%, ${color2}50 0%, transparent 50%),
+            radial-gradient(ellipse at 35% 75%, ${color3}45 0%, transparent 45%),
+            radial-gradient(ellipse at 85% 80%, ${color4}40 0%, transparent 40%)
           `,
-          animation: animated ? 'meshFloat 15s ease-in-out infinite' : 'none',
+          animation: animated ? 'meshFloat 12s ease-in-out infinite' : 'none',
         }}
       />
-      {/* Subtle noise overlay */}
+
+      {/* Secondary layer - slower counter-rotation for depth */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: '-40%',
+          width: '180%',
+          height: '180%',
+          background: `
+            radial-gradient(circle at 60% 40%, ${color2}35 0%, transparent 40%),
+            radial-gradient(circle at 30% 70%, ${color1}30 0%, transparent 35%)
+          `,
+          animation: animated ? 'meshFloat 18s ease-in-out infinite reverse' : 'none',
+        }}
+      />
+
+      {/* Breathing glow layer - adds life */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          opacity: 0.03,
+          background: `radial-gradient(ellipse at 50% 50%, ${color1}20 0%, transparent 60%)`,
+          animation: animated ? 'breathe 6s ease-in-out infinite' : 'none',
+        }}
+      />
+
+      {/* Subtle color shift overlay */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `linear-gradient(135deg, ${color1}15 0%, transparent 50%, ${color2}15 100%)`,
+          animation: animated ? 'colorShift 20s ease-in-out infinite' : 'none',
+        }}
+      />
+
+      {/* Film grain texture */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: 0.025,
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          mixBlendMode: 'overlay',
         }}
       />
     </div>
@@ -626,40 +751,87 @@ function SceneContent({
   )
 }
 
-// Decorative floating shapes
+// Decorative floating shapes - Dynamic ambient effects
 function DecorationLayer({ scene }: { scene: Scene }) {
-  // Extract primary color from background
+  // Extract colors from background
   const bgColor = scene.background.type === 'gradient'
     ? scene.background.colors[0]
     : scene.background.type === 'solid'
       ? scene.background.color
       : '#0D9488'
 
+  const secondaryColor = scene.background.type === 'gradient' && scene.background.colors[1]
+    ? scene.background.colors[1]
+    : bgColor
+
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-      {/* Subtle glow orbs */}
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 5 }}>
+      {/* Top-right glow orb */}
       <div
         style={{
           position: 'absolute',
-          top: '10%',
-          right: '-10%',
-          width: '40%',
-          height: '40%',
-          background: `radial-gradient(circle, ${bgColor}33 0%, transparent 70%)`,
-          filter: 'blur(60px)',
-          animation: 'floatSubtle 8s ease-in-out infinite',
+          top: '5%',
+          right: '-15%',
+          width: '45%',
+          height: '45%',
+          background: `radial-gradient(circle, ${bgColor}40 0%, transparent 60%)`,
+          filter: 'blur(50px)',
+          animation: 'floatSubtle 7s ease-in-out infinite',
         }}
       />
+
+      {/* Bottom-left glow orb */}
       <div
         style={{
           position: 'absolute',
-          bottom: '5%',
-          left: '-15%',
-          width: '50%',
-          height: '50%',
-          background: `radial-gradient(circle, ${bgColor}22 0%, transparent 70%)`,
-          filter: 'blur(80px)',
-          animation: 'floatSubtle 10s ease-in-out infinite reverse',
+          bottom: '0%',
+          left: '-20%',
+          width: '55%',
+          height: '55%',
+          background: `radial-gradient(circle, ${secondaryColor}30 0%, transparent 60%)`,
+          filter: 'blur(70px)',
+          animation: 'floatSubtle 9s ease-in-out infinite reverse',
+        }}
+      />
+
+      {/* Center accent pulse */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '30%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '60%',
+          height: '40%',
+          background: `radial-gradient(ellipse, ${bgColor}15 0%, transparent 50%)`,
+          filter: 'blur(40px)',
+          animation: 'breathe 5s ease-in-out infinite',
+        }}
+      />
+
+      {/* Subtle top gradient vignette */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '30%',
+          background: `linear-gradient(to bottom, ${bgColor}20 0%, transparent 100%)`,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Subtle bottom gradient vignette */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '25%',
+          background: `linear-gradient(to top, rgba(0,0,0,0.2) 0%, transparent 100%)`,
+          pointerEvents: 'none',
         }}
       />
     </div>
@@ -674,9 +846,11 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
   className = '',
 }) => {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
+  const [previousSceneIndex, setPreviousSceneIndex] = useState<number | null>(null)
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [showTransitionOverlay, setShowTransitionOverlay] = useState(false)
+  const [backgroundOpacity, setBackgroundOpacity] = useState(1) // For crossfade
   const [progress, setProgress] = useState(0)
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -684,15 +858,16 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
   const sceneStartTime = useRef<number>(Date.now())
 
   const currentScene = plan.scenes[currentSceneIndex]
+  const previousScene = previousSceneIndex !== null ? plan.scenes[previousSceneIndex] : null
   const totalDuration = plan.settings.totalDuration
 
   // Determine transition type based on scene index (variety)
-  const transitionTypes: TransitionType[] = ['sunburst', 'wipe', 'dissolve', 'zoom', 'morph']
+  const transitionTypes: TransitionType[] = ['sunburst', 'zoom', 'morph', 'dissolve', 'wipe']
   const currentTransitionType = transitionTypes[currentSceneIndex % transitionTypes.length]
 
-  // Extract colors for mesh gradient and transition
-  const sceneColors = useMemo(() => {
-    const bg = currentScene.background
+  // Extract colors for current and previous scenes
+  const getSceneColors = useCallback((scene: Scene) => {
+    const bg = scene.background
     if (bg.type === 'gradient' && bg.colors) {
       return bg.colors
     }
@@ -700,7 +875,13 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
       return [bg.color, bg.color]
     }
     return ['#667eea', '#764ba2']
-  }, [currentScene.background])
+  }, [])
+
+  const sceneColors = useMemo(() => getSceneColors(currentScene), [currentScene, getSceneColors])
+  const previousColors = useMemo(
+    () => previousScene ? getSceneColors(previousScene) : sceneColors,
+    [previousScene, sceneColors, getSceneColors]
+  )
 
   // Clear all timers
   const clearTimers = useCallback(() => {
@@ -708,7 +889,7 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
     if (progressRef.current) clearInterval(progressRef.current)
   }, [])
 
-  // Go to next scene with dramatic transition
+  // Go to next scene with SEAMLESS cinematic transition
   const goToNextScene = useCallback(() => {
     const nextIndex = (currentSceneIndex + 1) % plan.scenes.length
 
@@ -717,25 +898,37 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
       return
     }
 
-    // Step 1: Elements exit
+    // Step 1: Store current scene as previous and start transition
+    setPreviousSceneIndex(currentSceneIndex)
     setIsTransitioning(true)
+    setBackgroundOpacity(0) // Start crossfade
 
-    // Step 2: Show dramatic transition overlay
+    // Step 2: Show dramatic transition overlay (covers the crossfade)
     setTimeout(() => {
       setShowTransitionOverlay(true)
-    }, 300)
+    }, 100)
 
-    // Step 3: Switch scene during overlay peak
+    // Step 3: Switch scene while overlay is at peak (background crossfades underneath)
     setTimeout(() => {
       setCurrentSceneIndex(nextIndex)
       sceneStartTime.current = Date.now()
+    }, 400)
+
+    // Step 4: Start fading in new background
+    setTimeout(() => {
+      setBackgroundOpacity(1)
     }, 500)
 
-    // Step 4: Hide overlay and show new elements
+    // Step 5: Hide overlay - new elements animate in
     setTimeout(() => {
       setShowTransitionOverlay(false)
+    }, 900)
+
+    // Step 6: Transition complete
+    setTimeout(() => {
       setIsTransitioning(false)
-    }, 800)
+      setPreviousSceneIndex(null)
+    }, 1200)
 
   }, [currentSceneIndex, plan.scenes.length, loop])
 
@@ -771,22 +964,30 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
   const togglePlay = () => setIsPlaying(!isPlaying)
 
   const goToScene = (index: number) => {
+    if (index === currentSceneIndex) return
     clearTimers()
+
+    // Same seamless transition as auto-play
+    setPreviousSceneIndex(currentSceneIndex)
     setIsTransitioning(true)
-    setShowTransitionOverlay(true)
+    setBackgroundOpacity(0)
+
+    setTimeout(() => setShowTransitionOverlay(true), 100)
     setTimeout(() => {
       setCurrentSceneIndex(index)
       sceneStartTime.current = Date.now()
     }, 400)
+    setTimeout(() => setBackgroundOpacity(1), 500)
+    setTimeout(() => setShowTransitionOverlay(false), 900)
     setTimeout(() => {
-      setShowTransitionOverlay(false)
       setIsTransitioning(false)
-    }, 700)
+      setPreviousSceneIndex(null)
+    }, 1200)
   }
 
   const restart = () => {
     goToScene(0)
-    setIsPlaying(true)
+    setTimeout(() => setIsPlaying(true), 100)
   }
 
   // Aspect ratio
@@ -795,8 +996,9 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
     : plan.settings.aspectRatio === '4:5' ? '4/5'
     : '9/16'
 
-  // Background transition
-  const backgroundStyles = getBackgroundCSS(currentScene.background)
+  // Background styles for crossfade
+  const currentBackgroundStyles = getBackgroundCSS(currentScene.background)
+  const previousBackgroundStyles = previousScene ? getBackgroundCSS(previousScene.background) : currentBackgroundStyles
 
   return (
     <div className={`relative ${className}`}>
@@ -811,20 +1013,61 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
           background: '#0a0a0a',
         }}
       >
-        {/* Base background layer */}
+        {/* LAYER 1: Previous scene background (fades out) */}
+        {previousScene && (
+          <div
+            style={{
+              ...previousBackgroundStyles,
+              position: 'absolute',
+              inset: 0,
+              opacity: 1 - backgroundOpacity,
+              transition: `opacity 0.8s ${EASING.elegant}`,
+              zIndex: 1,
+            }}
+          />
+        )}
+
+        {/* LAYER 2: Current scene background (fades in) */}
         <div
           style={{
-            ...backgroundStyles,
+            ...currentBackgroundStyles,
             position: 'absolute',
             inset: 0,
-            transition: `all 1s ${EASING.smooth}`,
+            opacity: backgroundOpacity,
+            transition: `opacity 0.8s ${EASING.elegant}`,
+            zIndex: 2,
           }}
         />
 
-        {/* Mesh gradient overlay for premium look */}
-        <MeshGradientBackground colors={sceneColors} animated={isPlaying} />
+        {/* LAYER 3: Mesh gradient overlay - morphs between scene colors */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 3 }}>
+          {/* Previous colors mesh (fades out) */}
+          {previousScene && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                opacity: 1 - backgroundOpacity,
+                transition: `opacity 0.8s ${EASING.elegant}`,
+              }}
+            >
+              <MeshGradientBackground colors={previousColors} animated={isPlaying} />
+            </div>
+          )}
+          {/* Current colors mesh (fades in) */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: backgroundOpacity,
+              transition: `opacity 0.8s ${EASING.elegant}`,
+            }}
+          >
+            <MeshGradientBackground colors={sceneColors} animated={isPlaying} />
+          </div>
+        </div>
 
-        {/* Decorative layer */}
+        {/* Decorative layer with continuous animation */}
         <DecorationLayer scene={currentScene} />
 
         {/* Grain texture */}
@@ -836,23 +1079,41 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
             opacity: 0.04,
             pointerEvents: 'none',
             mixBlendMode: 'overlay',
+            zIndex: 4,
           }}
         />
 
         {/* Scene content - elements animate with word-by-word */}
-        <SceneContent
-          scene={currentScene}
-          isVisible={!isTransitioning}
-          isExiting={isTransitioning}
-          useWordAnimation={true}
-        />
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <SceneContent
+            scene={currentScene}
+            isVisible={!isTransitioning}
+            isExiting={isTransitioning}
+            useWordAnimation={true}
+          />
+        </div>
 
-        {/* Dramatic transition overlay */}
+        {/* DRAMATIC TRANSITION OVERLAY - Full screen flash/burst */}
         <TransitionOverlay
           isActive={showTransitionOverlay}
           type={currentTransitionType}
           color={sceneColors[0]}
         />
+
+        {/* Additional color blend overlay during transition */}
+        {isTransitioning && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: `radial-gradient(ellipse at center, ${sceneColors[0]}40 0%, transparent 70%)`,
+              opacity: showTransitionOverlay ? 0.8 : 0,
+              transition: 'opacity 0.5s ease-out',
+              zIndex: 90,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
 
         {/* Brand watermark */}
         <div
