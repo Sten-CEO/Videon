@@ -116,64 +116,77 @@ function ParticlesBackground({ color, density, speed }: {
   )
 }
 
-// Génère le style de transition
+// Premium cinematic transition styles
 function getTransitionStyle(
   state: SceneRendererProps['transitionState'],
   transitionType: string,
   duration: number
 ): React.CSSProperties {
+  // Premium easing curves for cinematic feel
+  const premiumEasing = 'cubic-bezier(0.4, 0, 0.2, 1)'
+
   const baseStyles: React.CSSProperties = {
     position: 'absolute',
     inset: 0,
-    transition: `all ${duration}s ease-in-out`,
+    transition: `all ${duration}s ${premiumEasing}`,
+    willChange: 'transform, opacity, filter',
   }
 
   switch (state) {
     case 'entering':
-      // Animation d'entrée
       switch (transitionType) {
+        case 'blur':
+          return {
+            ...baseStyles,
+            opacity: 0,
+            filter: 'blur(20px)',
+            transform: 'scale(1.05)',
+          }
         case 'slideLeft':
-          return { ...baseStyles, transform: 'translateX(100%)', opacity: 1 }
+          return { ...baseStyles, transform: 'translateX(100%)', opacity: 0.5 }
         case 'slideRight':
-          return { ...baseStyles, transform: 'translateX(-100%)', opacity: 1 }
+          return { ...baseStyles, transform: 'translateX(-100%)', opacity: 0.5 }
         case 'slideUp':
-          return { ...baseStyles, transform: 'translateY(100%)', opacity: 1 }
-        case 'slideDown':
-          return { ...baseStyles, transform: 'translateY(-100%)', opacity: 1 }
+          return { ...baseStyles, transform: 'translateY(100%)', opacity: 0.5 }
         case 'zoomIn':
-          return { ...baseStyles, transform: 'scale(0.5)', opacity: 0 }
-        case 'zoomOut':
-          return { ...baseStyles, transform: 'scale(1.5)', opacity: 0 }
+          return { ...baseStyles, transform: 'scale(0.9)', opacity: 0, filter: 'blur(10px)' }
         case 'fade':
         default:
-          return { ...baseStyles, opacity: 0 }
+          return { ...baseStyles, opacity: 0, filter: 'blur(8px)' }
       }
 
     case 'active':
-      return { ...baseStyles, transform: 'translate(0) scale(1)', opacity: 1 }
+      return {
+        ...baseStyles,
+        transform: 'translate(0) scale(1)',
+        opacity: 1,
+        filter: 'blur(0)',
+      }
 
     case 'exiting':
-      // Animation de sortie
       switch (transitionType) {
+        case 'blur':
+          return {
+            ...baseStyles,
+            opacity: 0,
+            filter: 'blur(20px)',
+            transform: 'scale(0.95)',
+          }
         case 'slideLeft':
-          return { ...baseStyles, transform: 'translateX(-100%)', opacity: 1 }
+          return { ...baseStyles, transform: 'translateX(-100%)', opacity: 0.5 }
         case 'slideRight':
-          return { ...baseStyles, transform: 'translateX(100%)', opacity: 1 }
+          return { ...baseStyles, transform: 'translateX(100%)', opacity: 0.5 }
         case 'slideUp':
-          return { ...baseStyles, transform: 'translateY(-100%)', opacity: 1 }
-        case 'slideDown':
-          return { ...baseStyles, transform: 'translateY(100%)', opacity: 1 }
+          return { ...baseStyles, transform: 'translateY(-100%)', opacity: 0.5 }
         case 'zoomIn':
-          return { ...baseStyles, transform: 'scale(1.5)', opacity: 0 }
-        case 'zoomOut':
-          return { ...baseStyles, transform: 'scale(0.5)', opacity: 0 }
+          return { ...baseStyles, transform: 'scale(1.1)', opacity: 0, filter: 'blur(10px)' }
         case 'fade':
         default:
-          return { ...baseStyles, opacity: 0 }
+          return { ...baseStyles, opacity: 0, filter: 'blur(8px)' }
       }
 
     case 'hidden':
-      return { ...baseStyles, opacity: 0, pointerEvents: 'none' }
+      return { ...baseStyles, opacity: 0, pointerEvents: 'none', filter: 'blur(10px)' }
 
     default:
       return baseStyles

@@ -1,21 +1,65 @@
 'use client'
 
 /**
- * LAYOUT RENDERER
+ * LAYOUT RENDERER - Premium Video Composition
  *
- * Rend les éléments d'une scène selon son layout.
- * Les éléments sont automatiquement placés dans les zones du layout.
+ * Renders scene elements with professional spacing, staggered animations,
+ * and cinematic timing for Base44-level quality.
  */
 
 import React from 'react'
 import type { Scene, SceneElement, TextElement, BadgeElement } from '@/lib/video-components/types'
 import { layouts, type LayoutZone, type LayoutName } from '@/lib/video-components/layouts'
-import { getTextStyleCSS, fontWeights, badgeVariants } from '@/lib/video-components/styles'
-import { getAnimationStyle } from '@/lib/video-components/animations'
+import { getTextStyleCSS, badgeVariants } from '@/lib/video-components/styles'
 
 interface LayoutRendererProps {
   scene: Scene
   isActive: boolean
+}
+
+// Premium animation configurations with professional timing
+const PREMIUM_ANIMATIONS = {
+  // Smooth entrance with subtle scale
+  smoothReveal: (delay: number) => ({
+    animation: `smoothReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s forwards`,
+    opacity: 0,
+  }),
+  // Elegant fade up with slight blur
+  elegantFadeUp: (delay: number) => ({
+    animation: `elegantFadeUp 0.7s cubic-bezier(0.33, 1, 0.68, 1) ${delay}s forwards`,
+    opacity: 0,
+  }),
+  // Cinematic scale reveal
+  cinematicScale: (delay: number) => ({
+    animation: `cinematicScale 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s forwards`,
+    opacity: 0,
+  }),
+  // Subtle slide
+  subtleSlide: (delay: number) => ({
+    animation: `subtleSlide 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}s forwards`,
+    opacity: 0,
+  }),
+}
+
+// Get premium staggered animation based on element index and type
+function getPremiumAnimation(
+  elementIndex: number,
+  totalElements: number,
+  elementType: string
+): React.CSSProperties {
+  // Base delay with stagger
+  const baseDelay = 0.1
+  const staggerDelay = 0.15
+  const delay = baseDelay + (elementIndex * staggerDelay)
+
+  // Choose animation based on element type for variety
+  if (elementType === 'badge') {
+    return PREMIUM_ANIMATIONS.subtleSlide(delay)
+  }
+  if (elementType === 'headline' || elementType === 'hero') {
+    return PREMIUM_ANIMATIONS.cinematicScale(delay)
+  }
+  return PREMIUM_ANIMATIONS.elegantFadeUp(delay)
 }
 
 // Mapping element type to zone element types
@@ -93,23 +137,22 @@ function distributeElementsToZones(
   return distribution
 }
 
-// Render a single element
+// Render a single element with premium styling
 function renderElement(
   element: SceneElement,
   isActive: boolean,
-  index: number
+  index: number,
+  totalElements: number
 ): React.ReactNode {
-  // When active: apply animation if present, otherwise show immediately
-  // When not active: hide the element
+  // Get element type for animation selection
+  const elementType = element.type === 'text'
+    ? (element as TextElement).style.style
+    : element.type
+
+  // Apply premium staggered animation when active
   const animationStyles: React.CSSProperties = isActive
-    ? element.animation
-      ? getAnimationStyle(
-          element.animation.type,
-          element.animation.duration,
-          element.animation.delay
-        )
-      : { opacity: 1 } // No animation = show immediately
-    : { opacity: 0 }   // Not active = hidden
+    ? getPremiumAnimation(index, totalElements, elementType)
+    : { opacity: 0 }
 
   switch (element.type) {
     case 'text': {
@@ -120,6 +163,7 @@ function renderElement(
         textEl.style.weight
       )
 
+      // Premium text styling with better line height and spacing
       return (
         <div
           key={element.id ?? `el-${index}`}
@@ -127,8 +171,11 @@ function renderElement(
             ...textStyles,
             ...animationStyles,
             textAlign: textEl.style.align ?? 'center',
-            maxWidth: textEl.style.maxWidth ? `${textEl.style.maxWidth}%` : '100%',
+            maxWidth: textEl.style.style === 'hero' ? '95%' : '85%',
             fontFamily: 'var(--font-display), system-ui, sans-serif',
+            lineHeight: textEl.style.style === 'hero' ? 1.05 : 1.3,
+            textShadow: '0 2px 20px rgba(0,0,0,0.3)',
+            willChange: 'transform, opacity',
           }}
         >
           {textEl.content}
@@ -148,14 +195,16 @@ function renderElement(
             ...animationStyles,
             background: variant.background,
             color: variant.color,
-            padding: '8px 16px',
-            borderRadius: '20px',
-            fontSize: '0.75rem',
+            padding: '10px 20px',
+            borderRadius: '24px',
+            fontSize: '0.8rem',
             fontWeight: 600,
-            letterSpacing: '0.05em',
+            letterSpacing: '0.08em',
             textTransform: 'uppercase',
             fontFamily: 'var(--font-body), system-ui, sans-serif',
             display: 'inline-block',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+            willChange: 'transform, opacity',
           }}
         >
           {badgeEl.content}
@@ -169,7 +218,8 @@ function renderElement(
           key={element.id ?? `el-${index}`}
           style={{
             ...animationStyles,
-            maxWidth: '80%',
+            maxWidth: '85%',
+            willChange: 'transform, opacity',
           }}
         >
           <img
@@ -177,9 +227,9 @@ function renderElement(
             alt=""
             style={{
               width: '100%',
-              borderRadius: element.borderRadius ?? 12,
+              borderRadius: element.borderRadius ?? 16,
               objectFit: element.objectFit ?? 'cover',
-              boxShadow: element.shadow ? '0 20px 40px rgba(0,0,0,0.3)' : 'none',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.4)',
             }}
           />
         </div>
@@ -198,7 +248,8 @@ function renderElement(
       } else if (element.shape === 'rounded') {
         shapeStyles.borderRadius = '16px'
       } else if (element.shape === 'line') {
-        shapeStyles.height = '2px'
+        shapeStyles.height = '3px'
+        shapeStyles.borderRadius = '2px'
       }
 
       return (
@@ -207,6 +258,7 @@ function renderElement(
           style={{
             ...shapeStyles,
             ...animationStyles,
+            willChange: 'transform, opacity',
           }}
         />
       )
@@ -217,35 +269,43 @@ function renderElement(
   }
 }
 
-// Render a zone with its elements
+// Render a zone with its elements - Premium spacing
 function ZoneRenderer({
   zone,
   elements,
   isActive,
+  zoneIndex,
 }: {
   zone: LayoutZone
   elements: SceneElement[]
   isActive: boolean
+  zoneIndex: number
 }) {
   if (elements.length === 0) return null
+
+  // Calculate total elements for proper stagger timing
+  const totalElements = elements.length
 
   return (
     <div
       style={{
         position: 'absolute',
         top: `${zone.y}%`,
-        left: zone.align === 'left' ? '5%' : zone.align === 'right' ? 'auto' : '50%',
-        right: zone.align === 'right' ? '5%' : 'auto',
+        left: zone.align === 'left' ? '8%' : zone.align === 'right' ? 'auto' : '50%',
+        right: zone.align === 'right' ? '8%' : 'auto',
         transform: zone.align === 'center' ? 'translateX(-50%)' : 'none',
-        width: zone.align === 'center' ? '90%' : '45%',
+        width: zone.align === 'center' ? '84%' : '42%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: zone.align === 'center' ? 'center' : zone.align === 'left' ? 'flex-start' : 'flex-end',
-        gap: '12px',
+        gap: '24px', // Increased gap for premium spacing
         textAlign: zone.align,
+        padding: '0 4%', // Add horizontal padding
       }}
     >
-      {elements.map((element, index) => renderElement(element, isActive, index))}
+      {elements.map((element, index) =>
+        renderElement(element, isActive, zoneIndex * 10 + index, totalElements)
+      )}
     </div>
   )
 }
@@ -260,12 +320,13 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
 
   return (
     <>
-      {layout.zones.map(zone => (
+      {layout.zones.map((zone, zoneIndex) => (
         <ZoneRenderer
           key={zone.name}
           zone={zone}
           elements={distribution.get(zone.name) ?? []}
           isActive={isActive}
+          zoneIndex={zoneIndex}
         />
       ))}
     </>
