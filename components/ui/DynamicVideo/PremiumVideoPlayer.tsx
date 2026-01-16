@@ -55,22 +55,26 @@ type TransitionType = 'sunburst' | 'wipe' | 'dissolve' | 'zoom' | 'morph' | 'con
 // Animation styles for elements - more variety
 type ElementAnimationStyle = 'fadeUp' | 'fadeDown' | 'scaleIn' | 'slideLeft' | 'slideRight' | 'blur' | 'pop' | 'float'
 
-// Get animation style based on transition type and element index
+// Get animation style based on transition type and element index - MORE VARIETY
 function getAnimationStyleForTransition(transitionType: TransitionType, index: number): ElementAnimationStyle {
+  // More diverse animations for content-only transitions
   const stylesByTransition: Record<TransitionType, ElementAnimationStyle[]> = {
     sunburst: ['scaleIn', 'pop', 'fadeUp'],
     wipe: ['slideLeft', 'slideRight', 'fadeUp'],
     dissolve: ['blur', 'fadeUp', 'fadeDown'],
     zoom: ['scaleIn', 'pop', 'fadeUp'],
     morph: ['float', 'fadeUp', 'blur'],
-    content: ['fadeUp', 'scaleIn', 'slideLeft', 'slideRight', 'blur', 'pop'],
-    blur: ['blur', 'fadeUp', 'float'],
-    slide: ['slideLeft', 'slideRight', 'fadeUp'],
-    scale: ['scaleIn', 'pop', 'fadeUp'],
+    // Content-only transitions have MORE variety
+    content: ['fadeUp', 'scaleIn', 'blur', 'float', 'slideLeft', 'slideRight', 'pop', 'fadeDown'],
+    blur: ['blur', 'fadeUp', 'float', 'scaleIn'],
+    slide: ['slideLeft', 'slideRight', 'fadeUp', 'fadeDown'],
+    scale: ['scaleIn', 'pop', 'fadeUp', 'float'],
   }
 
   const styles = stylesByTransition[transitionType] || stylesByTransition.content
-  return styles[index % styles.length]
+  // Add some randomness based on scene index to avoid repetition
+  const offset = Math.floor(index / 2)
+  return styles[(index + offset) % styles.length]
 }
 
 // Element animation styles - now with diverse animations
@@ -924,14 +928,14 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
   const currentScene = plan.scenes[currentSceneIndex]
   const totalDuration = plan.settings.totalDuration
 
-  // Varied transition types - alternate between overlay and content-only
+  // Mostly content-only transitions for fluid feel - overlay is rare
   const transitionSequence: TransitionType[] = [
-    'content',    // Scene 0->1: Just content animates (fluid)
-    'dissolve',   // Scene 1->2: Soft dissolve overlay
-    'content',    // Scene 2->3: Content animates (keeps it fresh)
-    'blur',       // Scene 3->4: Blur transition
-    'content',    // Scene 4->5: Content animates
-    'morph',      // Scene 5->0: Morph back to start
+    'content',    // Scene 0->1: Fluid content transition
+    'blur',       // Scene 1->2: Subtle blur (no harsh overlay)
+    'content',    // Scene 2->3: Fluid content transition
+    'scale',      // Scene 3->4: Scale effect (no overlay)
+    'content',    // Scene 4->5: Fluid content transition
+    'slide',      // Scene 5->0: Slide back (no overlay)
   ]
 
   // Get transition type from scene config, or use sequence fallback
@@ -989,37 +993,37 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
     }
 
     const transitionType = getTransitionType(currentSceneIndex)
-    const useOverlay = !['content', 'blur', 'slide', 'scale'].includes(transitionType)
+    const useOverlay = ['dissolve', 'morph', 'sunburst', 'wipe', 'zoom'].includes(transitionType)
 
     // Step 1: Elements exit
     setIsTransitioning(true)
 
     if (useOverlay) {
-      // With overlay transition (dissolve, morph, sunburst, etc.)
+      // With overlay transition - RARE, only for dramatic moments
       setTimeout(() => {
         setShowTransitionOverlay(true)
-      }, 250)
+      }, 280)
 
       setTimeout(() => {
         setCurrentSceneIndex(nextIndex)
         sceneStartTime.current = Date.now()
-      }, 450)
+      }, 480)
 
       setTimeout(() => {
         setShowTransitionOverlay(false)
         setIsTransitioning(false)
-      }, 750)
+      }, 800)
     } else {
-      // Content-only transition - elements just animate out/in
-      // Longer crossfade for smoother effect
+      // Content-only transition - smooth and fluid (PREFERRED)
+      // Elements exit with their animation, new elements enter smoothly
       setTimeout(() => {
         setCurrentSceneIndex(nextIndex)
         sceneStartTime.current = Date.now()
-      }, 350)
+      }, 400) // Slightly longer for smoother crossfade
 
       setTimeout(() => {
         setIsTransitioning(false)
-      }, 400)
+      }, 450)
     }
 
   }, [currentSceneIndex, plan.scenes.length, loop])

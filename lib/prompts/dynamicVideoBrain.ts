@@ -64,93 +64,162 @@ If a logo URL is provided, include it strategically:
 Choose the right layout for each scene:
 ${AVAILABLE_LAYOUTS}
 
-## BACKGROUNDS
+## BACKGROUNDS - VARIED BUT COHESIVE
 
-Use ONE of these consistently across all scenes:
-- **Dark elegant**: \`{ "type": "gradient", "colors": ["#0f172a", "#1e293b"], "direction": 180 }\`
-- **Brand teal**: \`{ "type": "gradient", "colors": ["#0D9488", "#0f172a"], "direction": 135 }\`
-- **Pure dark**: \`{ "type": "solid", "color": "#0a0a0a" }\`
-- **Warm dark**: \`{ "type": "gradient", "colors": ["#1a1a2e", "#16213e"], "direction": 180 }\`
-- **Deep purple**: \`{ "type": "gradient", "colors": ["#1e1b4b", "#312e81"], "direction": 135 }\`
-- **Ocean depth**: \`{ "type": "gradient", "colors": ["#0c4a6e", "#164e63"], "direction": 180 }\`
+⚠️ Keep the SAME color family but ADD VARIETY between scenes:
+- Change gradient **direction** (135°, 180°, 225°, 45°)
+- Add subtle **color shifts** (darker for problem, brighter for solution)
+- Mix gradient types (linear, radial)
 
-## DECORATIVE ELEMENTS
+### Background Palettes (pick ONE family, vary within it):
 
-Add subtle visual accents to fill empty space:
+**Dark Blue Family:**
+- Hook: \`{ "type": "gradient", "colors": ["#0f172a", "#1e3a5f"], "direction": 135 }\`
+- Problem: \`{ "type": "gradient", "colors": ["#0a0f1a", "#1e293b"], "direction": 180 }\`
+- Solution: \`{ "type": "radialGradient", "colors": ["#1e3a5f", "#0f172a"] }\`
+- Benefit: \`{ "type": "gradient", "colors": ["#1e293b", "#0f172a"], "direction": 225 }\`
+- CTA: \`{ "type": "gradient", "colors": ["#0f172a", "#1e3a5f"], "direction": 45 }\`
 
-### Shapes (use sparingly, 1-2 per scene max)
+**Teal/Cyan Family:**
+- Hook: \`{ "type": "gradient", "colors": ["#042f2e", "#0d4744"], "direction": 135 }\`
+- Problem: \`{ "type": "gradient", "colors": ["#021716", "#0d3331"], "direction": 180 }\`
+- Solution: \`{ "type": "radialGradient", "colors": ["#0d4744", "#042f2e"] }\`
+- Benefit: \`{ "type": "gradient", "colors": ["#0d3331", "#042f2e"], "direction": 225 }\`
+- CTA: \`{ "type": "gradient", "colors": ["#042f2e", "#115e59"], "direction": 45 }\`
+
+**Purple/Indigo Family:**
+- Hook: \`{ "type": "gradient", "colors": ["#1e1b4b", "#312e81"], "direction": 135 }\`
+- Problem: \`{ "type": "gradient", "colors": ["#0f0a2e", "#1e1b4b"], "direction": 180 }\`
+- Solution: \`{ "type": "radialGradient", "colors": ["#3730a3", "#1e1b4b"] }\`
+- Benefit: \`{ "type": "gradient", "colors": ["#312e81", "#1e1b4b"], "direction": 225 }\`
+- CTA: \`{ "type": "gradient", "colors": ["#1e1b4b", "#4338ca"], "direction": 45 }\`
+
+**Warm Dark Family:**
+- Hook: \`{ "type": "gradient", "colors": ["#1c1917", "#292524"], "direction": 135 }\`
+- Problem: \`{ "type": "gradient", "colors": ["#0a0a0a", "#1c1917"], "direction": 180 }\`
+- Solution: \`{ "type": "radialGradient", "colors": ["#44403c", "#1c1917"] }\`
+- Benefit: \`{ "type": "gradient", "colors": ["#292524", "#1c1917"], "direction": 225 }\`
+- CTA: \`{ "type": "gradient", "colors": ["#1c1917", "#44403c"], "direction": 45 }\`
+
+## DECORATIVE ELEMENTS - RICH VISUALS
+
+Add multiple decorative elements to make slides visually rich:
+
+### Glowing Orbs (2-3 per scene, different positions)
 \`\`\`json
 {
   "type": "shape",
   "shape": "circle",
-  "width": 80,
-  "height": 80,
-  "color": "rgba(255,255,255,0.05)",
+  "width": 120,
+  "height": 120,
+  "color": "rgba(13, 148, 136, 0.15)",
   "position": { "x": "right", "y": "top" }
 }
 \`\`\`
 
-Available shapes:
-- "circle" - Subtle glowing orbs
-- "rounded" - Rounded rectangles for accent
-- "line" - Thin accent lines
-
-### Dividers (for visual separation)
+### Corner Accents (small decorative dots)
 \`\`\`json
 {
-  "type": "divider",
-  "width": "40%",
-  "color": "rgba(255,255,255,0.2)",
-  "thickness": 2,
-  "position": { "x": "center", "y": "center" }
+  "type": "shape",
+  "shape": "circle",
+  "width": 8,
+  "height": 8,
+  "color": "rgba(255,255,255,0.3)",
+  "position": { "x": 90, "y": 10 }
 }
 \`\`\`
 
-## VIDEO STRUCTURE (5 SCENES)
+### Accent Lines
+\`\`\`json
+{
+  "type": "shape",
+  "shape": "line",
+  "width": 60,
+  "height": 2,
+  "color": "rgba(255,255,255,0.2)",
+  "position": { "x": "left", "y": "bottom" }
+}
+\`\`\`
+
+### Gradient Dividers
+\`\`\`json
+{
+  "type": "divider",
+  "width": "30%",
+  "color": "rgba(255,255,255,0.15)",
+  "thickness": 1
+}
+\`\`\`
+
+### Floating Rectangles (glassmorphism accent)
+\`\`\`json
+{
+  "type": "shape",
+  "shape": "rounded",
+  "width": 40,
+  "height": 40,
+  "color": "rgba(255,255,255,0.05)",
+  "position": { "x": 15, "y": 75 }
+}
+\`\`\`
+
+⚠️ IMPORTANT: Add 2-4 decorative shapes per scene for visual richness!
+
+## VIDEO STRUCTURE (5 SCENES) - RICH & VARIED
 
 ### Scene 1: HOOK (3s)
+- Background: Use direction 135°, slightly brighter
 - Layout: "focus" or "hero-central"
-- Content: Impactful question OR statistic
-- Elements:
+- Elements (5-6 total):
   - 1 hero text with gradient
-  - 1 optional subtitle for context
-  - 1 subtle decorative shape
+  - 1 subtitle for context
+  - 2-3 decorative orbs (different positions/sizes)
+  - 1 corner accent dot
   - Logo at bottom if provided
+- Transition: "content"
 
 ### Scene 2: PROBLEM (3s)
+- Background: Darker tone, direction 180°
 - Layout: "hero-central" or "stack"
-- Content: The pain point with emotional connection
-- Elements:
-  - 1 badge ("THE PROBLEM" or similar)
-  - 1 headline (main pain)
+- Elements (5-6 total):
+  - 1 badge ("THE PROBLEM")
+  - 1 headline (pain point)
   - 1 subtitle (consequence)
-  - 1 decorative accent
+  - 2 decorative shapes (orbs, accents)
+  - 1 divider line
+- Transition: "content" or "blur"
 
 ### Scene 3: SOLUTION (4s)
-- Layout: "hero-central" or "split-top"
-- Content: Product introduction with value prop
-- Elements:
+- Background: Radial gradient (spotlight effect)
+- Layout: "hero-central"
+- Elements (5-7 total):
   - Logo prominent if provided
-  - 1 hero text (product name + one-liner)
-  - 1 subtitle (key value proposition)
-  - 1 badge (optional: "INTRODUCING" or category)
+  - 1 badge ("INTRODUCING" or category)
+  - 1 hero text with gradient
+  - 1 subtitle (value prop)
+  - 2-3 decorative orbs
+- Transition: "content"
 
 ### Scene 4: BENEFIT (3s)
+- Background: Direction 225°
 - Layout: "focus" or "impact"
-- Content: Transformation/result they'll achieve
-- Elements:
-  - 1 hero text with gradient (key benefit)
+- Elements (5-6 total):
+  - 1 hero text with gradient
   - 1 subtitle (supporting detail)
-  - 1-2 decorative shapes
+  - 3 decorative shapes (varied sizes)
+  - 1 accent line
+- Transition: "content" or "scale"
 
 ### Scene 5: CTA (3s)
+- Background: Direction 45°, slightly brighter
 - Layout: "hero-central" or "stack"
-- Content: Clear call-to-action with urgency
-- Elements:
-  - 1 headline (action phrase)
-  - 1 badge (CTA button: "START FREE", "TRY NOW")
+- Elements (5-7 total):
+  - 1 headline (action)
+  - 1 badge (CTA: "START FREE")
+  - 1 subtitle (guarantee/bonus)
   - Logo at bottom if provided
-  - 1 subtitle (optional: bonus or guarantee)
+  - 2-3 decorative accents
+- Transition: "content"
 
 ## TEXT GRADIENTS
 
@@ -192,27 +261,28 @@ When logo URL is provided:
 Sizes: "small" (40px), "medium" (60px), "large" (80px)
 Styles: "normal", "glow" (subtle glow effect), "glass" (glassmorphism)
 
-## TRANSITIONS
+## TRANSITIONS - MOSTLY FLUID, RARELY OVERLAY
 
-Use VARIED transitions - mix overlay effects with smooth content animations:
+⚠️ CRITICAL: Use content-only transitions 80% of the time!
+Overlay transitions should be RARE (only 1 per video max).
 
-### With Overlay Effect (dramatic moments):
-- "dissolve" - Soft fade overlay (calm, elegant)
-- "morph" - Organic wave sweep (solution reveal)
-- "sunburst" - Radial burst from center (hook/CTA impact)
-- "wipe" - Directional sweep (problem/change)
+### Content-Only Transitions (USE MOST OF THE TIME):
+- "content" - Elements smoothly fade out/in. PREFERRED!
+- "blur" - Elements blur out/in, cinematic feel
+- "slide" - Elements slide in different directions
+- "scale" - Elements scale with subtle bounce
 
-### Content-Only (fluid, no overlay):
-- "content" - Elements smoothly fade out/in, NO overlay. Very fluid and modern!
-- "blur" - Elements blur out/in, subtle and cinematic
-- "slide" - Elements slide out/in different directions
-- "scale" - Elements scale out/in with bounce
+### Overlay Transitions (USE SPARINGLY - max 1 per video):
+- "dissolve" - Only for very dramatic moment
+- "morph" - Only for major reveal
 
-⚠️ IMPORTANT: Alternate between overlay and content-only transitions:
-- Scene 1→2: Use "content" (fluid)
-- Scene 2→3: Use "dissolve" or "morph" (overlay)
-- Scene 3→4: Use "content" or "blur" (fluid)
-- Scene 4→5: Use "sunburst" (dramatic CTA)
+⚠️ RECOMMENDED SEQUENCE:
+- Scene 1→2: \`"content"\` (fluid, no flash)
+- Scene 2→3: \`"content"\` or \`"blur"\` (keep it smooth)
+- Scene 3→4: \`"content"\` (no interruption)
+- Scene 4→5: \`"content"\` or \`"scale"\` (stay fluid)
+
+The video should feel like ONE continuous flow, not a slideshow!
 
 ## EXAMPLE OUTPUT
 
