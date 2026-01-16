@@ -3,19 +3,16 @@
 /**
  * VIDEO GENERATION PAGE
  *
- * Uses the creative-refined API with:
- * - Real-time progress tracking via SSE
- * - Vision feedback loop (AI self-critique)
- * - Smart effect selection
+ * Uses the dynamic video composition system where the AI
+ * decides placement, animations, transitions for each scene.
  */
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Button, Textarea, Card } from '@/components/ui'
-import { VideoPreviewPlayer } from '@/components/ui/VideoPreviewPlayer'
+import { DynamicVideoPlayer } from '@/components/ui/DynamicVideo'
 import type { ChatMessage } from '@/lib/types'
-import type { Base44Plan } from '@/lib/templates/base44'
-import { TEMPLATE_ID } from '@/lib/templates/base44'
+import type { VideoPlan } from '@/lib/video-components/types'
 import { retrieveImages } from '@/lib/imageStore'
 
 type GenerationPhase = 'idle' | 'analyzing' | 'generating' | 'refining' | 'complete' | 'error'
@@ -49,7 +46,7 @@ function ConversationContent() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
   const [phase, setPhase] = useState<GenerationPhase>('idle')
-  const [plan, setPlan] = useState<Base44Plan | null>(null)
+  const [plan, setPlan] = useState<VideoPlan | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Progress tracking
@@ -147,38 +144,24 @@ function ConversationContent() {
     setPlan(null)
     setError(null)
     setProgress(0)
-    setProgressMessage('Starting...')
+    setProgressMessage('Analyzing your request...')
     setQualityScore(null)
 
     addMessage('user', prompt)
-
-    const images = imagesRef.current
-    if (images.length > 0) {
-      addMessage('assistant', `${images.length} image(s) detected. Creating your video with optimized effects...`)
-    } else {
-      addMessage('assistant', 'Creating your marketing video with cinematic effects...')
-    }
+    addMessage('assistant', 'Creating your video with dynamic compositions...')
 
     try {
       setPhase('generating')
+      setProgressMessage('AI is designing scenes...')
+      setProgress(30)
 
-      // Generate a job ID for progress tracking
-      const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+      console.log('[Generate] Calling /api/generate-dynamic...')
 
-      // Subscribe to progress updates BEFORE making the request
-      subscribeToProgress(jobId)
-
-      console.log('[Generate] Calling /api/creative-refined with progress tracking...')
-
-      const response = await fetch('/api/creative-refined', {
+      const response = await fetch('/api/generate-dynamic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: prompt,
-          providedImages: images.length > 0 ? images : undefined,
-          enableRefinement: true,
-          maxIterations: 2,
-          jobId,
+          description: prompt,
         }),
       })
 
@@ -187,53 +170,41 @@ function ConversationContent() {
         throw new Error(errorData.error || 'Failed to generate')
       }
 
+      setProgress(70)
+      setProgressMessage('Finalizing composition...')
+
       const data = await response.json()
-      const generatedPlan: Base44Plan = data.data
+      const generatedPlan: VideoPlan = data.data
 
-      console.log('[Generate] Plan received:', generatedPlan.templateId)
-      console.log('[Generate] Effects preset:', generatedPlan.settings.effects?.preset)
-      console.log('[Generate] Refinement:', data.refinement)
-
-      // VERIFY templateId
-      if (generatedPlan.templateId !== TEMPLATE_ID) {
-        throw new Error(`Invalid templateId: ${generatedPlan.templateId}. Expected: ${TEMPLATE_ID}`)
-      }
+      console.log('[Generate] Plan received:', generatedPlan.id)
+      console.log('[Generate] Scenes:', generatedPlan.scenes.length)
 
       setPlan(generatedPlan)
       setPhase('complete')
       setProgress(100)
+      setProgressMessage('Complete!')
 
-      const refinementInfo = data.refinement?.enabled
-        ? `\n**Quality:** ${data.refinement.finalScore}/10 (${data.refinement.iterations} iteration${data.refinement.iterations > 1 ? 's' : ''})`
-        : ''
-
-      const effectsInfo = generatedPlan.settings.effects
-        ? `\n**Effects style:** ${generatedPlan.settings.effects.preset}`
-        : ''
+      // Build scenes summary
+      const scenesSummary = generatedPlan.scenes
+        .map((scene, i) => `${i + 1}. **${scene.name.toUpperCase()}:** ${scene.elements.length} elements, ${scene.duration}s`)
+        .join('\n')
 
       addMessage('assistant', `✅ **Video created successfully!**
 
-**Product:** ${generatedPlan.brand.name}
-**Palette:** ${generatedPlan.settings.palette}${effectsInfo}${refinementInfo}
+**Brand:** ${generatedPlan.brand.name}
+**Duration:** ${generatedPlan.settings.totalDuration}s
+**Format:** ${generatedPlan.settings.aspectRatio}
 
-**6 scenes generated:**
-1. **HOOK:** ${generatedPlan.story.hook.headline}
-2. **PROBLEM:** ${generatedPlan.story.problem.headline}
-3. **SOLUTION:** ${generatedPlan.story.solution.headline}
-4. **DEMO:** ${generatedPlan.story.demo.headline}
-5. **PROOF:** ${generatedPlan.story.proof.headline}
-6. **CTA:** ${generatedPlan.story.cta.headline}`)
+**${generatedPlan.scenes.length} scenes generated:**
+${scenesSummary}
+
+Each scene has unique positioning, animations, and transitions designed by AI.`)
 
     } catch (err) {
       console.error('[Generate] Error:', err)
       setPhase('error')
       setError(err instanceof Error ? err.message : 'An error occurred')
       addMessage('assistant', `❌ Error: ${err instanceof Error ? err.message : 'Unknown error'}`)
-
-      // Close progress subscription on error
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-      }
     }
   }
 
@@ -368,7 +339,7 @@ function ConversationContent() {
       <div className="w-[480px] flex flex-col gap-4 overflow-y-auto">
         {/* Video Player */}
         {plan ? (
-          <VideoPreviewPlayer plan={plan} />
+          <DynamicVideoPlayer plan={plan} autoPlay={true} loop={true} showControls={true} />
         ) : (
           <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#F0FDFA] to-[#FFF7ED] border border-[#E4E4E7]" style={{ aspectRatio: '9/16', maxHeight: '600px', minHeight: '400px' }}>
             <div className="absolute inset-0 flex items-center justify-center">
@@ -451,46 +422,71 @@ function ConversationContent() {
                 <span className="text-[#18181B] font-medium">{plan.brand.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#52525B]">Palette</span>
-                <span className="text-[#18181B] font-medium capitalize">{plan.settings.palette}</span>
-              </div>
-              {plan.settings.effects && (
-                <div className="flex justify-between">
-                  <span className="text-[#52525B]">Effects style</span>
-                  <span className="text-[#18181B] font-medium capitalize">{plan.settings.effects.preset}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
                 <span className="text-[#52525B]">Duration</span>
-                <span className="text-[#18181B] font-medium capitalize">{plan.settings.duration}</span>
+                <span className="text-[#18181B] font-medium">{plan.settings.totalDuration}s</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#52525B]">Images</span>
-                <span className="text-[#18181B] font-medium">{plan.casting.images.length}</span>
+                <span className="text-[#52525B]">Format</span>
+                <span className="text-[#18181B] font-medium">{plan.settings.aspectRatio}</span>
               </div>
-              {qualityScore !== null && (
-                <div className="flex justify-between">
-                  <span className="text-[#52525B]">Quality score</span>
-                  <span className="text-[#059669] font-semibold">{qualityScore}/10</span>
+              <div className="flex justify-between">
+                <span className="text-[#52525B]">Scenes</span>
+                <span className="text-[#18181B] font-medium">{plan.scenes.length}</span>
+              </div>
+              {/* Colors */}
+              <div className="pt-2 border-t border-[#E4E4E7]">
+                <span className="text-[#52525B]">Colors</span>
+                <div className="flex gap-2 mt-2">
+                  <div
+                    className="w-6 h-6 rounded-lg shadow-sm border border-[#E4E4E7]"
+                    style={{ backgroundColor: plan.brand.colors.primary }}
+                    title="Primary"
+                  />
+                  <div
+                    className="w-6 h-6 rounded-lg shadow-sm border border-[#E4E4E7]"
+                    style={{ backgroundColor: plan.brand.colors.secondary }}
+                    title="Secondary"
+                  />
+                  {plan.brand.colors.accent && (
+                    <div
+                      className="w-6 h-6 rounded-lg shadow-sm border border-[#E4E4E7]"
+                      style={{ backgroundColor: plan.brand.colors.accent }}
+                      title="Accent"
+                    />
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </Card>
         )}
 
-        {/* Story scenes */}
+        {/* Dynamic scenes */}
         {plan && (
           <Card variant="elevated" padding="md">
             <h3 className="font-semibold text-[#18181B] mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-              Scenes
+              Scenes ({plan.scenes.length})
             </h3>
             <div className="space-y-2">
-              {Object.entries(plan.story).map(([key, scene]) => (
-                <div key={key} className="p-3 rounded-xl bg-[#FAFAF9]">
-                  <div className="text-xs font-semibold text-[#0D9488] uppercase mb-1">{key}</div>
-                  <div className="text-sm text-[#18181B] font-medium">{scene.headline}</div>
-                  {scene.subtext && (
-                    <div className="text-xs text-[#52525B] mt-1">{scene.subtext}</div>
+              {plan.scenes.map((scene, index) => (
+                <div key={scene.id || index} className="p-3 rounded-xl bg-[#FAFAF9]">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold text-[#0D9488] uppercase">{scene.name}</span>
+                    <span className="text-xs text-[#A1A1AA]">{scene.duration}s</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {scene.elements.map((el, elIndex) => (
+                      <span
+                        key={elIndex}
+                        className="px-2 py-0.5 text-xs bg-white border border-[#E4E4E7] rounded-full text-[#52525B]"
+                      >
+                        {el.type}
+                      </span>
+                    ))}
+                  </div>
+                  {scene.transition && (
+                    <div className="mt-1 text-xs text-[#A1A1AA]">
+                      → {scene.transition.type}
+                    </div>
                   )}
                 </div>
               ))}
