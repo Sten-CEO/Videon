@@ -14,12 +14,10 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import type { VideoPlan, Scene, SceneElement, TextElement, BadgeElement } from '@/lib/video-components/types'
+import type { VideoPlan, Scene, SceneElement, TextElement, BadgeElement, TransitionType } from '@/lib/video-components/types'
 import { getBackgroundCSS } from '@/lib/video-components/backgrounds'
 import { badgeVariants } from '@/lib/video-components/styles'
 import {
-  type TransitionEffect,
-  transitionEffectNames,
   textGradients,
   getTextGradient,
   type TextGradientName,
@@ -45,9 +43,6 @@ const EASING = {
 const TEXT_GRADIENTS = Object.fromEntries(
   Object.entries(textGradients).map(([key, value]) => [key, value.gradient])
 ) as Record<TextGradientName, string>
-
-// All available transition types from premium effects library
-type TransitionType = TransitionEffect
 
 // Element animation styles
 function getElementAnimation(
@@ -209,7 +204,7 @@ function WordByWordText({
 }
 
 // ============================================================================
-// DRAMATIC CINEMATIC TRANSITION OVERLAY
+// SIMPLE ELEGANT TRANSITION OVERLAY (Apple/Linear style)
 // ============================================================================
 
 interface TransitionOverlayProps {
@@ -228,276 +223,29 @@ function TransitionOverlay({ isActive, type, color = '#ffffff' }: TransitionOver
     pointerEvents: 'none',
   }
 
-  // SUNBURST - Explosive radial burst from center
-  if (type === 'sunburst') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: `radial-gradient(circle at 50% 50%, ${color} 0%, ${color}80 20%, transparent 60%)`, animation: 'sunburstExpand 1s cubic-bezier(0.16, 1, 0.3, 1) forwards' }} />
-        <div style={{ ...baseStyle, background: `radial-gradient(circle at 50% 50%, transparent 20%, ${color}60 40%, transparent 60%)`, animation: 'sunburstExpand 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards' }} />
-        <div style={{ ...baseStyle, background: 'rgba(255,255,255,0.4)', animation: 'flashPulse 0.6s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // ZOOM - Impactful scale burst with rings
-  if (type === 'zoom') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: `radial-gradient(circle at 50% 50%, ${color} 0%, ${color}80 15%, transparent 50%)`, animation: 'zoomBurst 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }} />
-        <div style={{ ...baseStyle, border: `3px solid ${color}60`, borderRadius: '50%', width: '50%', height: '50%', top: '25%', left: '25%', animation: 'ringExpand 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards' }} />
-        <div style={{ ...baseStyle, border: `2px solid ${color}40`, borderRadius: '50%', width: '30%', height: '30%', top: '35%', left: '35%', animation: 'ringExpand 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards' }} />
-      </>
-    )
-  }
-
-  // VORTEX - Spiral swirl inward
-  if (type === 'vortex') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: `conic-gradient(from 0deg at 50% 50%, ${color} 0deg, transparent 60deg, ${color} 120deg, transparent 180deg, ${color} 240deg, transparent 300deg)`, animation: 'vortexSwirl 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards' }} />
-        <div style={{ ...baseStyle, background: `radial-gradient(circle, ${color}60 0%, transparent 50%)`, animation: 'zoomBurst 1s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // RIPPLE - Water ripple effect
-  if (type === 'ripple') {
-    return (
-      <>
-        <div style={{ ...baseStyle, border: `4px solid ${color}`, borderRadius: '50%', animation: 'rippleExpand 1s ease-out forwards' }} />
-        <div style={{ ...baseStyle, border: `3px solid ${color}80`, borderRadius: '50%', animation: 'rippleExpand 1s ease-out 0.15s forwards' }} />
-        <div style={{ ...baseStyle, border: `2px solid ${color}60`, borderRadius: '50%', animation: 'rippleExpand 1s ease-out 0.3s forwards' }} />
-        <div style={{ ...baseStyle, border: `1px solid ${color}40`, borderRadius: '50%', animation: 'rippleExpand 1s ease-out 0.45s forwards' }} />
-      </>
-    )
-  }
-
-  // STARBURST - Multi-ray star explosion
-  if (type === 'starburst') {
-    return (
-      <>
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
-          <div key={i} style={{ ...baseStyle, background: `linear-gradient(${angle}deg, ${color} 0%, transparent 50%)`, transformOrigin: 'center', animation: `sunburstExpand 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.02}s forwards` }} />
-        ))}
-        <div style={{ ...baseStyle, background: 'rgba(255,255,255,0.5)', animation: 'flashPulse 0.4s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // WIPE - Smooth diagonal sweep
-  if (type === 'wipe') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: `linear-gradient(135deg, ${color} 0%, ${color}90 45%, transparent 55%)`, animation: 'diagonalWipe 0.9s cubic-bezier(0.87, 0, 0.13, 1) forwards' }} />
-        <div style={{ ...baseStyle, background: `linear-gradient(135deg, transparent 40%, ${color}40 50%, transparent 60%)`, animation: 'diagonalWipe 0.9s cubic-bezier(0.87, 0, 0.13, 1) 0.05s forwards' }} />
-      </>
-    )
-  }
-
-  // BLINDS - Venetian blinds reveal
-  if (type === 'blinds') {
-    return (
-      <>
-        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-          <div key={i} style={{ ...baseStyle, top: `${i * 12.5}%`, height: '12.5%', background: color, transformOrigin: 'top', animation: `blindsReveal 0.8s ease-out ${i * 0.05}s forwards reverse` }} />
-        ))}
-      </>
-    )
-  }
-
-  // CURTAIN - Theatrical curtain opening
-  if (type === 'curtain') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: color, animation: 'curtainOpen 1s cubic-bezier(0.16, 1, 0.3, 1) forwards reverse' }} />
-        <div style={{ ...baseStyle, background: `linear-gradient(90deg, rgba(0,0,0,0.3) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.3) 100%)`, animation: 'curtainOpen 1s cubic-bezier(0.16, 1, 0.3, 1) forwards reverse' }} />
-      </>
-    )
-  }
-
-  // SLIDE - Smooth directional slide
-  if (type === 'slide') {
-    return (
-      <div style={{ ...baseStyle, background: `linear-gradient(90deg, ${color} 0%, ${color}80 80%, transparent 100%)`, animation: 'diagonalWipe 0.7s ease-out forwards' }} />
-    )
-  }
-
-  // PUSH - Push current scene out
-  if (type === 'push') {
-    return (
-      <div style={{ ...baseStyle, background: color, transform: 'translateX(-100%)', animation: 'diagonalWipe 0.6s ease-out forwards' }} />
-    )
-  }
-
-  // MORPH - Organic color wave
-  if (type === 'morph') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: `linear-gradient(135deg, ${color}90 0%, transparent 50%, ${color}60 100%)`, backgroundSize: '400% 400%', animation: 'morphWave 1.1s ease-in-out forwards' }} />
-        <div style={{ ...baseStyle, background: `linear-gradient(225deg, transparent 0%, ${color}50 50%, transparent 100%)`, backgroundSize: '300% 300%', animation: 'morphWave 1.1s ease-in-out 0.1s forwards' }} />
-        <div style={{ ...baseStyle, background: `radial-gradient(ellipse at center, ${color}50 0%, transparent 70%)`, animation: 'glowPulse 0.8s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // DISSOLVE - Soft ethereal fade
-  if (type === 'dissolve') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: `radial-gradient(ellipse at center, ${color}80 0%, ${color}40 50%, transparent 80%)`, animation: 'dissolvePulse 1s ease-in-out forwards' }} />
-        <div style={{ ...baseStyle, backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', animation: 'blurFade 1s ease-in-out forwards' }} />
-      </>
-    )
-  }
-
-  // LIQUID - Fluid transition
-  if (type === 'liquid') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: color, animation: 'liquidFlow 1.2s ease-in-out forwards' }} />
-        <div style={{ ...baseStyle, background: `linear-gradient(180deg, transparent 0%, ${color}40 50%, transparent 100%)`, animation: 'liquidFlow 1.2s ease-in-out 0.1s forwards' }} />
-        <div style={{ ...baseStyle, background: `radial-gradient(ellipse at 50% 100%, ${color}60 0%, transparent 50%)`, animation: 'glowPulse 1s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // SMOKE - Ethereal smoke reveal
-  if (type === 'smoke') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: `radial-gradient(ellipse at 50% 80%, ${color}60 0%, transparent 60%)`, animation: 'smokeRise 1.3s ease-out forwards' }} />
-        <div style={{ ...baseStyle, background: `radial-gradient(ellipse at 30% 70%, ${color}40 0%, transparent 50%)`, animation: 'smokeRise 1.3s ease-out 0.2s forwards' }} />
-        <div style={{ ...baseStyle, background: `radial-gradient(ellipse at 70% 75%, ${color}40 0%, transparent 50%)`, animation: 'smokeRise 1.3s ease-out 0.1s forwards' }} />
-      </>
-    )
-  }
-
-  // INK - Ink drop spread
-  if (type === 'ink') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: color, animation: 'inkSpread 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards' }} />
-        <div style={{ ...baseStyle, background: `${color}80`, animation: 'inkSpread 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards' }} />
-      </>
-    )
-  }
-
-  // GLITCH - Digital glitch distortion
-  if (type === 'glitch') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: `linear-gradient(90deg, transparent 0%, ${color} 10%, transparent 20%, ${color} 30%, transparent 40%)`, animation: 'glitchFlash 0.6s steps(3) forwards' }} />
-        <div style={{ ...baseStyle, background: color, mixBlendMode: 'difference', animation: 'glitchSlice 0.5s steps(5) forwards' }} />
-        <div style={{ ...baseStyle, background: '#ff00ff40', animation: 'glitchFlash 0.4s steps(2) forwards' }} />
-        <div style={{ ...baseStyle, background: '#00ffff40', animation: 'glitchFlash 0.4s steps(2) 0.1s forwards' }} />
-      </>
-    )
-  }
-
-  // PIXELATE - Pixel scatter
-  if (type === 'pixelate') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: color, animation: 'pixelateIn 0.8s ease-out forwards' }} />
-        <div style={{ ...baseStyle, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', animation: 'blurFade 0.8s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // PRISM - Rainbow light refraction
-  if (type === 'prism') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: 'linear-gradient(135deg, #ff000080, #ff800080, #ffff0080, #00ff0080, #00ffff80, #0000ff80, #ff00ff80)', animation: 'prismSplit 0.9s ease-out forwards' }} />
-        <div style={{ ...baseStyle, background: `radial-gradient(circle, ${color}60 0%, transparent 50%)`, animation: 'zoomBurst 0.8s ease-out forwards' }} />
-        <div style={{ ...baseStyle, background: 'rgba(255,255,255,0.3)', animation: 'flashPulse 0.5s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // NEON - Neon glow burst
-  if (type === 'neon') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: 'transparent', boxShadow: `0 0 100px ${color}, 0 0 200px ${color}80`, animation: 'neonPulse 0.8s ease-out forwards' }} />
-        <div style={{ ...baseStyle, background: `radial-gradient(circle, ${color}40 0%, transparent 50%)`, animation: 'zoomBurst 0.8s ease-out forwards' }} />
-        <div style={{ ...baseStyle, border: `2px solid ${color}`, borderRadius: '50%', animation: 'ringExpand 0.6s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // ELECTRIC - Lightning flash
-  if (type === 'electric') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: 'white', animation: 'electricFlash 0.5s steps(5) forwards' }} />
-        <div style={{ ...baseStyle, background: `linear-gradient(180deg, transparent 45%, ${color} 48%, ${color} 52%, transparent 55%)`, animation: 'electricBolt 0.5s ease-out forwards' }} />
-        <div style={{ ...baseStyle, background: '#00ffff60', mixBlendMode: 'overlay', animation: 'flashPulse 0.3s ease-out forwards' }} />
-        <div style={{ ...baseStyle, background: `radial-gradient(circle at 50% 50%, ${color}40 0%, transparent 40%)`, animation: 'zoomBurst 0.4s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // HEXAGON - Hexagonal tile reveal
-  if (type === 'hexagon') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: color, animation: 'hexagonExpand 1s cubic-bezier(0.16, 1, 0.3, 1) forwards' }} />
-        <div style={{ ...baseStyle, background: `${color}60`, animation: 'hexagonExpand 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards' }} />
-      </>
-    )
-  }
-
-  // DIAMOND - Diamond shape expansion
-  if (type === 'diamond') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: color, clipPath: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)', animation: 'diamondWipe 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards' }} />
-        <div style={{ ...baseStyle, background: 'rgba(255,255,255,0.3)', animation: 'flashPulse 0.5s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // SHATTER - Glass shatter effect
-  if (type === 'shatter') {
-    const pieces = [
-      { x: -80, y: -60, r: 25 }, { x: 80, y: -80, r: -30 }, { x: -60, y: 80, r: 45 },
-      { x: 60, y: 60, r: -45 }, { x: 0, y: -100, r: 15 }, { x: -100, y: 0, r: -20 },
-    ]
-    return (
-      <>
-        {pieces.map((p, i) => (
-          <div key={i} style={{ ...baseStyle, background: `${color}${90 - i * 10}`, clipPath: `polygon(${20 + i * 10}% ${10 + i * 5}%, ${60 + i * 5}% ${20 + i * 8}%, ${50 - i * 3}% ${70 + i * 5}%)`, ['--shatter-x' as string]: `${p.x}px`, ['--shatter-y' as string]: `${p.y}px`, ['--shatter-r' as string]: `${p.r}deg`, animation: `shatterPiece 0.7s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.03}s forwards` }} />
-        ))}
-        <div style={{ ...baseStyle, background: 'rgba(255,255,255,0.4)', animation: 'flashPulse 0.3s ease-out forwards' }} />
-      </>
-    )
-  }
-
-  // MOSAIC - Mosaic tiles
-  if (type === 'mosaic') {
-    return (
-      <>
-        {Array.from({ length: 16 }).map((_, i) => (
-          <div key={i} style={{ ...baseStyle, top: `${Math.floor(i / 4) * 25}%`, left: `${(i % 4) * 25}%`, width: '25%', height: '25%', background: `${color}${Math.floor(Math.random() * 40 + 60).toString(16)}`, animation: `mosaicReveal 0.6s ease-out ${Math.random() * 0.3}s forwards reverse` }} />
-        ))}
-      </>
-    )
-  }
-
-  // GEOMETRIC - Abstract geometric shapes
-  if (type === 'geometric') {
-    return (
-      <>
-        <div style={{ ...baseStyle, background: color, animation: 'geometricTransform 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards' }} />
-        <div style={{ ...baseStyle, background: `${color}60`, animation: 'geometricTransform 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards' }} />
-      </>
-    )
-  }
-
-  // Default fallback - simple dissolve
+  // SIMPLE FADE with subtle glow - Default elegant transition
   return (
-    <div style={{ ...baseStyle, background: `radial-gradient(circle, ${color}80 0%, transparent 70%)`, animation: 'dissolvePulse 0.8s ease-out forwards' }} />
+    <>
+      {/* Soft radial glow from center */}
+      <div
+        style={{
+          ...baseStyle,
+          background: `radial-gradient(ellipse at center, ${color}30 0%, transparent 70%)`,
+          opacity: 1,
+          animation: 'simpleFadeInOut 0.8s ease-in-out forwards',
+        }}
+      />
+      {/* Very subtle blur overlay */}
+      <div
+        style={{
+          ...baseStyle,
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          opacity: 0.5,
+          animation: 'simpleFadeInOut 0.6s ease-in-out forwards',
+        }}
+      />
+    </>
   )
 }
 
@@ -847,8 +595,10 @@ function SceneContent({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '28px',
-        padding: '10%',
+        gap: '24px',
+        // Safe margins: more padding to avoid text touching edges
+        padding: '60px 32px',
+        paddingTop: '80px', // Extra top padding for badge/brand
         zIndex: 10,
       }}
     >
@@ -976,8 +726,8 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
   const previousScene = previousSceneIndex !== null ? plan.scenes[previousSceneIndex] : null
   const totalDuration = plan.settings.totalDuration
 
-  // Determine transition type based on scene index - cycles through ALL 25 premium transitions
-  const currentTransitionType = transitionEffectNames[currentSceneIndex % transitionEffectNames.length]
+  // Simple elegant transition - always use fade (Apple/Linear style)
+  const currentTransitionType = 'fade' as TransitionType
 
   // Extract colors for current and previous scenes
   const getSceneColors = useCallback((scene: Scene) => {
@@ -1003,7 +753,7 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
     if (progressRef.current) clearInterval(progressRef.current)
   }, [])
 
-  // Go to next scene with SEAMLESS cinematic transition
+  // Go to next scene with SMOOTH, SUBTLE transition (Apple/Linear style)
   const goToNextScene = useCallback(() => {
     const nextIndex = (currentSceneIndex + 1) % plan.scenes.length
 
@@ -1017,32 +767,32 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
     setIsTransitioning(true)
     setBackgroundOpacity(0) // Start crossfade
 
-    // Step 2: Show dramatic transition overlay (covers the crossfade)
+    // Step 2: Show subtle transition overlay (very brief)
     setTimeout(() => {
       setShowTransitionOverlay(true)
-    }, 100)
+    }, 50)
 
-    // Step 3: Switch scene while overlay is at peak (background crossfades underneath)
+    // Step 3: Switch scene quickly
     setTimeout(() => {
       setCurrentSceneIndex(nextIndex)
       sceneStartTime.current = Date.now()
-    }, 400)
+    }, 200)
 
     // Step 4: Start fading in new background
     setTimeout(() => {
       setBackgroundOpacity(1)
-    }, 500)
+    }, 250)
 
-    // Step 5: Hide overlay - new elements animate in
+    // Step 5: Hide overlay quickly - elements animate in smoothly
     setTimeout(() => {
       setShowTransitionOverlay(false)
-    }, 900)
+    }, 450)
 
     // Step 6: Transition complete
     setTimeout(() => {
       setIsTransitioning(false)
       setPreviousSceneIndex(null)
-    }, 1200)
+    }, 600)
 
   }, [currentSceneIndex, plan.scenes.length, loop])
 
@@ -1198,30 +948,31 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
         />
 
         {/* Scene content - elements animate with word-by-word */}
+        {/* Content is always visible, only fades during brief overlay */}
         <div style={{ position: 'relative', zIndex: 10 }}>
           <SceneContent
             scene={currentScene}
-            isVisible={!isTransitioning}
-            isExiting={isTransitioning}
+            isVisible={true}
+            isExiting={false}
             useWordAnimation={true}
           />
         </div>
 
-        {/* DRAMATIC TRANSITION OVERLAY - Full screen flash/burst */}
+        {/* Subtle transition overlay (very brief and gentle) */}
         <TransitionOverlay
           isActive={showTransitionOverlay}
           type={currentTransitionType}
           color={sceneColors[0]}
         />
 
-        {/* Additional color blend overlay during transition */}
-        {isTransitioning && (
+        {/* Minimal color accent during transition (very subtle) */}
+        {showTransitionOverlay && (
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              background: `radial-gradient(ellipse at center, ${sceneColors[0]}40 0%, transparent 70%)`,
-              opacity: showTransitionOverlay ? 0.8 : 0,
+              background: `radial-gradient(ellipse at center, ${sceneColors[0]}15 0%, transparent 60%)`,
+              opacity: 0.5,
               transition: 'opacity 0.5s ease-out',
               zIndex: 90,
               pointerEvents: 'none',
