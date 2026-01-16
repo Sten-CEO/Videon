@@ -10,7 +10,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Button, Textarea, Card } from '@/components/ui'
-import { DynamicVideoPlayer } from '@/components/ui/DynamicVideo'
+import { PremiumVideoPlayer } from '@/components/ui/DynamicVideo'
 import type { ChatMessage } from '@/lib/types'
 import type { VideoPlan } from '@/lib/video-components/types'
 import { retrieveImages } from '@/lib/imageStore'
@@ -339,7 +339,7 @@ Each scene has unique positioning, animations, and transitions designed by AI.`)
       <div className="w-[480px] flex flex-col gap-4 overflow-y-auto">
         {/* Video Player */}
         {plan ? (
-          <DynamicVideoPlayer plan={plan} autoPlay={true} loop={true} showControls={true} />
+          <PremiumVideoPlayer plan={plan} autoPlay={true} loop={true} showControls={true} />
         ) : (
           <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#F0FDFA] to-[#FFF7ED] border border-[#E4E4E7]" style={{ aspectRatio: '9/16', maxHeight: '600px', minHeight: '400px' }}>
             <div className="absolute inset-0 flex items-center justify-center">
