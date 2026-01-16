@@ -190,7 +190,10 @@ function ShapeRenderer({ element, isActive }: { element: ShapeElement; isActive:
 // Rend un badge
 function BadgeRenderer({ element, isActive }: { element: BadgeElement; isActive: boolean }) {
   const positionStyles = getPositionCSS(element.position.x, element.position.y)
-  const variant = badgeVariants[element.variant ?? 'primary']
+
+  // Fallback to primary if variant doesn't exist
+  const variantKey = element.variant ?? 'primary'
+  const variant = badgeVariants[variantKey as keyof typeof badgeVariants] ?? badgeVariants.primary
 
   const animationStyles = isActive && element.animation
     ? getAnimationStyle(
