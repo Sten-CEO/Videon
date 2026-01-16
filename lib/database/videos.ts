@@ -217,7 +217,7 @@ export async function startVideoGeneration(videoId: string): Promise<Video | nul
     status: 'generating',
     generation_progress: 0,
     generation_started_at: new Date().toISOString(),
-    generation_error: null,
+    generation_error: undefined,
   })
 }
 
@@ -279,7 +279,6 @@ export async function getUserProfile(): Promise<UserProfile | null> {
         // Return default profile
         return {
           id: user.id,
-          email: user.email || '',
           full_name: null,
           avatar_url: null,
           plan: 'free',
@@ -293,7 +292,6 @@ export async function getUserProfile(): Promise<UserProfile | null> {
       // Return default profile on error
       return {
         id: user.id,
-        email: user.email || '',
         full_name: null,
         avatar_url: null,
         plan: 'free',
@@ -376,6 +374,7 @@ export async function getBrandSettings(): Promise<BrandSettings | null> {
           primary_color: '#0D9488',
           secondary_color: '#F97316',
           font_preference: 'Inter',
+          settings: {},
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }
