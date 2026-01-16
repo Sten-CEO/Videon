@@ -153,6 +153,24 @@ function validateBackground(
   }
 }
 
+// PROFESSIONAL GRADIENTS ONLY - block all ugly ones
+const ALLOWED_GRADIENTS = ['teal', 'sapphire', 'arctic', 'ocean', 'cosmic', 'silver', 'violet', 'purple']
+const BLOCKED_GRADIENTS = ['rainbow', 'prism', 'unicorn', 'candy', 'neon', 'holographic', 'fire', 'electric', 'aurora', 'sunset', 'coral', 'peach', 'fuchsia', 'magenta', 'berry']
+
+/**
+ * Sanitize gradient to only allow professional ones
+ */
+function sanitizeGradientName(gradient: string | undefined): string | undefined {
+  if (!gradient) return undefined
+  if (BLOCKED_GRADIENTS.includes(gradient)) {
+    return 'teal' // Default to professional teal
+  }
+  if (!ALLOWED_GRADIENTS.includes(gradient)) {
+    return 'teal' // Unknown gradient? Use teal
+  }
+  return gradient
+}
+
 /**
  * Generate fallback content for empty scenes based on scene type
  */
@@ -307,28 +325,38 @@ function validateElements(
     return generateFallbackContent(sceneType, brandName, themeData)
   }
 
-  // Clean and validate text content in each element
+  // Clean and validate text content in each element + sanitize gradients
   return elements.map((el) => {
     if (el.type === 'text') {
-      const textEl = el as { type: 'text'; content: string; style: { style: string } }
-      const maxLength = textEl.style.style === 'hero' ? 60
-        : textEl.style.style === 'headline' ? 80
-        : textEl.style.style === 'subtitle' ? 120
-        : 150
+      const textEl = el as any
+      const textStyle = textEl.style?.style || 'body'
+      const maxLength = textStyle === 'hero' ? 40
+        : textStyle === 'headline' ? 50
+        : textStyle === 'subtitle' ? 80
+        : 100
+
+      // SANITIZE gradient - replace ugly ones with teal or remove
+      const sanitizedGradient = sanitizeGradientName(textEl.style?.gradient)
+
       return {
-        ...el,
+        ...textEl,
         content: cleanTextContent(textEl.content, maxLength),
-      }
+        style: {
+          ...textEl.style,
+          gradient: sanitizedGradient,
+          color: sanitizedGradient ? textEl.style?.color : '#ffffff',
+        },
+      } as any
     }
     if (el.type === 'badge') {
-      const badgeEl = el as { type: 'badge'; content: string }
+      const badgeEl = el as any
       return {
-        ...el,
-        content: cleanTextContent(badgeEl.content, 25).toUpperCase(),
-      }
+        ...badgeEl,
+        content: cleanTextContent(badgeEl.content || '', 20).toUpperCase(),
+      } as any
     }
     return el
-  })
+  }) as Scene['elements']
 }
 
 /**
