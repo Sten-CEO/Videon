@@ -60,6 +60,7 @@ export interface Animation {
 // ============================================================================
 
 export type TransitionType =
+  // Basic transitions
   | 'fade'
   | 'slideLeft'
   | 'slideRight'
@@ -72,6 +73,35 @@ export type TransitionType =
   | 'glitch'
   | 'blur'
   | 'none'
+  // Premium transitions (radial)
+  | 'sunburst'
+  | 'zoom'
+  | 'vortex'
+  | 'ripple'
+  | 'starburst'
+  // Premium transitions (directional)
+  | 'wipe'
+  | 'blinds'
+  | 'curtain'
+  | 'slide'
+  | 'push'
+  // Premium transitions (organic)
+  | 'morph'
+  | 'dissolve'
+  | 'liquid'
+  | 'smoke'
+  | 'ink'
+  // Premium transitions (modern)
+  | 'pixelate'
+  | 'prism'
+  | 'neon'
+  | 'electric'
+  // Premium transitions (geometric)
+  | 'hexagon'
+  | 'diamond'
+  | 'shatter'
+  | 'mosaic'
+  | 'geometric'
 
 export interface Transition {
   type: TransitionType
@@ -100,6 +130,7 @@ export interface TextStyleOptions {
   align?: TextAlign
   weight?: FontWeight
   color?: string          // Couleur custom (sinon défaut selon le style)
+  gradient?: string       // Nom du gradient premium (ex: 'teal', 'sunset', 'gold')
   maxWidth?: number       // Largeur max en pourcentage
 }
 
