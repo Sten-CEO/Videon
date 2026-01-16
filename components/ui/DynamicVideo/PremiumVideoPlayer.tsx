@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import type { VideoPlan, Scene, SceneElement, TextElement, BadgeElement } from '@/lib/video-components/types'
+import type { VideoPlan, Scene, SceneElement, TextElement, BadgeElement, LogoElement, ShapeElement } from '@/lib/video-components/types'
 import { getBackgroundCSS } from '@/lib/video-components/backgrounds'
 import { badgeVariants } from '@/lib/video-components/styles'
 
@@ -543,12 +543,13 @@ function ElementView({
   }
 
   if (element.type === 'shape') {
-    const shapeEl = element
+    const shapeEl = element as ShapeElement
     let shapeStyle: React.CSSProperties = {
       width: typeof shapeEl.width === 'number' ? shapeEl.width : 60,
       height: typeof shapeEl.height === 'number' ? shapeEl.height : 60,
       backgroundColor: shapeEl.color || 'rgba(255,255,255,0.1)',
       borderRadius: shapeEl.shape === 'circle' ? '50%' : shapeEl.shape === 'rounded' ? 16 : 0,
+      filter: shapeEl.shape === 'circle' ? 'blur(20px)' : 'none',
     }
 
     if (shapeEl.shape === 'line') {
@@ -566,6 +567,65 @@ function ElementView({
           ...animationStyle,
           ...shapeStyle,
           willChange: 'transform, opacity',
+          position: 'absolute',
+          pointerEvents: 'none',
+        }}
+      />
+    )
+  }
+
+  // Logo element
+  if (element.type === 'logo') {
+    const logoEl = element as LogoElement
+    const logoSize = logoEl.size === 'small' ? 40 : logoEl.size === 'large' ? 80 : 60
+    const logoStyle = logoEl.style || 'normal'
+
+    return (
+      <div
+        style={{
+          ...animationStyle,
+          position: 'relative',
+          willChange: 'transform, opacity',
+        }}
+      >
+        <div
+          style={{
+            position: 'relative',
+            padding: logoStyle === 'glass' ? '12px 20px' : '8px',
+            background: logoStyle === 'glass' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+            backdropFilter: logoStyle === 'glass' ? 'blur(10px)' : 'none',
+            WebkitBackdropFilter: logoStyle === 'glass' ? 'blur(10px)' : 'none',
+            borderRadius: logoStyle === 'glass' ? '12px' : '0',
+            border: logoStyle === 'glass' ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
+          }}
+        >
+          <img
+            src={logoEl.src}
+            alt="Brand logo"
+            style={{
+              height: logoSize,
+              maxWidth: 200,
+              objectFit: 'contain',
+              filter: logoStyle === 'glow' ? 'drop-shadow(0 0 20px rgba(255,255,255,0.3))' : 'none',
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Divider element
+  if (element.type === 'divider') {
+    const dividerEl = element as { type: 'divider'; width?: number | string; color?: string; thickness?: number }
+    return (
+      <div
+        style={{
+          ...animationStyle,
+          width: dividerEl.width || '40%',
+          height: dividerEl.thickness || 2,
+          background: `linear-gradient(90deg, transparent, ${dividerEl.color || 'rgba(255,255,255,0.3)'}, transparent)`,
+          borderRadius: 1,
+          willChange: 'transform, opacity',
         }}
       />
     )
@@ -574,7 +634,7 @@ function ElementView({
   return null
 }
 
-// Scene content renderer - positions elements vertically
+// Scene content renderer - positions elements vertically with proper hierarchy
 function SceneContent({
   scene,
   isVisible,
@@ -586,17 +646,38 @@ function SceneContent({
   isExiting: boolean
   useWordAnimation?: boolean
 }) {
-  // Sort elements: badges first, then headlines, then subtitles
-  const sortedElements = [...scene.elements].sort((a, b) => {
-    const order = { badge: 0, text: 1, shape: 2, image: 3 }
-    const aOrder = a.type === 'text'
-      ? ((a as TextElement).style.style === 'hero' || (a as TextElement).style.style === 'headline' ? 1 : 2)
-      : (order[a.type as keyof typeof order] ?? 3)
-    const bOrder = b.type === 'text'
-      ? ((b as TextElement).style.style === 'hero' || (b as TextElement).style.style === 'headline' ? 1 : 2)
-      : (order[b.type as keyof typeof order] ?? 3)
-    return aOrder - bOrder
-  })
+  // Sort elements with smart ordering:
+  // 1. Logo (if at top position)
+  // 2. Badge
+  // 3. Hero/Headline text
+  // 4. Subtitle/Body text
+  // 5. Other elements (dividers, shapes)
+  // 6. Logo (if at bottom position)
+  const getElementOrder = (el: SceneElement): number => {
+    if (el.type === 'logo') {
+      const pos = (el as LogoElement).position?.y
+      return pos === 'bottom' ? 10 : 0 // Bottom logos go last
+    }
+    if (el.type === 'badge') return 1
+    if (el.type === 'text') {
+      const style = (el as TextElement).style.style
+      if (style === 'hero') return 2
+      if (style === 'headline') return 3
+      if (style === 'subtitle') return 4
+      if (style === 'body') return 5
+      if (style === 'caption') return 8
+      return 6
+    }
+    if (el.type === 'divider') return 7
+    if (el.type === 'shape') return 9
+    return 6
+  }
+
+  const sortedElements = [...scene.elements].sort((a, b) => getElementOrder(a) - getElementOrder(b))
+
+  // Separate shapes for absolute positioning
+  const shapes = sortedElements.filter(el => el.type === 'shape')
+  const contentElements = sortedElements.filter(el => el.type !== 'shape')
 
   return (
     <div
@@ -607,12 +688,13 @@ function SceneContent({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '28px',
-        padding: '10%',
+        gap: '20px',
+        padding: '12% 8%',
         zIndex: 10,
       }}
     >
-      {sortedElements.map((element, index) => (
+      {/* Render content elements in flex container */}
+      {contentElements.map((element, index) => (
         <ElementView
           key={element.id || `el-${index}`}
           element={element}
@@ -622,44 +704,132 @@ function SceneContent({
           useWordAnimation={useWordAnimation}
         />
       ))}
+
+      {/* Render shapes as absolutely positioned decorations */}
+      {shapes.map((element, index) => {
+        const shapeEl = element as ShapeElement
+        const position = shapeEl.position || { x: 'center', y: 'center' }
+
+        // Calculate position styles
+        const posStyle: React.CSSProperties = {
+          position: 'absolute',
+          zIndex: 5,
+        }
+
+        // X position
+        if (position.x === 'left') posStyle.left = '10%'
+        else if (position.x === 'right') posStyle.right = '10%'
+        else if (position.x === 'center') { posStyle.left = '50%'; posStyle.transform = 'translateX(-50%)' }
+        else if (typeof position.x === 'number') posStyle.left = `${position.x}%`
+
+        // Y position
+        if (position.y === 'top') posStyle.top = '15%'
+        else if (position.y === 'bottom') posStyle.bottom = '15%'
+        else if (position.y === 'center') {
+          posStyle.top = '50%'
+          posStyle.transform = posStyle.transform ? `${posStyle.transform} translateY(-50%)` : 'translateY(-50%)'
+        }
+        else if (typeof position.y === 'number') posStyle.top = `${position.y}%`
+
+        return (
+          <div
+            key={element.id || `shape-${index}`}
+            style={posStyle}
+          >
+            <ElementView
+              element={element}
+              isVisible={isVisible}
+              isExiting={isExiting}
+              index={contentElements.length + index}
+              useWordAnimation={false}
+            />
+          </div>
+        )
+      })}
     </div>
   )
 }
 
-// Decorative floating shapes
-function DecorationLayer({ scene }: { scene: Scene }) {
-  // Extract primary color from background
+// Decorative floating shapes with enhanced animations
+function DecorationLayer({ scene, isPlaying }: { scene: Scene; isPlaying: boolean }) {
+  // Extract colors from background
   const bgColor = scene.background.type === 'gradient'
     ? scene.background.colors[0]
     : scene.background.type === 'solid'
       ? scene.background.color
       : '#0D9488'
 
+  const secondaryColor = scene.background.type === 'gradient' && scene.background.colors[1]
+    ? scene.background.colors[1]
+    : bgColor
+
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-      {/* Subtle glow orbs */}
+      {/* Primary glow orb - top right */}
       <div
         style={{
           position: 'absolute',
-          top: '10%',
-          right: '-10%',
-          width: '40%',
-          height: '40%',
-          background: `radial-gradient(circle, ${bgColor}33 0%, transparent 70%)`,
-          filter: 'blur(60px)',
-          animation: 'floatSubtle 8s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '5%',
-          left: '-15%',
+          top: '5%',
+          right: '-15%',
           width: '50%',
           height: '50%',
-          background: `radial-gradient(circle, ${bgColor}22 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${bgColor}40 0%, transparent 60%)`,
           filter: 'blur(80px)',
-          animation: 'floatSubtle 10s ease-in-out infinite reverse',
+          animation: isPlaying ? 'floatSubtle 12s ease-in-out infinite' : 'none',
+        }}
+      />
+
+      {/* Secondary glow orb - bottom left */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '0%',
+          left: '-20%',
+          width: '60%',
+          height: '60%',
+          background: `radial-gradient(circle, ${secondaryColor}30 0%, transparent 65%)`,
+          filter: 'blur(100px)',
+          animation: isPlaying ? 'floatSubtle 15s ease-in-out infinite reverse' : 'none',
+        }}
+      />
+
+      {/* Accent orb - center */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '40%',
+          left: '60%',
+          width: '30%',
+          height: '30%',
+          background: `radial-gradient(circle, ${bgColor}20 0%, transparent 70%)`,
+          filter: 'blur(60px)',
+          animation: isPlaying ? 'pulseSubtle 8s ease-in-out infinite' : 'none',
+        }}
+      />
+
+      {/* Animated gradient line accent */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '20%',
+          left: '10%',
+          width: '2px',
+          height: '60%',
+          background: `linear-gradient(180deg, transparent, ${bgColor}30, transparent)`,
+          opacity: 0.5,
+          animation: isPlaying ? 'shimmerLine 4s ease-in-out infinite' : 'none',
+        }}
+      />
+
+      {/* Floating particles */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(circle at 20% 80%, ${bgColor}10 0%, transparent 40%),
+                       radial-gradient(circle at 80% 20%, ${secondaryColor}10 0%, transparent 40%),
+                       radial-gradient(circle at 50% 50%, ${bgColor}05 0%, transparent 50%)`,
+          animation: isPlaying ? 'meshFloat 20s ease-in-out infinite' : 'none',
         }}
       />
     </div>
@@ -825,7 +995,7 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
         <MeshGradientBackground colors={sceneColors} animated={isPlaying} />
 
         {/* Decorative layer */}
-        <DecorationLayer scene={currentScene} />
+        <DecorationLayer scene={currentScene} isPlaying={isPlaying} />
 
         {/* Grain texture */}
         <div
