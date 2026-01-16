@@ -99,13 +99,17 @@ function renderElement(
   isActive: boolean,
   index: number
 ): React.ReactNode {
-  const animationStyles = isActive && element.animation
-    ? getAnimationStyle(
-        element.animation.type,
-        element.animation.duration,
-        element.animation.delay
-      )
-    : { opacity: 0 }
+  // When active: apply animation if present, otherwise show immediately
+  // When not active: hide the element
+  const animationStyles: React.CSSProperties = isActive
+    ? element.animation
+      ? getAnimationStyle(
+          element.animation.type,
+          element.animation.duration,
+          element.animation.delay
+        )
+      : { opacity: 1 } // No animation = show immediately
+    : { opacity: 0 }   // Not active = hidden
 
   switch (element.type) {
     case 'text': {
