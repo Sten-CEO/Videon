@@ -32,10 +32,12 @@ function isTableNotFoundError(error: any): boolean {
     errorCode === '42P01' ||           // PostgreSQL: relation does not exist
     errorCode === 'PGRST116' ||        // PostgREST: table not found
     errorCode === 'PGRST204' ||        // PostgREST: no rows returned (for .single())
+    errorCode === 'PGRST205' ||        // PostgREST: table not found in schema cache
     errorCode === '42501' ||           // PostgreSQL: permission denied
     errorMessage.includes('relation') ||
     errorMessage.includes('does not exist') ||
     errorMessage.includes('not found') ||
+    errorMessage.includes('schema cache') ||
     errorHint.includes('does not exist')
   )
 }
