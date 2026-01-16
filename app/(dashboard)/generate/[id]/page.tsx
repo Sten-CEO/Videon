@@ -157,11 +157,33 @@ function ConversationContent() {
 
       console.log('[Generate] Calling /api/generate-dynamic...')
 
+      // Get product image URLs
+      const productImageUrls = imagesRef.current
+        .map(img => img.url)
+        .filter(url => url && url.length > 0)
+
+      // Get logo URL from brand settings (stored in localStorage)
+      let logoUrl: string | undefined
+      try {
+        const brandSettings = localStorage.getItem('videon_brand_settings')
+        if (brandSettings) {
+          const parsed = JSON.parse(brandSettings)
+          logoUrl = parsed.logoUrl || undefined
+        }
+      } catch (e) {
+        console.log('[Generate] No brand settings found')
+      }
+
+      console.log('[Generate] Product images:', productImageUrls.length)
+      console.log('[Generate] Logo URL:', logoUrl || 'none')
+
       const response = await fetch('/api/generate-dynamic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           description: prompt,
+          logoUrl: logoUrl,
+          productImages: productImageUrls.length > 0 ? productImageUrls : undefined,
         }),
       })
 
