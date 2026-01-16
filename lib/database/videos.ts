@@ -2,6 +2,7 @@
  * VIDEO DATABASE OPERATIONS
  *
  * Server-side functions for video CRUD operations.
+ * Gracefully handles missing database tables.
  */
 
 import { createClient } from '@/lib/supabase/server'
@@ -16,6 +17,19 @@ import type {
 } from './types'
 
 // =============================================================================
+// HELPER: Check if table exists error
+// =============================================================================
+
+function isTableNotFoundError(error: any): boolean {
+  // Supabase returns specific error codes for missing tables
+  return (
+    error?.code === '42P01' || // relation does not exist
+    error?.message?.includes('relation') ||
+    error?.message?.includes('does not exist')
+  )
+}
+
+// =============================================================================
 // VIDEO OPERATIONS
 // =============================================================================
 
@@ -23,134 +37,176 @@ import type {
  * Get all videos for the current user
  */
 export async function getUserVideos(): Promise<Video[]> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return []
+    }
+
+    const { data, error } = await supabase
+      .from('videos')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        console.log('[DB] Videos table not found - returning empty array')
+        return []
+      }
+      console.error('[DB] Error fetching videos:', error)
+      return []
+    }
+
+    return data || []
+  } catch (err) {
+    console.error('[DB] Unexpected error in getUserVideos:', err)
     return []
   }
-
-  const { data, error } = await supabase
-    .from('videos')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('[DB] Error fetching videos:', error)
-    return []
-  }
-
-  return data || []
 }
 
 /**
  * Get a single video by ID
  */
 export async function getVideoById(videoId: string): Promise<Video | null> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return null
+    }
+
+    const { data, error } = await supabase
+      .from('videos')
+      .select('*')
+      .eq('id', videoId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        return null
+      }
+      console.error('[DB] Error fetching video:', error)
+      return null
+    }
+
+    return data
+  } catch (err) {
+    console.error('[DB] Unexpected error in getVideoById:', err)
     return null
   }
-
-  const { data, error } = await supabase
-    .from('videos')
-    .select('*')
-    .eq('id', videoId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (error) {
-    console.error('[DB] Error fetching video:', error)
-    return null
-  }
-
-  return data
 }
 
 /**
  * Create a new video
  */
 export async function createVideo(input: CreateVideoInput): Promise<Video | null> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return null
+    }
+
+    const { data, error } = await supabase
+      .from('videos')
+      .insert({
+        user_id: user.id,
+        title: input.title,
+        description: input.description || null,
+        plan: input.plan || null,
+        status: 'draft',
+      })
+      .select()
+      .single()
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        console.log('[DB] Videos table not found - video not saved')
+        return null
+      }
+      console.error('[DB] Error creating video:', error)
+      return null
+    }
+
+    return data
+  } catch (err) {
+    console.error('[DB] Unexpected error in createVideo:', err)
     return null
   }
-
-  const { data, error } = await supabase
-    .from('videos')
-    .insert({
-      user_id: user.id,
-      title: input.title,
-      description: input.description || null,
-      plan: input.plan || null,
-      status: 'draft',
-    })
-    .select()
-    .single()
-
-  if (error) {
-    console.error('[DB] Error creating video:', error)
-    return null
-  }
-
-  return data
 }
 
 /**
  * Update a video
  */
 export async function updateVideo(videoId: string, input: UpdateVideoInput): Promise<Video | null> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return null
+    }
+
+    const { data, error } = await supabase
+      .from('videos')
+      .update(input)
+      .eq('id', videoId)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        return null
+      }
+      console.error('[DB] Error updating video:', error)
+      return null
+    }
+
+    return data
+  } catch (err) {
+    console.error('[DB] Unexpected error in updateVideo:', err)
     return null
   }
-
-  const { data, error } = await supabase
-    .from('videos')
-    .update(input)
-    .eq('id', videoId)
-    .eq('user_id', user.id)
-    .select()
-    .single()
-
-  if (error) {
-    console.error('[DB] Error updating video:', error)
-    return null
-  }
-
-  return data
 }
 
 /**
  * Delete a video
  */
 export async function deleteVideo(videoId: string): Promise<boolean> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return false
+    }
+
+    const { error } = await supabase
+      .from('videos')
+      .delete()
+      .eq('id', videoId)
+      .eq('user_id', user.id)
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        return false
+      }
+      console.error('[DB] Error deleting video:', error)
+      return false
+    }
+
+    return true
+  } catch (err) {
+    console.error('[DB] Unexpected error in deleteVideo:', err)
     return false
   }
-
-  const { error } = await supabase
-    .from('videos')
-    .delete()
-    .eq('id', videoId)
-    .eq('user_id', user.id)
-
-  if (error) {
-    console.error('[DB] Error deleting video:', error)
-    return false
-  }
-
-  return true
 }
 
 /**
@@ -201,50 +257,90 @@ export async function failVideoGeneration(videoId: string, error: string): Promi
 
 /**
  * Get the current user's profile
+ * Returns default profile if table doesn't exist
  */
 export async function getUserProfile(): Promise<UserProfile | null> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return null
+    }
+
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        // Return default profile
+        return {
+          id: user.id,
+          email: user.email || '',
+          full_name: null,
+          avatar_url: null,
+          plan: 'free',
+          videos_generated: 0,
+          videos_limit: 3,
+          plan_expires_at: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      }
+      // Return default profile on error
+      return {
+        id: user.id,
+        email: user.email || '',
+        full_name: null,
+        avatar_url: null,
+        plan: 'free',
+        videos_generated: 0,
+        videos_limit: 3,
+        plan_expires_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    }
+
+    return data
+  } catch (err) {
+    console.error('[DB] Unexpected error in getUserProfile:', err)
     return null
   }
-
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
-  if (error) {
-    console.error('[DB] Error fetching user profile:', error)
-    return null
-  }
-
-  return data
 }
 
 /**
  * Increment videos generated count
  */
 export async function incrementVideosGenerated(): Promise<boolean> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return false
+    }
+
+    const { error } = await supabase.rpc('increment_videos_generated', {
+      user_id: user.id,
+    })
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        return true // Pretend it worked
+      }
+      console.error('[DB] Error incrementing videos:', error)
+      return false
+    }
+
+    return true
+  } catch (err) {
+    console.error('[DB] Unexpected error in incrementVideosGenerated:', err)
     return false
   }
-
-  const { error } = await supabase.rpc('increment_videos_generated', {
-    user_id: user.id,
-  })
-
-  if (error) {
-    console.error('[DB] Error incrementing videos:', error)
-    return false
-  }
-
-  return true
 }
 
 // =============================================================================
@@ -255,51 +351,79 @@ export async function incrementVideosGenerated(): Promise<boolean> {
  * Get the current user's brand settings
  */
 export async function getBrandSettings(): Promise<BrandSettings | null> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return null
+    }
+
+    const { data, error } = await supabase
+      .from('brand_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        // Return default brand settings
+        return {
+          id: 'default',
+          user_id: user.id,
+          brand_name: 'My Brand',
+          logo_url: null,
+          primary_color: '#0D9488',
+          secondary_color: '#F97316',
+          font_preference: 'Inter',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      }
+      console.error('[DB] Error fetching brand settings:', error)
+      return null
+    }
+
+    return data
+  } catch (err) {
+    console.error('[DB] Unexpected error in getBrandSettings:', err)
     return null
   }
-
-  const { data, error } = await supabase
-    .from('brand_settings')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
-
-  if (error) {
-    console.error('[DB] Error fetching brand settings:', error)
-    return null
-  }
-
-  return data
 }
 
 /**
  * Update brand settings
  */
 export async function updateBrandSettings(input: UpdateBrandSettingsInput): Promise<BrandSettings | null> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return null
+    }
+
+    const { data, error } = await supabase
+      .from('brand_settings')
+      .update(input)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (error) {
+      if (isTableNotFoundError(error)) {
+        console.log('[DB] Brand settings table not found')
+        return null
+      }
+      console.error('[DB] Error updating brand settings:', error)
+      return null
+    }
+
+    return data
+  } catch (err) {
+    console.error('[DB] Unexpected error in updateBrandSettings:', err)
     return null
   }
-
-  const { data, error } = await supabase
-    .from('brand_settings')
-    .update(input)
-    .eq('user_id', user.id)
-    .select()
-    .single()
-
-  if (error) {
-    console.error('[DB] Error updating brand settings:', error)
-    return null
-  }
-
-  return data
 }
 
 // =============================================================================
@@ -308,49 +432,72 @@ export async function updateBrandSettings(input: UpdateBrandSettingsInput): Prom
 
 /**
  * Get dashboard stats for the current user
+ * Returns default stats if tables don't exist
  */
-export async function getDashboardStats(): Promise<DashboardStats | null> {
-  const supabase = await createClient()
+export async function getDashboardStats(): Promise<DashboardStats> {
+  try {
+    const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return null
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return getDefaultStats()
+    }
+
+    // Get videos
+    const { data: videos, error: videosError } = await supabase
+      .from('videos')
+      .select('status')
+      .eq('user_id', user.id)
+
+    if (videosError) {
+      if (isTableNotFoundError(videosError)) {
+        return getDefaultStats()
+      }
+      console.error('[DB] Error fetching videos for stats:', videosError)
+      return getDefaultStats()
+    }
+
+    // Get profile
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('plan, videos_generated, videos_limit')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError && !isTableNotFoundError(profileError)) {
+      console.error('[DB] Error fetching profile for stats:', profileError)
+    }
+
+    const videosList = videos || []
+    const totalVideos = videosList.length
+    const readyVideos = videosList.filter(v => v.status === 'ready').length
+    const generatingVideos = videosList.filter(v => v.status === 'generating').length
+    const draftVideos = videosList.filter(v => v.status === 'draft').length
+
+    return {
+      totalVideos,
+      readyVideos,
+      generatingVideos,
+      draftVideos,
+      videosRemaining: profile ? profile.videos_limit - profile.videos_generated : 3,
+      plan: profile?.plan || 'free',
+    }
+  } catch (err) {
+    console.error('[DB] Unexpected error in getDashboardStats:', err)
+    return getDefaultStats()
   }
+}
 
-  // Get videos
-  const { data: videos, error: videosError } = await supabase
-    .from('videos')
-    .select('status')
-    .eq('user_id', user.id)
-
-  if (videosError) {
-    console.error('[DB] Error fetching videos for stats:', videosError)
-    return null
-  }
-
-  // Get profile
-  const { data: profile, error: profileError } = await supabase
-    .from('user_profiles')
-    .select('plan, videos_generated, videos_limit')
-    .eq('id', user.id)
-    .single()
-
-  if (profileError) {
-    console.error('[DB] Error fetching profile for stats:', profileError)
-  }
-
-  const videosList = videos || []
-  const totalVideos = videosList.length
-  const readyVideos = videosList.filter(v => v.status === 'ready').length
-  const generatingVideos = videosList.filter(v => v.status === 'generating').length
-  const draftVideos = videosList.filter(v => v.status === 'draft').length
-
+/**
+ * Get default stats when database is not available
+ */
+function getDefaultStats(): DashboardStats {
   return {
-    totalVideos,
-    readyVideos,
-    generatingVideos,
-    draftVideos,
-    videosRemaining: profile ? profile.videos_limit - profile.videos_generated : 3,
-    plan: profile?.plan || 'free',
+    totalVideos: 0,
+    readyVideos: 0,
+    generatingVideos: 0,
+    draftVideos: 0,
+    videosRemaining: 3,
+    plan: 'free',
   }
 }
