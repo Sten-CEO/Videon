@@ -423,6 +423,22 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Simple elegant fade transition (Apple/Linear style) */
+@keyframes simpleFadeInOut {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes floatSubtle {
   0%, 100% {
     transform: translateY(0);
