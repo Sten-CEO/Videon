@@ -251,10 +251,22 @@ export type SceneElement =
 
 export type SceneName = 'hook' | 'problem' | 'solution' | 'demo' | 'proof' | 'cta' | 'custom'
 
+// Layout names - must match layouts.ts
+export type LayoutName =
+  | 'hero-central'
+  | 'stack'
+  | 'split-top'
+  | 'split-bottom'
+  | 'focus'
+  | 'minimal'
+  | 'impact'
+  | 'cards'
+
 export interface Scene {
   id?: string
   name: SceneName
   label?: string                // Label custom si name = 'custom'
+  layout: LayoutName            // Layout pattern to use
   duration: number              // en secondes
   background: Background
   elements: SceneElement[]
