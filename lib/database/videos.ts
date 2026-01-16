@@ -21,12 +21,36 @@ import type {
 // =============================================================================
 
 function isTableNotFoundError(error: any): boolean {
-  // Supabase returns specific error codes for missing tables
+  if (!error) return false
+
+  // Supabase/PostgREST returns specific error codes for missing tables
+  const errorCode = error?.code || error?.error?.code
+  const errorMessage = error?.message || error?.error?.message || ''
+  const errorHint = error?.hint || error?.error?.hint || ''
+
   return (
-    error?.code === '42P01' || // relation does not exist
-    error?.message?.includes('relation') ||
-    error?.message?.includes('does not exist')
+    errorCode === '42P01' ||           // PostgreSQL: relation does not exist
+    errorCode === 'PGRST116' ||        // PostgREST: table not found
+    errorCode === 'PGRST204' ||        // PostgREST: no rows returned (for .single())
+    errorCode === '42501' ||           // PostgreSQL: permission denied
+    errorMessage.includes('relation') ||
+    errorMessage.includes('does not exist') ||
+    errorMessage.includes('not found') ||
+    errorHint.includes('does not exist')
   )
+}
+
+/**
+ * Format error for logging
+ */
+function formatError(error: any): string {
+  if (!error) return 'unknown error'
+  return JSON.stringify({
+    code: error.code,
+    message: error.message,
+    hint: error.hint,
+    details: error.details,
+  }, null, 2)
 }
 
 // =============================================================================
@@ -56,7 +80,7 @@ export async function getUserVideos(): Promise<Video[]> {
         console.log('[DB] Videos table not found - returning empty array')
         return []
       }
-      console.error('[DB] Error fetching videos:', error)
+      console.error('[DB] Error fetching videos:', formatError(error))
       return []
     }
 
@@ -90,7 +114,7 @@ export async function getVideoById(videoId: string): Promise<Video | null> {
       if (isTableNotFoundError(error)) {
         return null
       }
-      console.error('[DB] Error fetching video:', error)
+      console.error('[DB] Error fetching video:', formatError(error))
       return null
     }
 
@@ -130,7 +154,7 @@ export async function createVideo(input: CreateVideoInput): Promise<Video | null
         console.log('[DB] Videos table not found - video not saved')
         return null
       }
-      console.error('[DB] Error creating video:', error)
+      console.error('[DB] Error creating video:', formatError(error))
       return null
     }
 
@@ -165,7 +189,7 @@ export async function updateVideo(videoId: string, input: UpdateVideoInput): Pro
       if (isTableNotFoundError(error)) {
         return null
       }
-      console.error('[DB] Error updating video:', error)
+      console.error('[DB] Error updating video:', formatError(error))
       return null
     }
 
@@ -198,7 +222,7 @@ export async function deleteVideo(videoId: string): Promise<boolean> {
       if (isTableNotFoundError(error)) {
         return false
       }
-      console.error('[DB] Error deleting video:', error)
+      console.error('[DB] Error deleting video:', formatError(error))
       return false
     }
 
@@ -330,7 +354,7 @@ export async function incrementVideosGenerated(): Promise<boolean> {
       if (isTableNotFoundError(error)) {
         return true // Pretend it worked
       }
-      console.error('[DB] Error incrementing videos:', error)
+      console.error('[DB] Error incrementing videos:', formatError(error))
       return false
     }
 
@@ -379,7 +403,7 @@ export async function getBrandSettings(): Promise<BrandSettings | null> {
           updated_at: new Date().toISOString(),
         }
       }
-      console.error('[DB] Error fetching brand settings:', error)
+      console.error('[DB] Error fetching brand settings:', formatError(error))
       return null
     }
 
@@ -414,7 +438,7 @@ export async function updateBrandSettings(input: UpdateBrandSettingsInput): Prom
         console.log('[DB] Brand settings table not found')
         return null
       }
-      console.error('[DB] Error updating brand settings:', error)
+      console.error('[DB] Error updating brand settings:', formatError(error))
       return null
     }
 
@@ -452,7 +476,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       if (isTableNotFoundError(videosError)) {
         return getDefaultStats()
       }
-      console.error('[DB] Error fetching videos for stats:', videosError)
+      console.error('[DB] Error fetching videos for stats:', formatError(videosError))
       return getDefaultStats()
     }
 
@@ -464,7 +488,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .single()
 
     if (profileError && !isTableNotFoundError(profileError)) {
-      console.error('[DB] Error fetching profile for stats:', profileError)
+      console.error('[DB] Error fetching profile for stats:', formatError(profileError))
     }
 
     const videosList = videos || []
