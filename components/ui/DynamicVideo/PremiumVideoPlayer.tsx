@@ -74,22 +74,27 @@ function getElementAnimation(
   }
 }
 
-// Get text size based on style and content length
+// Get text size based on style and content length - RESPONSIVE with clamp()
 function getTextSize(style: string, contentLength: number): string {
   // Reduce size for longer text
-  const lengthFactor = contentLength > 30 ? 0.8 : contentLength > 20 ? 0.9 : 1
+  const lengthFactor = contentLength > 50 ? 0.7 : contentLength > 30 ? 0.85 : contentLength > 20 ? 0.92 : 1
 
-  const baseSizes: Record<string, number> = {
-    hero: 3.5,
-    headline: 2.2,
-    subtitle: 1.3,
-    body: 1,
-    caption: 0.85,
-    cta: 1.2,
+  // Base sizes in rem with responsive clamp for different screen sizes
+  const baseSizes: Record<string, { min: number; preferred: number; max: number }> = {
+    hero: { min: 1.8, preferred: 3.2, max: 4 },
+    headline: { min: 1.4, preferred: 2, max: 2.6 },
+    subtitle: { min: 0.95, preferred: 1.2, max: 1.5 },
+    body: { min: 0.85, preferred: 1, max: 1.2 },
+    caption: { min: 0.7, preferred: 0.85, max: 1 },
+    cta: { min: 1, preferred: 1.2, max: 1.5 },
   }
 
-  const size = (baseSizes[style] || 1.5) * lengthFactor
-  return `${size}rem`
+  const sizeConfig = baseSizes[style] || baseSizes.body
+  const minSize = sizeConfig.min * lengthFactor
+  const preferredSize = sizeConfig.preferred * lengthFactor
+  const maxSize = sizeConfig.max * lengthFactor
+
+  return `clamp(${minSize}rem, ${preferredSize * 5}vw, ${maxSize}rem)`
 }
 
 // ============================================================================
@@ -204,7 +209,7 @@ function WordByWordText({
 }
 
 // ============================================================================
-// SIMPLE ELEGANT TRANSITION OVERLAY (Apple/Linear style)
+// ELEGANT TRANSITION OVERLAY (Apple/Linear style with subtle variations)
 // ============================================================================
 
 interface TransitionOverlayProps {
@@ -223,28 +228,111 @@ function TransitionOverlay({ isActive, type, color = '#ffffff' }: TransitionOver
     pointerEvents: 'none',
   }
 
-  // SIMPLE FADE with subtle glow - Default elegant transition
+  // Elegant transition styles based on type - all subtle and refined
+  const getTransitionStyle = (): { primary: React.CSSProperties; secondary: React.CSSProperties } => {
+    switch (type) {
+      case 'dissolve':
+      case 'morph':
+      case 'fade':
+        // Soft dissolve - most elegant
+        return {
+          primary: {
+            ...baseStyle,
+            background: `radial-gradient(ellipse at center, ${color}25 0%, transparent 60%)`,
+            animation: 'simpleFadeInOut 0.7s ease-in-out forwards',
+          },
+          secondary: {
+            ...baseStyle,
+            backdropFilter: 'blur(3px)',
+            WebkitBackdropFilter: 'blur(3px)',
+            opacity: 0.4,
+            animation: 'simpleFadeInOut 0.5s ease-in-out forwards',
+          },
+        }
+
+      case 'wipe':
+      case 'slide':
+      case 'push':
+        // Directional sweep
+        return {
+          primary: {
+            ...baseStyle,
+            background: `linear-gradient(90deg, ${color}20 0%, ${color}35 50%, transparent 100%)`,
+            animation: 'simpleFadeInOut 0.6s ease-out forwards',
+          },
+          secondary: {
+            ...baseStyle,
+            backdropFilter: 'blur(2px)',
+            WebkitBackdropFilter: 'blur(2px)',
+            opacity: 0.3,
+            animation: 'simpleFadeInOut 0.5s ease-in-out forwards',
+          },
+        }
+
+      case 'zoom':
+      case 'sunburst':
+      case 'ripple':
+        // Radial burst - subtle glow
+        return {
+          primary: {
+            ...baseStyle,
+            background: `radial-gradient(circle at center, ${color}35 0%, ${color}15 40%, transparent 70%)`,
+            animation: 'simpleFadeInOut 0.8s ease-out forwards',
+          },
+          secondary: {
+            ...baseStyle,
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            opacity: 0.5,
+            animation: 'simpleFadeInOut 0.6s ease-in-out forwards',
+          },
+        }
+
+      case 'prism':
+      case 'neon':
+      case 'electric':
+        // Vibrant glow for modern effects
+        return {
+          primary: {
+            ...baseStyle,
+            background: `radial-gradient(ellipse at center, ${color}40 0%, transparent 50%)`,
+            boxShadow: `inset 0 0 60px ${color}20`,
+            animation: 'simpleFadeInOut 0.6s ease-in-out forwards',
+          },
+          secondary: {
+            ...baseStyle,
+            backdropFilter: 'blur(5px)',
+            WebkitBackdropFilter: 'blur(5px)',
+            opacity: 0.4,
+            animation: 'simpleFadeInOut 0.5s ease-in-out forwards',
+          },
+        }
+
+      default:
+        // Default elegant fade
+        return {
+          primary: {
+            ...baseStyle,
+            background: `radial-gradient(ellipse at center, ${color}25 0%, transparent 65%)`,
+            animation: 'simpleFadeInOut 0.7s ease-in-out forwards',
+          },
+          secondary: {
+            ...baseStyle,
+            backdropFilter: 'blur(3px)',
+            WebkitBackdropFilter: 'blur(3px)',
+            opacity: 0.35,
+            animation: 'simpleFadeInOut 0.55s ease-in-out forwards',
+          },
+        }
+    }
+  }
+
+  const styles = getTransitionStyle()
+
   return (
     <>
-      {/* Soft radial glow from center */}
-      <div
-        style={{
-          ...baseStyle,
-          background: `radial-gradient(ellipse at center, ${color}30 0%, transparent 70%)`,
-          opacity: 1,
-          animation: 'simpleFadeInOut 0.8s ease-in-out forwards',
-        }}
-      />
-      {/* Very subtle blur overlay */}
-      <div
-        style={{
-          ...baseStyle,
-          backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)',
-          opacity: 0.5,
-          animation: 'simpleFadeInOut 0.6s ease-in-out forwards',
-        }}
-      />
+      <div style={styles.primary} />
+      <div style={styles.secondary} />
     </>
   )
 }
@@ -726,8 +814,8 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
   const previousScene = previousSceneIndex !== null ? plan.scenes[previousSceneIndex] : null
   const totalDuration = plan.settings.totalDuration
 
-  // Simple elegant transition - always use fade (Apple/Linear style)
-  const currentTransitionType = 'fade' as TransitionType
+  // Use scene's transition type - elegant variations for each
+  const currentTransitionType = (currentScene.transition?.type || 'dissolve') as TransitionType
 
   // Extract colors for current and previous scenes
   const getSceneColors = useCallback((scene: Scene) => {
