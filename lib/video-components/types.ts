@@ -196,7 +196,7 @@ export type Background =
 // ÉLÉMENTS (composants visuels)
 // ============================================================================
 
-export type ElementType = 'text' | 'image' | 'shape' | 'icon' | 'badge' | 'divider' | 'spacer' | 'logo'
+export type ElementType = 'text' | 'image' | 'shape' | 'icon' | 'badge' | 'divider' | 'spacer' | 'logo' | 'imagePlaceholder'
 
 // Élément de base (propriétés communes)
 export interface BaseElement {
@@ -274,6 +274,17 @@ export interface LogoElement extends BaseElement {
   style?: 'normal' | 'glow' | 'glass'           // Style visuel
 }
 
+// Élément Image Placeholder (emplacement pour image client)
+export interface ImagePlaceholderElement extends BaseElement {
+  type: 'imagePlaceholder'
+  placeholderType: 'screenshot' | 'mockup' | 'logo' | 'photo'  // Type de placeholder
+  src?: string                   // URL de l'image (optionnel - peut être vide)
+  width?: number | string        // Largeur (défaut: 280)
+  height?: number | string       // Hauteur (défaut: 180)
+  effect?: 'glass' | 'shadow' | 'float' | 'glow' | 'none'  // Effet visuel
+  label?: string                 // Label du placeholder si vide
+}
+
 // Union de tous les éléments
 export type SceneElement =
   | TextElement
@@ -284,6 +295,7 @@ export type SceneElement =
   | DividerElement
   | SpacerElement
   | LogoElement
+  | ImagePlaceholderElement
 
 // ============================================================================
 // SCÈNE (une "slide" de la vidéo)
@@ -302,14 +314,21 @@ export type LayoutName =
   | 'impact'
   | 'cards'
 
+// Phase de contenu (pour les slides multi-contenus)
+export interface ContentPhase {
+  elements: SceneElement[]
+  duration: number              // Durée de cette phase en secondes
+}
+
 export interface Scene {
   id?: string
   name: SceneName
   label?: string                // Label custom si name = 'custom'
   layout: LayoutName            // Layout pattern to use
-  duration: number              // en secondes
+  duration: number              // en secondes (durée totale de la scène)
   background: Background
-  elements: SceneElement[]
+  elements: SceneElement[]      // Éléments principaux (si pas de phases)
+  contentPhases?: ContentPhase[] // Phases de contenu multiples (optionnel)
   transition?: Transition       // Transition vers la scène suivante
 }
 
