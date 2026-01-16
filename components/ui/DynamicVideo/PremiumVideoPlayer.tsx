@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import type { VideoPlan, Scene, SceneElement, TextElement, BadgeElement, LogoElement, ShapeElement } from '@/lib/video-components/types'
+import type { VideoPlan, Scene, SceneElement, TextElement, BadgeElement, LogoElement, ShapeElement, ImagePlaceholderElement, ContentPhase } from '@/lib/video-components/types'
 import { getBackgroundCSS } from '@/lib/video-components/backgrounds'
 import { badgeVariants } from '@/lib/video-components/styles'
 
@@ -699,23 +699,152 @@ function ElementView({
     )
   }
 
+  // Image Placeholder element
+  if (element.type === 'imagePlaceholder') {
+    const placeholderEl = element as ImagePlaceholderElement
+    const width = typeof placeholderEl.width === 'number' ? placeholderEl.width : 280
+    const height = typeof placeholderEl.height === 'number' ? placeholderEl.height : 180
+    const effect = placeholderEl.effect || 'glass'
+
+    // Effect styles
+    const effectStyles: Record<string, React.CSSProperties> = {
+      glass: {
+        background: 'rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+      },
+      shadow: {
+        background: 'rgba(0, 0, 0, 0.3)',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 8px 20px rgba(0, 0, 0, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+      },
+      float: {
+        background: 'rgba(255, 255, 255, 0.05)',
+        boxShadow: '0 30px 60px rgba(0, 0, 0, 0.4)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        transform: 'perspective(1000px) rotateX(5deg)',
+      },
+      glow: {
+        background: 'rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 0 40px rgba(255, 255, 255, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+      },
+      none: {
+        background: 'transparent',
+      },
+    }
+
+    // Placeholder type labels
+    const placeholderLabels: Record<string, string> = {
+      screenshot: 'Product Screenshot',
+      mockup: 'App Mockup',
+      logo: 'Your Logo',
+      photo: 'Image',
+    }
+
+    return (
+      <div
+        style={{
+          ...elementAnimation,
+          position: 'relative',
+          willChange: 'transform, opacity',
+        }}
+      >
+        <div
+          style={{
+            width,
+            height,
+            borderRadius: 16,
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            ...effectStyles[effect],
+          }}
+        >
+          {placeholderEl.src ? (
+            <img
+              src={placeholderEl.src}
+              alt={placeholderEl.label || 'Product image'}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: 12,
+              }}
+            />
+          ) : (
+            // Empty placeholder UI
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 12,
+                color: 'rgba(255, 255, 255, 0.4)',
+              }}
+            >
+              {/* Mockup header dots */}
+              {placeholderEl.placeholderType === 'screenshot' || placeholderEl.placeholderType === 'mockup' ? (
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255, 95, 87, 0.6)' }} />
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(254, 188, 46, 0.6)' }} />
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(40, 200, 64, 0.6)' }} />
+                </div>
+              ) : null}
+              {/* Placeholder lines */}
+              <div style={{ width: '60%', height: 10, background: 'rgba(255,255,255,0.15)', borderRadius: 5 }} />
+              <div style={{ width: '80%', height: 10, background: 'rgba(255,255,255,0.1)', borderRadius: 5 }} />
+              <div style={{ width: '50%', height: 10, background: 'rgba(255,255,255,0.08)', borderRadius: 5 }} />
+              {/* Label */}
+              <span style={{ fontSize: '0.7rem', marginTop: 8, opacity: 0.6 }}>
+                {placeholderEl.label || placeholderLabels[placeholderEl.placeholderType] || 'Image'}
+              </span>
+            </div>
+          )}
+        </div>
+        {/* Floating effect glow */}
+        {effect === 'float' && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: -20,
+              left: '10%',
+              right: '10%',
+              height: 40,
+              background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 70%)',
+              filter: 'blur(10px)',
+            }}
+          />
+        )}
+      </div>
+    )
+  }
+
   return null
 }
 
 // Scene content renderer - positions elements vertically with proper hierarchy
 function SceneContent({
   scene,
+  elements,  // Can be overridden for content phases
   isVisible,
   isExiting,
   useWordAnimation = true,
   transitionType = 'content',
 }: {
   scene: Scene
+  elements?: SceneElement[]  // Optional - uses scene.elements if not provided
   isVisible: boolean
   isExiting: boolean
   useWordAnimation?: boolean
   transitionType?: TransitionType
 }) {
+  // Use provided elements or fallback to scene.elements
+  const activeElements = elements || scene.elements
+
   // Sort elements with smart ordering:
   // 1. Logo (if at top position)
   // 2. Badge
@@ -743,7 +872,7 @@ function SceneContent({
     return 6
   }
 
-  const sortedElements = [...scene.elements].sort((a, b) => getElementOrder(a) - getElementOrder(b))
+  const sortedElements = [...activeElements].sort((a, b) => getElementOrder(a) - getElementOrder(b))
 
   // Separate shapes for absolute positioning
   const shapes = sortedElements.filter(el => el.type === 'shape')
@@ -916,17 +1045,26 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
   className = '',
 }) => {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
+  const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0)  // For multi-content slides
+  const [isPhaseTransitioning, setIsPhaseTransitioning] = useState(false)  // Content phase change
   const [isPlaying, setIsPlaying] = useState(autoPlay)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [showTransitionOverlay, setShowTransitionOverlay] = useState(false)
   const [progress, setProgress] = useState(0)
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const phaseTimerRef = useRef<NodeJS.Timeout | null>(null)  // Timer for phase transitions
   const progressRef = useRef<NodeJS.Timeout | null>(null)
   const sceneStartTime = useRef<number>(Date.now())
 
   const currentScene = plan.scenes[currentSceneIndex]
   const totalDuration = plan.settings.totalDuration
+
+  // Get current elements - either from content phases or direct elements
+  const hasContentPhases = currentScene.contentPhases && currentScene.contentPhases.length > 0
+  const currentElements = hasContentPhases
+    ? currentScene.contentPhases![currentPhaseIndex]?.elements || currentScene.elements
+    : currentScene.elements
 
   // Mostly content-only transitions for fluid feel - overlay is rare
   const transitionSequence: TransitionType[] = [
@@ -980,8 +1118,31 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
   // Clear all timers
   const clearTimers = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
+    if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current)
     if (progressRef.current) clearInterval(progressRef.current)
   }, [])
+
+  // Go to next content phase (within same scene, no slide transition)
+  const goToNextPhase = useCallback(() => {
+    if (!hasContentPhases || !currentScene.contentPhases) return
+
+    const nextPhaseIndex = currentPhaseIndex + 1
+
+    // If there are more phases, transition to next phase (no slide change)
+    if (nextPhaseIndex < currentScene.contentPhases.length) {
+      // Phase transition - content changes smoothly, no overlay
+      setIsPhaseTransitioning(true)
+
+      setTimeout(() => {
+        setCurrentPhaseIndex(nextPhaseIndex)
+      }, 350)
+
+      setTimeout(() => {
+        setIsPhaseTransitioning(false)
+      }, 400)
+    }
+    // If no more phases, let the main timer handle scene transition
+  }, [hasContentPhases, currentScene.contentPhases, currentPhaseIndex])
 
   // Go to next scene with varied transition style
   const goToNextScene = useCallback(() => {
@@ -1006,6 +1167,7 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
 
       setTimeout(() => {
         setCurrentSceneIndex(nextIndex)
+        setCurrentPhaseIndex(0)  // Reset phase for new scene
         sceneStartTime.current = Date.now()
       }, 480)
 
@@ -1018,6 +1180,7 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
       // Elements exit with their animation, new elements enter smoothly
       setTimeout(() => {
         setCurrentSceneIndex(nextIndex)
+        setCurrentPhaseIndex(0)  // Reset phase for new scene
         sceneStartTime.current = Date.now()
       }, 400) // Slightly longer for smoother crossfade
 
@@ -1037,8 +1200,23 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
 
     const sceneDuration = currentScene.duration * 1000
 
-    // Timer for next scene
-    timerRef.current = setTimeout(goToNextScene, sceneDuration)
+    // Handle content phases if present
+    if (hasContentPhases && currentScene.contentPhases) {
+      const phases = currentScene.contentPhases
+      const currentPhaseDuration = (phases[currentPhaseIndex]?.duration || 2) * 1000
+
+      // Schedule next phase or scene transition
+      if (currentPhaseIndex < phases.length - 1) {
+        // More phases to go - schedule phase transition
+        phaseTimerRef.current = setTimeout(goToNextPhase, currentPhaseDuration)
+      } else {
+        // Last phase - schedule scene transition at end of this phase
+        timerRef.current = setTimeout(goToNextScene, currentPhaseDuration)
+      }
+    } else {
+      // No content phases - just schedule scene transition
+      timerRef.current = setTimeout(goToNextScene, sceneDuration)
+    }
 
     // Progress bar update
     sceneStartTime.current = Date.now()
@@ -1054,7 +1232,7 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
     }, 50)
 
     return clearTimers
-  }, [isPlaying, currentSceneIndex, currentScene, goToNextScene, clearTimers, plan.scenes, totalDuration])
+  }, [isPlaying, currentSceneIndex, currentPhaseIndex, currentScene, goToNextScene, goToNextPhase, clearTimers, plan.scenes, totalDuration, hasContentPhases])
 
   // Controls
   const togglePlay = () => setIsPlaying(!isPlaying)
@@ -1131,8 +1309,9 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
         {/* Scene content - elements animate with varied styles */}
         <SceneContent
           scene={currentScene}
-          isVisible={!isTransitioning}
-          isExiting={isTransitioning}
+          elements={currentElements}
+          isVisible={!isTransitioning && !isPhaseTransitioning}
+          isExiting={isTransitioning || isPhaseTransitioning}
           useWordAnimation={true}
           transitionType={currentTransitionType}
         />
