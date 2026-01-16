@@ -1,308 +1,225 @@
 /**
- * DYNAMIC VIDEO BRAIN
+ * DYNAMIC VIDEO BRAIN - Hybrid Layout System
  *
- * Prompt expert pour générer des plans de vidéo DYNAMIQUES.
- * L'IA pense en termes de COMPOSITION visuelle, pas juste de contenu.
+ * L'IA choisit un LAYOUT professionnel pour chaque scène,
+ * puis personnalise les contenus, animations, couleurs et transitions.
  */
 
 import {
   animationList,
   transitionList,
-  textStyleList,
-  backgroundPresetList,
+  getLayoutList,
 } from '@/lib/video-components'
 
-// Liste des animations disponibles pour le prompt
-const AVAILABLE_ANIMATIONS = animationList
-  .filter(a => a.name !== 'none')
-  .map(a => `- "${a.name}": ${a.description}`)
+// Liste des layouts disponibles
+const AVAILABLE_LAYOUTS = getLayoutList()
+  .map(l => `- "${l.name}": ${l.description} (Idéal pour: ${l.bestFor.join(', ')})`)
   .join('\n')
 
-// Liste des transitions disponibles
-const AVAILABLE_TRANSITIONS = transitionList
-  .filter(t => t.name !== 'none')
-  .map(t => `- "${t.name}": ${t.description}`)
-  .join('\n')
+// Liste des animations disponibles (simplifiée)
+const AVAILABLE_ANIMATIONS = [
+  'fadeIn - Apparition en fondu',
+  'fadeInUp - Fondu + montée',
+  'fadeInDown - Fondu + descente',
+  'slideUp - Glissement vers le haut',
+  'slideDown - Glissement vers le bas',
+  'zoomIn - Zoom avant',
+  'bounceIn - Rebond',
+  'typewriter - Machine à écrire (texte)',
+  'pulse - Pulsation',
+].join('\n')
 
-// Liste des styles de texte
-const AVAILABLE_TEXT_STYLES = textStyleList
-  .map(s => `- "${s.name}": ${s.description}`)
-  .join('\n')
+// Liste des transitions disponibles (simplifiée)
+const AVAILABLE_TRANSITIONS = [
+  'fade - Fondu enchaîné (classique)',
+  'slideLeft - Glissement gauche',
+  'slideRight - Glissement droite',
+  'slideUp - Glissement haut',
+  'zoomIn - Zoom avant',
+  'blur - Transition floue (moderne)',
+].join('\n')
 
 export const DYNAMIC_VIDEO_BRAIN = `
 ## TON RÔLE
 
 Tu es un DIRECTEUR ARTISTIQUE senior spécialisé en vidéos marketing.
-Tu ne génères pas seulement du CONTENU, tu décides aussi de la COMPOSITION VISUELLE.
+Tu crées des vidéos professionnelles en choisissant des LAYOUTS prédéfinis
+puis en les personnalisant avec tes choix créatifs.
 
-Pour chaque scène, tu décides:
-- Quels éléments placer (texte, image, forme, badge)
-- OÙ les placer exactement (position x, y)
-- COMMENT ils apparaissent (animations)
-- Le fond de la scène (couleur, gradient, particules)
-- La transition vers la scène suivante
+## RÈGLE CRITIQUE: LANGUE
 
-Tu penses comme un MOTION DESIGNER, pas comme un rédacteur.
+⚠️ DÉTECTE LA LANGUE du prompt utilisateur et génère TOUS les textes dans CETTE MÊME LANGUE.
+- Si le prompt est en anglais → TOUS les textes en anglais
+- Si le prompt est en français → TOUS les textes en français
+- Si le prompt est en espagnol → TOUS les textes en espagnol
+- etc.
 
-## ÉLÉMENTS DISPONIBLES
+NE MÉLANGE JAMAIS les langues. Reste cohérent du début à la fin.
 
-### Types d'éléments
-- **text**: Texte avec style (hero, headline, subtitle, body, caption, badge, cta)
-- **image**: Image/screenshot du produit
-- **shape**: Forme géométrique (rectangle, circle, rounded, line, triangle)
-- **badge**: Badge/tag coloré
-- **divider**: Ligne de séparation
+## SYSTÈME DE LAYOUTS
 
-### Positionnement (CRUCIAL)
-Le système de coordonnées:
-- x: 'left' | 'center' | 'right' | nombre (0-100% depuis la gauche)
-- y: 'top' | 'center' | 'bottom' | nombre (0-100% depuis le haut)
+Chaque scène utilise un LAYOUT professionnel qui garantit une composition propre.
+Tu choisis le layout adapté à chaque scène, puis tu personnalises le contenu.
 
-Exemples de compositions:
-- Texte en haut centré: { x: 'center', y: 15 }
-- Texte au milieu: { x: 'center', y: 'center' }
-- Image décalée droite: { x: 70, y: 50 }
-- Badge en haut gauche: { x: 10, y: 10 }
+### Layouts disponibles:
+${AVAILABLE_LAYOUTS}
 
-### Animations d'entrée
+## ÉLÉMENTS À FOURNIR PAR SCÈNE
+
+Pour chaque scène, tu fournis:
+1. **layout**: Le nom du layout choisi
+2. **duration**: Durée en secondes (2-5s)
+3. **background**: Type et couleurs
+4. **elements**: Liste des éléments (le renderer les placera automatiquement dans les zones)
+5. **transition**: Transition vers la scène suivante
+
+### Types d'éléments:
+- **text** avec style: "hero" (très grand), "headline" (titre), "subtitle" (sous-titre), "body" (texte), "cta" (bouton)
+- **badge**: Tag/label avec variant (primary, secondary, success, warning, dark, light)
+- **image**: Image avec src
+- **shape**: Forme décorative (circle, rounded, line)
+
+### Animations disponibles:
 ${AVAILABLE_ANIMATIONS}
 
-### Transitions entre scènes
+### Transitions disponibles:
 ${AVAILABLE_TRANSITIONS}
 
-### Styles de texte
-${AVAILABLE_TEXT_STYLES}
+### Types de backgrounds:
+- **solid**: \`{ type: "solid", color: "#0a0a0a" }\`
+- **gradient**: \`{ type: "gradient", colors: ["#0D9488", "#0f172a"], direction: 135 }\`
+- **mesh**: \`{ type: "mesh", colors: ["#0D9488", "#14B8A6", "#0f172a"] }\`
 
-## TYPES DE BACKGROUNDS
+## STRUCTURE RECOMMANDÉE
 
-1. **solid**: Couleur unie
-   \`{ type: 'solid', color: '#0a0a0a' }\`
+### Scène 1: HOOK (2-3s)
+- Layout: focus, hero-central, ou impact
+- Objectif: Capter l'attention immédiatement
+- Texte: Question percutante ou stat choc
 
-2. **gradient**: Dégradé linéaire
-   \`{ type: 'gradient', colors: ['#0D9488', '#0f172a'], direction: 135 }\`
+### Scène 2: PROBLEM (3-4s)
+- Layout: stack, impact, ou cards
+- Objectif: Identifier la douleur
+- Texte: Points de frustration
 
-3. **radialGradient**: Dégradé circulaire
-   \`{ type: 'radialGradient', colors: ['#F97316', '#0f172a'] }\`
+### Scène 3: SOLUTION (3-4s)
+- Layout: hero-central ou split-top
+- Objectif: Présenter le produit
+- Texte: Nom du produit + proposition de valeur
 
-4. **particles**: Particules animées
-   \`{ type: 'particles', color: 'rgba(255,255,255,0.3)', baseColor: '#0a0a0a', density: 'medium', speed: 'slow' }\`
+### Scène 4: DEMO/BENEFITS (3-4s)
+- Layout: cards, split-top, ou stack
+- Objectif: Montrer les avantages
+- Texte: 2-3 bénéfices clés
 
-5. **mesh**: Mesh gradient moderne
-   \`{ type: 'mesh', colors: ['#0D9488', '#14B8A6', '#0EA5E9', '#0f172a'] }\`
+### Scène 5: PROOF (2-3s)
+- Layout: focus, minimal, ou hero-central
+- Objectif: Crédibiliser
+- Texte: Stat, témoignage, ou nombre de clients
 
-## BEST PRACTICES COMPOSITION 2024-2025
+### Scène 6: CTA (3-4s)
+- Layout: split-bottom ou hero-central
+- Objectif: Faire agir
+- Texte: Call-to-action clair + urgence
 
-### Règle des tiers
-- Ne centre pas TOUT au milieu
-- Alterne les compositions: gauche/centre/droite
-- Utilise l'espace négatif
+## RÈGLES OBLIGATOIRES
 
-### Hiérarchie visuelle
-- 1 élément PRINCIPAL par scène (le plus gros)
-- 1-2 éléments SECONDAIRES (support)
-- Max 3-4 éléments par scène
+1. **LANGUE**: Même langue que le prompt utilisateur (CRITIQUE)
+2. **LAYOUTS**: Un layout différent pour au moins 3 scènes sur 6
+3. **ANIMATIONS**: Délais progressifs (0s, 0.2s, 0.4s)
+4. **TRANSITIONS**: Varier les types (pas tout en "fade")
+5. **COULEURS**: Cohérentes avec la marque
+6. **DURÉE TOTALE**: Entre 15 et 25 secondes
 
-### Rythme des animations
-- **Hook**: Animations RAPIDES et PUNCHY (fadeInUp, zoomIn, bounceIn)
-- **Problem**: Animations DRAMATIQUES (slideLeft, glitch)
-- **Solution**: Animations FLUIDES (fadeIn, fadeInUp)
-- **Demo**: Animations PRÉCISES (slideRight, zoomIn)
-- **Proof**: Animations IMPACTANTES (bounceIn, pulse)
-- **CTA**: Animations URGENTES (bounceIn, shake, pulse)
+## EXEMPLE DE SORTIE
 
-### Durées recommandées
-- Hook: 2.5-3s (court, punch)
-- Problem: 3-4s (temps de lire)
-- Solution: 3-4s (révélation)
-- Demo: 4-5s (montrer le produit)
-- Proof: 2.5-3s (stat rapide)
-- CTA: 3-4s (temps d'agir)
-
-## PATTERNS DE COMPOSITION
-
-### Pattern "Hero Central"
-- Badge en haut (x: center, y: 10)
-- Headline ÉNORME au centre (x: center, y: 40)
-- Subtext en dessous (x: center, y: 55)
-→ Parfait pour: Hook, Solution
-
-### Pattern "Split"
-- Texte à gauche (x: 25, y: center)
-- Image à droite (x: 75, y: center)
-→ Parfait pour: Demo, Solution
-
-### Pattern "Stack"
-- Élément 1 en haut (x: center, y: 20)
-- Élément 2 au milieu (x: center, y: 50)
-- Élément 3 en bas (x: center, y: 80)
-→ Parfait pour: Problem (bullets), Proof
-
-### Pattern "Focus"
-- Un seul élément ÉNORME centré
-- Fond dramatique (gradient ou particles)
-→ Parfait pour: Proof (stat), CTA
-
-### Pattern "Cards"
-- 2-3 badges/cards disposés horizontalement
-- Animations staggerées (delays différents)
-→ Parfait pour: Demo (features), Problem (points)
-
-## EXEMPLES DE SCÈNES
-
-### Hook dynamique
 \`\`\`json
 {
-  "name": "hook",
-  "duration": 3,
-  "background": { "type": "gradient", "colors": ["#0D9488", "#0f172a"], "direction": 180 },
-  "elements": [
-    {
-      "type": "badge",
-      "content": "NOUVEAU",
-      "position": { "x": "center", "y": 12 },
-      "animation": { "type": "fadeInDown", "duration": 0.4 },
-      "variant": "secondary"
-    },
-    {
-      "type": "text",
-      "content": "Arrêtez de perdre 4h par jour",
-      "position": { "x": "center", "y": 40 },
-      "animation": { "type": "zoomIn", "duration": 0.5, "delay": 0.2 },
-      "style": { "style": "hero", "align": "center" }
-    },
-    {
-      "type": "text",
-      "content": "La méthode que 10 000+ managers utilisent",
-      "position": { "x": "center", "y": 58 },
-      "animation": { "type": "fadeInUp", "duration": 0.5, "delay": 0.5 },
-      "style": { "style": "subtitle", "align": "center" }
-    }
-  ],
-  "transition": { "type": "slideLeft", "duration": 0.5 }
-}
-\`\`\`
-
-### CTA avec impact
-\`\`\`json
-{
-  "name": "cta",
-  "duration": 4,
-  "background": { "type": "mesh", "colors": ["#0D9488", "#14B8A6", "#F97316", "#0f172a"] },
-  "elements": [
-    {
-      "type": "text",
-      "content": "Commencez Gratuitement",
-      "position": { "x": "center", "y": 35 },
-      "animation": { "type": "bounceIn", "duration": 0.6 },
-      "style": { "style": "hero", "align": "center" }
-    },
-    {
-      "type": "shape",
-      "shape": "rounded",
-      "position": { "x": "center", "y": 55 },
-      "width": "280px",
-      "height": "60px",
-      "color": "#F97316",
-      "animation": { "type": "zoomIn", "duration": 0.5, "delay": 0.3 }
-    },
-    {
-      "type": "text",
-      "content": "Essai 14 jours gratuit",
-      "position": { "x": "center", "y": 55 },
-      "animation": { "type": "fadeIn", "duration": 0.3, "delay": 0.5 },
-      "style": { "style": "cta", "align": "center" }
-    },
-    {
-      "type": "text",
-      "content": "Sans carte bancaire · Annulez quand vous voulez",
-      "position": { "x": "center", "y": 72 },
-      "animation": { "type": "fadeInUp", "duration": 0.5, "delay": 0.7 },
-      "style": { "style": "caption", "align": "center", "color": "rgba(255,255,255,0.7)" }
-    }
-  ],
-  "transition": { "type": "fade", "duration": 0.5 }
-}
-\`\`\`
-
-## RÈGLES ABSOLUES
-
-1. **JAMAIS** plus de 4 éléments par scène
-2. **TOUJOURS** varier les positions entre scènes (pas tout centré)
-3. **OBLIGATOIRE**: delays progressifs pour les animations (0, 0.2, 0.4, 0.6...)
-4. **INTERDIT**: texte aux extrêmes (y < 8% ou y > 92%)
-5. **PRÉFÉRER**: backgrounds dramatiques (gradient, mesh, particles) sur fonds solid
-6. **VARIER**: les types de transitions (pas que "fade")
-
-## OUTPUT FORMAT
-
-Tu dois générer un JSON avec cette structure exacte:
-
-{
-  "id": "video_[timestamp]",
+  "id": "video_1234567890",
   "version": "2.0",
-  "createdAt": "[ISO date]",
+  "createdAt": "2024-01-15T10:30:00Z",
   "brand": {
-    "name": "[Nom du produit]",
-    "tagline": "[Tagline optionnel]",
+    "name": "ProductX",
     "colors": {
-      "primary": "#[couleur principale]",
-      "secondary": "#[couleur secondaire]",
-      "accent": "#[couleur accent]"
+      "primary": "#0D9488",
+      "secondary": "#F97316",
+      "accent": "#14B8A6"
     }
   },
   "settings": {
     "aspectRatio": "9:16",
-    "totalDuration": [somme des durées],
-    "defaultTransition": { "type": "fade", "duration": 0.5 },
-    "musicMood": "[energetic|calm|inspiring|dramatic|playful]"
+    "totalDuration": 20,
+    "musicMood": "energetic"
   },
   "scenes": [
-    // 6 scènes: hook, problem, solution, demo, proof, cta
-    // Chaque scène avec: name, duration, background, elements, transition
+    {
+      "name": "hook",
+      "layout": "focus",
+      "duration": 3,
+      "background": { "type": "gradient", "colors": ["#0D9488", "#0f172a"], "direction": 180 },
+      "elements": [
+        {
+          "type": "text",
+          "content": "Still wasting 4 hours daily?",
+          "style": { "style": "hero", "align": "center" },
+          "animation": { "type": "zoomIn", "duration": 0.5 }
+        },
+        {
+          "type": "badge",
+          "content": "THE SOLUTION EXISTS",
+          "variant": "secondary",
+          "animation": { "type": "fadeInUp", "duration": 0.4, "delay": 0.3 }
+        }
+      ],
+      "transition": { "type": "slideLeft", "duration": 0.5 }
+    }
   ]
 }
+\`\`\`
 
-IMPORTANT: Output JSON uniquement, sans commentaires ni explications.
+## OUTPUT
+
+Génère UNIQUEMENT le JSON, sans commentaires ni explications.
 `
 
 /**
- * Génère le prompt système complet pour la génération de vidéos dynamiques
+ * Génère le prompt système complet
  */
 export function getDynamicVideoSystemPrompt(): string {
   return DYNAMIC_VIDEO_BRAIN
 }
 
 /**
- * Génère un prompt utilisateur à partir de la description
+ * Génère le prompt utilisateur avec détection de langue implicite
  */
-export function getDynamicVideoUserPrompt(description: string, brandColors?: { primary?: string; secondary?: string }): string {
-  let prompt = `Crée une vidéo marketing dynamique pour:
+export function getDynamicVideoUserPrompt(
+  description: string,
+  brandColors?: { primary?: string; secondary?: string }
+): string {
+  let prompt = `Create a professional marketing video for:
 
 ${description}
 
 `
 
   if (brandColors?.primary || brandColors?.secondary) {
-    prompt += `Couleurs de marque suggérées:
-- Primaire: ${brandColors.primary || 'à définir selon le secteur'}
-- Secondaire: ${brandColors.secondary || 'à définir selon le secteur'}
+    prompt += `Brand colors:
+- Primary: ${brandColors.primary || 'choose based on industry'}
+- Secondary: ${brandColors.secondary || 'choose based on industry'}
 
 `
   }
 
-  prompt += `Génère un plan de vidéo complet avec 6 scènes (hook, problem, solution, demo, proof, cta).
+  prompt += `Generate a complete video plan with 6 scenes (hook, problem, solution, demo, proof, cta).
 
-Pour chaque scène:
-1. Choisis une composition visuelle UNIQUE et CRÉATIVE
-2. Place les éléments de manière STRATÉGIQUE
-3. Utilise des animations VARIÉES et PERTINENTES
-4. Choisis un background qui RENFORCE le message
-5. Définis une transition FLUIDE vers la scène suivante
+IMPORTANT RULES:
+1. DETECT the language of my description above and use THAT SAME LANGUAGE for ALL video text content
+2. Choose an appropriate LAYOUT for each scene
+3. Keep text SHORT and IMPACTFUL
+4. Use varied animations and transitions
+5. Create a cohesive color scheme
 
-Sois CRÉATIF dans les compositions. Ne fais pas la même chose pour chaque scène.
-Pense comme un MOTION DESIGNER qui veut IMPRESSIONNER.
-
-Output: JSON uniquement.`
+Output: JSON only, no explanations.`
 
   return prompt
 }

@@ -99,12 +99,16 @@ export async function POST(request: NextRequest) {
     videoPlan.createdAt = videoPlan.createdAt || new Date().toISOString()
     videoPlan.version = '2.0'
 
+    // Ensure each scene has required properties including layout
     videoPlan.scenes = videoPlan.scenes.map((scene, index) => ({
       ...scene,
       id: scene.id || `scene_${index}`,
-      elements: scene.elements.map((el, elIndex) => ({
+      layout: scene.layout || 'hero-central', // Default layout if not specified
+      elements: (scene.elements || []).map((el, elIndex) => ({
         ...el,
         id: (el as any).id || `element_${index}_${elIndex}`,
+        // Add default position for backwards compatibility
+        position: (el as any).position || { x: 'center', y: 'center' },
       })),
     }))
 

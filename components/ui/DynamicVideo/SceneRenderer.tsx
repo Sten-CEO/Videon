@@ -6,10 +6,10 @@
  * Rend une scène complète avec son fond et tous ses éléments.
  */
 
-import React, { useEffect, useState, useRef } from 'react'
-import type { Scene, Background } from '@/lib/video-components/types'
+import React, { useEffect, useRef } from 'react'
+import type { Scene } from '@/lib/video-components/types'
 import { getBackgroundCSS } from '@/lib/video-components/backgrounds'
-import { ElementRenderer } from './ElementRenderer'
+import { LayoutRenderer } from './LayoutRenderer'
 
 interface SceneRendererProps {
   scene: Scene
@@ -224,14 +224,11 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({
         }}
       />
 
-      {/* Éléments de la scène */}
-      {scene.elements.map((element, index) => (
-        <ElementRenderer
-          key={element.id ?? `element-${index}`}
-          element={element}
-          isActive={transitionState === 'active'}
-        />
-      ))}
+      {/* Éléments de la scène via LayoutRenderer */}
+      <LayoutRenderer
+        scene={scene}
+        isActive={transitionState === 'active'}
+      />
 
       {/* Label de scène (debug) */}
       {process.env.NODE_ENV === 'development' && (
@@ -248,7 +245,7 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({
             fontFamily: 'monospace',
           }}
         >
-          {scene.name} | {scene.duration}s
+          {scene.name} | {scene.layout ?? 'hero-central'} | {scene.duration}s
         </div>
       )}
     </div>

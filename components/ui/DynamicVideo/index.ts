@@ -6,4 +6,5 @@
 
 export { DynamicVideoPlayer } from './DynamicVideoPlayer'
 export { SceneRenderer } from './SceneRenderer'
+export { LayoutRenderer } from './LayoutRenderer'
 export { ElementRenderer } from './ElementRenderer'
