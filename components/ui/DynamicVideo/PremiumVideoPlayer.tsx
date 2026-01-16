@@ -44,6 +44,26 @@ const TEXT_GRADIENTS = Object.fromEntries(
   Object.entries(textGradients).map(([key, value]) => [key, value.gradient])
 ) as Record<TextGradientName, string>
 
+// PROFESSIONAL gradients only - NO rainbow, candy, unicorn, prism
+const PROFESSIONAL_GRADIENTS: TextGradientName[] = [
+  'teal', 'sapphire', 'arctic', 'ocean', 'cosmic', 'silver', 'platinum',
+  'mint', 'ice', 'violet', 'purple', 'gold', 'amber', 'sunset'
+]
+
+// Sanitize gradient to only use professional ones
+function sanitizeGradient(gradient: string | undefined): string | undefined {
+  if (!gradient) return undefined
+
+  // If it's a known ugly gradient, replace with professional one
+  const uglyGradients = ['rainbow', 'prism', 'unicorn', 'candy', 'holographic', 'neon', 'fire', 'electric']
+  if (uglyGradients.includes(gradient)) {
+    // Return a random professional gradient
+    return PROFESSIONAL_GRADIENTS[Math.floor(Math.random() * PROFESSIONAL_GRADIENTS.length)]
+  }
+
+  return gradient
+}
+
 // Element animation styles
 function getElementAnimation(
   isVisible: boolean,
@@ -453,8 +473,9 @@ function ElementView({
     // Use word-by-word animation for hero and headline text
     const shouldUseWordAnimation = useWordAnimation && (textStyle === 'hero' || textStyle === 'headline')
 
-    // Check if gradient is specified in the element style
-    const gradientKey = (textEl.style as { gradient?: string }).gradient
+    // Check if gradient is specified in the element style - SANITIZE to professional only
+    const rawGradient = (textEl.style as { gradient?: string }).gradient
+    const gradientKey = sanitizeGradient(rawGradient)
 
     if (shouldUseWordAnimation) {
       return (
@@ -683,10 +704,11 @@ function SceneContent({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '24px',
-        // Safe margins: more padding to avoid text touching edges
-        padding: '60px 32px',
-        paddingTop: '80px', // Extra top padding for badge/brand
+        gap: '20px',
+        // IMPORTANT: Large safe margins to prevent text cutoff
+        padding: '15% 8%',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
         zIndex: 10,
       }}
     >
@@ -841,7 +863,7 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
     if (progressRef.current) clearInterval(progressRef.current)
   }, [])
 
-  // Go to next scene with SMOOTH, SUBTLE transition (Apple/Linear style)
+  // Go to next scene with SMOOTH, CINEMATIC transition
   const goToNextScene = useCallback(() => {
     const nextIndex = (currentSceneIndex + 1) % plan.scenes.length
 
@@ -850,37 +872,53 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
       return
     }
 
-    // Step 1: Store current scene as previous and start transition
+    // CINEMATIC TRANSITION SEQUENCE
+    // Step 1: Start transition - store previous, begin crossfade
     setPreviousSceneIndex(currentSceneIndex)
     setIsTransitioning(true)
-    setBackgroundOpacity(0) // Start crossfade
 
-    // Step 2: Show subtle transition overlay (very brief)
+    // Step 2: Show transition overlay for smooth blend
     setTimeout(() => {
       setShowTransitionOverlay(true)
-    }, 50)
+      setBackgroundOpacity(0.3) // Start fading out old background
+    }, 100)
 
-    // Step 3: Switch scene quickly
+    // Step 3: Gradual background fade
+    setTimeout(() => {
+      setBackgroundOpacity(0.1)
+    }, 300)
+
+    // Step 4: Switch to new scene at midpoint
     setTimeout(() => {
       setCurrentSceneIndex(nextIndex)
       sceneStartTime.current = Date.now()
-    }, 200)
+    }, 500)
 
-    // Step 4: Start fading in new background
+    // Step 5: Start fading in new background
+    setTimeout(() => {
+      setBackgroundOpacity(0.5)
+    }, 600)
+
+    // Step 6: Continue fading in
+    setTimeout(() => {
+      setBackgroundOpacity(0.8)
+    }, 800)
+
+    // Step 7: Full opacity
     setTimeout(() => {
       setBackgroundOpacity(1)
-    }, 250)
+    }, 1000)
 
-    // Step 5: Hide overlay quickly - elements animate in smoothly
+    // Step 8: Hide overlay - let content shine
     setTimeout(() => {
       setShowTransitionOverlay(false)
-    }, 450)
+    }, 1100)
 
-    // Step 6: Transition complete
+    // Step 9: Transition complete
     setTimeout(() => {
       setIsTransitioning(false)
       setPreviousSceneIndex(null)
-    }, 600)
+    }, 1300)
 
   }, [currentSceneIndex, plan.scenes.length, loop])
 
