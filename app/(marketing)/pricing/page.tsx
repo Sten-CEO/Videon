@@ -173,7 +173,7 @@ export default function PricingPage() {
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <Card key={index} variant="hover" padding="lg">
+            <Card key={index} variant="default" hover padding="lg">
               <h3 className="font-semibold mb-2">{faq.question}</h3>
               <p className="text-foreground-muted">{faq.answer}</p>
             </Card>
