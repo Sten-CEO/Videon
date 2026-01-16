@@ -85,61 +85,71 @@ function validateTransition(
   }
 }
 
+// PROFESSIONAL DARK BACKGROUNDS ONLY - These are proven to look good
+const DARK_PROFESSIONAL_BACKGROUNDS = [
+  { type: 'gradient', colors: ['#0f172a', '#1e293b', '#0f172a'], direction: 180 }, // Dark blue
+  { type: 'gradient', colors: ['#0a0a0a', '#171717', '#0a0a0a'], direction: 180 }, // Pure dark
+  { type: 'gradient', colors: ['#042f2e', '#0d3d56', '#042f2e'], direction: 135 }, // Dark teal
+  { type: 'gradient', colors: ['#1e1b4b', '#312e81', '#1e1b4b'], direction: 135 }, // Dark purple
+  { type: 'gradient', colors: ['#18181b', '#27272a', '#18181b'], direction: 180 }, // Charcoal
+  { type: 'gradient', colors: ['#0c0a09', '#1c1917', '#0c0a09'], direction: 180 }, // Warm dark
+]
+
 /**
- * Validate and enhance background
+ * Check if a color is dark enough (luminance < 0.3)
+ */
+function isDarkColor(hex: string): boolean {
+  // Remove # if present
+  const color = hex.replace('#', '')
+  if (color.length !== 6) return false
+
+  const r = parseInt(color.substr(0, 2), 16) / 255
+  const g = parseInt(color.substr(2, 2), 16) / 255
+  const b = parseInt(color.substr(4, 2), 16) / 255
+
+  // Calculate relative luminance
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return luminance < 0.35 // Allow slightly brighter but still dark
+}
+
+/**
+ * Validate and enhance background - FORCE DARK PROFESSIONAL COLORS
  */
 function validateBackground(
   background: any,
   themeBackgrounds: string[]
 ): Scene['background'] {
-  // If it's already a valid background object, keep it
+  // If it's a valid background, check if colors are dark
   if (background && background.type) {
     if (background.type === 'gradient' && Array.isArray(background.colors)) {
-      return {
-        type: 'gradient',
-        colors: background.colors,
-        direction: background.direction || 180,
+      // Check if ALL colors are dark
+      const allDark = background.colors.every((c: string) => isDarkColor(c))
+      if (allDark) {
+        return {
+          type: 'gradient',
+          colors: background.colors,
+          direction: background.direction || 180,
+        }
       }
+      // Colors are too bright - force dark background
+      console.warn('[PREMIUM API] Background colors too bright, forcing dark')
     }
-    if (background.type === 'solid' && background.color) {
+    if (background.type === 'solid' && background.color && isDarkColor(background.color)) {
       return {
         type: 'solid',
         color: background.color,
       }
     }
-    if (background.type === 'mesh' && Array.isArray(background.colors)) {
-      return {
-        type: 'mesh',
-        colors: background.colors,
-      }
-    }
   }
 
-  // Fallback to theme preset
-  const presetName = themeBackgrounds[0] as BackgroundPresetName
-  const preset = backgroundPresets[presetName]
-
-  if (preset) {
-    if (preset.type === 'solid') {
-      return { type: 'solid', color: preset.colors[0] }
-    }
-    if (preset.type === 'gradient') {
-      return {
-        type: 'gradient',
-        colors: preset.colors,
-        direction: preset.direction || 180,
-      }
-    }
-    if (preset.type === 'mesh') {
-      return { type: 'mesh', colors: preset.colors }
-    }
-  }
-
-  // Ultimate fallback
+  // Use a professional dark background from our curated list
+  const randomDark = DARK_PROFESSIONAL_BACKGROUNDS[
+    Math.floor(Math.random() * DARK_PROFESSIONAL_BACKGROUNDS.length)
+  ]
   return {
     type: 'gradient',
-    colors: ['#0f172a', '#1e293b'],
-    direction: 180,
+    colors: randomDark.colors,
+    direction: randomDark.direction,
   }
 }
 

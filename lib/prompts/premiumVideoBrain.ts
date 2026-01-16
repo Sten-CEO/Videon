@@ -223,22 +223,25 @@ Based on your analysis, choose ONE visual theme and use it CONSISTENTLY:
 - Feeling: Minimal, efficient, professional
 
 ### 🌈 CREATIVE VIBRANT (for design, marketing, creative tools)
-- Backgrounds: meshWarm, sunsetGlow, cosmicPurple, hotPink
-- Transitions: sunburst, vortex, liquid, prism
-- Text gradients: sunset, purple, aurora, rainbow
+- Backgrounds: darkPurple, charcoal, deepSpace (DARK ONLY)
+- Transitions: morph, dissolve, wipe, slide
+- Text gradients: purple, violet, cosmic, sunset
 - Feeling: Bold, inspiring, dynamic
+- ⚠️ NO bright backgrounds - keep it dark and premium
 
 ### ⚡ FUTURISTIC AI (for AI products, innovation)
-- Backgrounds: cyberpunk, deepSpace, neonCity, midnight
-- Transitions: glitch, electric, prism, neon
-- Text gradients: cosmic, aurora, prism, chrome
+- Backgrounds: deepSpace, midnight, darkBlue, charcoal (DARK ONLY)
+- Transitions: dissolve, morph, wipe, slide
+- Text gradients: cosmic, teal, sapphire, violet
 - Feeling: Cutting-edge, powerful, transformative
+- ⚠️ NO neon colors - keep it elegant
 
 ### 🧡 WARM FRIENDLY (for consumer apps, e-commerce, lifestyle)
-- Backgrounds: meshWarm, sunsetGlow, tropicalBliss
-- Transitions: morph, ripple, dissolve, curtain
-- Text gradients: warmGold, coral, peach, amber
+- Backgrounds: darkWarm, charcoal, deepSpace (DARK with warm accents)
+- Transitions: morph, dissolve, slide, wipe
+- Text gradients: amber, gold, coral, sunset
 - Feeling: Welcoming, trustworthy, approachable
+- ⚠️ Backgrounds MUST be dark - only text/accents can be warm
 
 ### 🏛️ CORPORATE TRUST (for enterprise, finance, legal)
 - Backgrounds: darkBlue, charcoal, minimalist
@@ -292,13 +295,35 @@ Apply text gradients to create visual hierarchy:
 - CTA text → Use gradient for emphasis
 - NOT every text needs a gradient - use sparingly for impact
 
-### 6. TRANSITIONS (SCENE-APPROPRIATE)
-Choose transitions based on scene PURPOSE:
-- **Hook**: Dramatic entry (sunburst, zoom, electric)
-- **Problem**: Creates tension (glitch, vortex, ink)
-- **Solution**: Relief/clarity (ripple, morph, prism)
-- **Benefit**: Reinforces value (diamond, starburst)
-- **CTA**: Strong closing (sunburst, zoom, neon)
+### 6. TRANSITIONS (ELEGANT & SUBTLE)
+Use SMOOTH, SUBTLE transitions - NO dramatic effects:
+- **Hook**: dissolve, morph, wipe
+- **Problem**: dissolve, morph, slide
+- **Solution**: dissolve, morph, ripple
+- **Benefit**: dissolve, wipe, slide
+- **CTA**: dissolve, morph, wipe
+
+⚠️ FORBIDDEN TRANSITIONS: glitch, electric, shatter, sunburst, vortex, neon, ink
+
+## ⛔ ABSOLUTELY FORBIDDEN
+
+**NEVER USE THESE - THEY LOOK CHEAP:**
+
+### Forbidden Text Gradients:
+- rainbow, prism, unicorn, candy, neon, holographic, fire, electric
+
+### Forbidden Backgrounds:
+- ANY bright/saturated colors (pink, bright purple, bright blue, neon)
+- meshWarm, hotPink, neonCity, holographic, meshRainbow
+- ANY color with luminance > 0.3
+
+### Forbidden Transitions:
+- glitch, electric, shatter, vortex, ink, pixelate, starburst
+- ANY "dramatic" transition - keep it ELEGANT
+
+### Golden Rule:
+Think Apple, Linear, Stripe - clean, dark, sophisticated.
+NOT Canva, NOT PowerPoint, NOT amateur.
 
 ## AVAILABLE LAYOUTS
 ${AVAILABLE_LAYOUTS}
