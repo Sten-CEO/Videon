@@ -17,36 +17,45 @@ interface ElementRendererProps {
   isActive: boolean // Si la scène est active (pour jouer l'animation)
 }
 
-// Convertit position en CSS
+// Convertit position en CSS - avec des marges sécurisées pour éviter le débordement
 function getPositionCSS(x: SceneElement['position']['x'], y: SceneElement['position']['y']): React.CSSProperties {
   const styles: React.CSSProperties = {
     position: 'absolute',
   }
 
+  // Safe margins - plus généreuses pour éviter le texte collé aux bords
+  const safeMarginX = '8%' // 8% de marge horizontale minimum
+  const safeMarginTop = '12%' // 12% de marge en haut (pour badge/brand)
+  const safeMarginBottom = '10%' // 10% de marge en bas
+
   // Position X
   if (x === 'left') {
-    styles.left = '5%'
+    styles.left = safeMarginX
   } else if (x === 'center') {
     styles.left = '50%'
     styles.transform = 'translateX(-50%)'
   } else if (x === 'right') {
-    styles.right = '5%'
-  } else {
-    styles.left = `${x}%`
+    styles.right = safeMarginX
+  } else if (typeof x === 'number') {
+    // Clamp values to safe zone
+    const clampedX = Math.max(8, Math.min(92, x))
+    styles.left = `${clampedX}%`
   }
 
   // Position Y
   if (y === 'top') {
-    styles.top = '8%'
+    styles.top = safeMarginTop
   } else if (y === 'center') {
     styles.top = '50%'
     styles.transform = styles.transform
       ? `${styles.transform} translateY(-50%)`
       : 'translateY(-50%)'
   } else if (y === 'bottom') {
-    styles.bottom = '8%'
-  } else {
-    styles.top = `${y}%`
+    styles.bottom = safeMarginBottom
+  } else if (typeof y === 'number') {
+    // Clamp values to safe zone
+    const clampedY = Math.max(10, Math.min(90, y))
+    styles.top = `${clampedY}%`
   }
 
   return styles
@@ -260,7 +269,28 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, isAct
       return null // Spacer is just for layout, doesn't render
 
     default:
-      console.warn('Unknown element type:', (element as any).type)
+      // Fallback: essayer de rendre comme du texte si contenu présent
+      const unknownElement = element as any
+      if (unknownElement.content && typeof unknownElement.content === 'string') {
+        console.warn('Unknown element type, rendering as text:', unknownElement.type)
+        return (
+          <div
+            style={{
+              ...getPositionCSS(unknownElement.position?.x || 'center', unknownElement.position?.y || 'center'),
+              ...(isActive && unknownElement.animation
+                ? getAnimationStyle(unknownElement.animation.type, unknownElement.animation.duration, unknownElement.animation.delay)
+                : { opacity: 0 }),
+              color: unknownElement.color || '#ffffff',
+              fontSize: '1rem',
+              textAlign: 'center',
+              zIndex: unknownElement.zIndex ?? 1,
+            }}
+          >
+            {unknownElement.content}
+          </div>
+        )
+      }
+      console.warn('Unknown element type without content:', unknownElement.type)
       return null
   }
 }

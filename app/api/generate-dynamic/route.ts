@@ -144,6 +144,184 @@ function validateBackground(
 }
 
 /**
+ * Generate fallback content for empty scenes based on scene type
+ */
+function generateFallbackContent(
+  sceneType: string,
+  brandName: string,
+  themeData: ReturnType<typeof getThemeEffects>
+): Scene['elements'] {
+  const gradient = themeData.textGradients[0] || 'teal'
+
+  const fallbackContent: Record<string, Scene['elements']> = {
+    hook: [
+      {
+        type: 'badge',
+        content: brandName.toUpperCase(),
+        variant: 'primary',
+        position: { x: 'center', y: 'top' },
+      } as any,
+      {
+        type: 'text',
+        content: 'Discover Something Amazing',
+        style: { style: 'hero', gradient, align: 'center' },
+        position: { x: 'center', y: 'center' },
+      } as any,
+    ],
+    problem: [
+      {
+        type: 'text',
+        content: 'The Challenge',
+        style: { style: 'headline', color: '#ffffff', align: 'center' },
+        position: { x: 'center', y: 'center' },
+      } as any,
+      {
+        type: 'text',
+        content: 'Time-consuming processes holding you back?',
+        style: { style: 'subtitle', color: '#a1a1aa', align: 'center' },
+        position: { x: 'center', y: 'center' },
+      } as any,
+    ],
+    solution: [
+      {
+        type: 'text',
+        content: 'The Solution',
+        style: { style: 'headline', gradient, align: 'center' },
+        position: { x: 'center', y: 'center' },
+      } as any,
+      {
+        type: 'text',
+        content: 'Streamlined, efficient, powerful.',
+        style: { style: 'subtitle', color: '#ffffff', align: 'center' },
+        position: { x: 'center', y: 'center' },
+      } as any,
+    ],
+    benefit: [
+      {
+        type: 'text',
+        content: 'Key Benefits',
+        style: { style: 'headline', color: '#ffffff', align: 'center' },
+        position: { x: 'center', y: 'center' },
+      } as any,
+      {
+        type: 'text',
+        content: 'Save time. Boost productivity. See results.',
+        style: { style: 'subtitle', color: '#a1a1aa', align: 'center' },
+        position: { x: 'center', y: 'center' },
+      } as any,
+    ],
+    cta: [
+      {
+        type: 'text',
+        content: 'Get Started Today',
+        style: { style: 'hero', gradient, align: 'center' },
+        position: { x: 'center', y: 'center' },
+      } as any,
+      {
+        type: 'badge',
+        content: 'TRY FREE',
+        variant: 'primary',
+        position: { x: 'center', y: 'bottom' },
+      } as any,
+    ],
+  }
+
+  return fallbackContent[sceneType] || fallbackContent.hook
+}
+
+/**
+ * Clean and validate text content from AI
+ */
+function cleanTextContent(text: string, maxLength: number = 100): string {
+  if (!text || typeof text !== 'string') return ''
+
+  // Remove any HTML tags
+  let cleaned = text.replace(/<[^>]*>/g, '')
+
+  // Fix common encoding issues
+  cleaned = cleaned
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+
+  // Remove excessive whitespace
+  cleaned = cleaned.replace(/\s+/g, ' ').trim()
+
+  // Truncate if too long (add ellipsis)
+  if (cleaned.length > maxLength) {
+    const truncated = cleaned.substring(0, maxLength - 3)
+    // Don't break in middle of word
+    const lastSpace = truncated.lastIndexOf(' ')
+    if (lastSpace > maxLength * 0.7) {
+      cleaned = truncated.substring(0, lastSpace) + '...'
+    } else {
+      cleaned = truncated + '...'
+    }
+  }
+
+  return cleaned
+}
+
+/**
+ * Validate that elements have actual text content
+ */
+function validateElements(
+  elements: Scene['elements'],
+  sceneType: string,
+  brandName: string,
+  themeData: ReturnType<typeof getThemeEffects>
+): Scene['elements'] {
+  if (!elements || elements.length === 0) {
+    console.warn(`[PREMIUM API] Scene ${sceneType} has no elements, adding fallback`)
+    return generateFallbackContent(sceneType, brandName, themeData)
+  }
+
+  // Check if any text element has actual content
+  const hasContent = elements.some((el) => {
+    if (el.type === 'text') {
+      const textEl = el as { type: 'text'; content?: string }
+      return textEl.content && textEl.content.trim().length > 0
+    }
+    if (el.type === 'badge') {
+      const badgeEl = el as { type: 'badge'; content?: string }
+      return badgeEl.content && badgeEl.content.trim().length > 0
+    }
+    return el.type === 'image' || el.type === 'shape'
+  })
+
+  if (!hasContent) {
+    console.warn(`[PREMIUM API] Scene ${sceneType} has empty elements, adding fallback`)
+    return generateFallbackContent(sceneType, brandName, themeData)
+  }
+
+  // Clean and validate text content in each element
+  return elements.map((el) => {
+    if (el.type === 'text') {
+      const textEl = el as { type: 'text'; content: string; style: { style: string } }
+      const maxLength = textEl.style.style === 'hero' ? 60
+        : textEl.style.style === 'headline' ? 80
+        : textEl.style.style === 'subtitle' ? 120
+        : 150
+      return {
+        ...el,
+        content: cleanTextContent(textEl.content, maxLength),
+      }
+    }
+    if (el.type === 'badge') {
+      const badgeEl = el as { type: 'badge'; content: string }
+      return {
+        ...el,
+        content: cleanTextContent(badgeEl.content, 25).toUpperCase(),
+      }
+    }
+    return el
+  })
+}
+
+/**
  * Enhance the video plan with intelligent defaults
  */
 function enhanceVideoPlan(
@@ -152,6 +330,7 @@ function enhanceVideoPlan(
 ): VideoPlan {
   const detectedTheme = detectVisualTheme(description)
   const themeData = getThemeEffects(detectedTheme)
+  const brandName = plan.brand?.name || 'Brand'
 
   // Add metadata
   const enhancedPlan: VideoPlan = {
@@ -168,6 +347,17 @@ function enhanceVideoPlan(
     detectedAt: new Date().toISOString(),
   }
 
+  // Ensure brand exists
+  if (!enhancedPlan.brand) {
+    enhancedPlan.brand = {
+      name: 'Brand',
+      colors: {
+        primary: '#0D9488',
+        secondary: '#14B8A6',
+      },
+    }
+  }
+
   // Ensure settings
   enhancedPlan.settings = {
     aspectRatio: plan.settings?.aspectRatio || '9:16',
@@ -179,9 +369,12 @@ function enhanceVideoPlan(
     musicMood: themeData.mood as any,
   }
 
+  // Define scene type sequence for fallback
+  const sceneTypes = ['hook', 'problem', 'solution', 'benefit', 'cta']
+
   // Process each scene
   enhancedPlan.scenes = (plan.scenes || []).map((scene, index) => {
-    const sceneType = scene.name || (['hook', 'problem', 'solution', 'benefit', 'cta'][index] as any)
+    const sceneType = scene.name || (sceneTypes[index % sceneTypes.length] as any)
 
     // Validate and enhance transition
     const enhancedTransition = validateTransition(
@@ -196,15 +389,24 @@ function enhanceVideoPlan(
       themeData.backgrounds
     )
 
+    // Validate and enhance elements - ADD FALLBACKS FOR EMPTY SCENES
+    const validatedElements = validateElements(
+      scene.elements,
+      sceneType,
+      brandName,
+      themeData
+    )
+
     // Ensure elements have IDs and positions
-    const enhancedElements = (scene.elements || []).map((el, elIndex) => ({
+    const enhancedElements = validatedElements.map((el, elIndex) => ({
       ...el,
       id: (el as any).id || `element_${index}_${elIndex}`,
       position: (el as any).position || { x: 'center', y: 'center' },
     }))
 
-    // Validate duration
-    const duration = scene.duration || (sceneType === 'solution' ? 4 : 3)
+    // Validate duration (minimum 2s, maximum 6s)
+    let duration = scene.duration || (sceneType === 'solution' ? 4 : 3)
+    duration = Math.max(2, Math.min(6, duration))
 
     return {
       ...scene,
@@ -217,6 +419,27 @@ function enhanceVideoPlan(
       transition: enhancedTransition as any,
     }
   })
+
+  // Ensure minimum 3 scenes
+  if (enhancedPlan.scenes.length < 3) {
+    console.warn('[PREMIUM API] Less than 3 scenes, adding fallback scenes')
+    const missingScenes = 3 - enhancedPlan.scenes.length
+    for (let i = 0; i < missingScenes; i++) {
+      const sceneType = sceneTypes[(enhancedPlan.scenes.length + i) % sceneTypes.length]
+      enhancedPlan.scenes.push({
+        id: `scene_fallback_${i}`,
+        name: sceneType as any,
+        layout: 'hero-central',
+        duration: 3,
+        background: validateBackground(null, themeData.backgrounds),
+        elements: generateFallbackContent(sceneType, brandName, themeData).map((el, idx) => ({
+          ...el,
+          id: `fallback_el_${i}_${idx}`,
+        })),
+        transition: validateTransition(null, sceneType, themeData.mood as any) as any,
+      })
+    }
+  }
 
   // Calculate total duration
   enhancedPlan.settings.totalDuration = enhancedPlan.scenes.reduce(
