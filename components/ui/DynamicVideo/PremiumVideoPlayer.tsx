@@ -94,27 +94,23 @@ function getElementAnimation(
   }
 }
 
-// Get text size based on style and content length - RESPONSIVE with clamp()
+// Get text size based on style and content length - SMALL AND CONTAINED
 function getTextSize(style: string, contentLength: number): string {
-  // Reduce size for longer text
-  const lengthFactor = contentLength > 50 ? 0.7 : contentLength > 30 ? 0.85 : contentLength > 20 ? 0.92 : 1
+  // Aggressively reduce size for longer text
+  const lengthFactor = contentLength > 40 ? 0.55 : contentLength > 25 ? 0.7 : contentLength > 15 ? 0.85 : 1
 
-  // Base sizes in rem with responsive clamp for different screen sizes
-  const baseSizes: Record<string, { min: number; preferred: number; max: number }> = {
-    hero: { min: 1.8, preferred: 3.2, max: 4 },
-    headline: { min: 1.4, preferred: 2, max: 2.6 },
-    subtitle: { min: 0.95, preferred: 1.2, max: 1.5 },
-    body: { min: 0.85, preferred: 1, max: 1.2 },
-    caption: { min: 0.7, preferred: 0.85, max: 1 },
-    cta: { min: 1, preferred: 1.2, max: 1.5 },
+  // SMALLER base sizes to prevent overflow
+  const baseSizes: Record<string, number> = {
+    hero: 1.8,      // Was 3.2 - now much smaller
+    headline: 1.4,  // Was 2 - now smaller
+    subtitle: 1,    // Was 1.2
+    body: 0.9,
+    caption: 0.75,
+    cta: 1.1,
   }
 
-  const sizeConfig = baseSizes[style] || baseSizes.body
-  const minSize = sizeConfig.min * lengthFactor
-  const preferredSize = sizeConfig.preferred * lengthFactor
-  const maxSize = sizeConfig.max * lengthFactor
-
-  return `clamp(${minSize}rem, ${preferredSize * 5}vw, ${maxSize}rem)`
+  const size = (baseSizes[style] || 1) * lengthFactor
+  return `${Math.min(size, 2)}rem` // Hard cap at 2rem
 }
 
 // ============================================================================
@@ -470,39 +466,27 @@ function ElementView({
     const textEl = element as TextElement
     const textStyle = textEl.style.style
 
-    // Use word-by-word animation for hero and headline text
-    const shouldUseWordAnimation = useWordAnimation && (textStyle === 'hero' || textStyle === 'headline')
+    // DISABLED: Word-by-word animation causes overflow bugs
+    // Always use simple text rendering
 
-    // Check if gradient is specified in the element style - SANITIZE to professional only
+    // Check if gradient is specified - FORCE WHITE TEXT (no ugly gradients)
     const rawGradient = (textEl.style as { gradient?: string }).gradient
     const gradientKey = sanitizeGradient(rawGradient)
 
-    if (shouldUseWordAnimation) {
-      return (
-        <WordByWordText
-          text={textEl.content}
-          isVisible={isVisible}
-          isExiting={isExiting}
-          style={textStyle}
-          color={textEl.style.color || '#ffffff'}
-          gradient={gradientKey}
-          baseDelay={baseDelay}
-        />
-      )
-    }
+    // Only use gradient for hero text, and only professional ones
+    const useGradient = gradientKey && textStyle === 'hero' && PROFESSIONAL_GRADIENTS.includes(gradientKey as any)
 
-    // Standard text rendering for subtitles and body text
     const fontSize = getTextSize(textStyle, textEl.content.length)
 
-    // Apply gradient if specified
-    const textStyles: React.CSSProperties = gradientKey ? {
-      background: TEXT_GRADIENTS[gradientKey as keyof typeof TEXT_GRADIENTS] || gradientKey,
+    // Simple text styles - WHITE or professional gradient
+    const textStyles: React.CSSProperties = useGradient ? {
+      background: TEXT_GRADIENTS[gradientKey as keyof typeof TEXT_GRADIENTS],
       WebkitBackgroundClip: 'text',
       WebkitTextFillColor: 'transparent',
       backgroundClip: 'text',
     } : {
-      color: textEl.style.color || '#ffffff',
-      textShadow: '0 4px 30px rgba(0,0,0,0.3)',
+      color: '#ffffff',
+      textShadow: '0 2px 20px rgba(0,0,0,0.5)',
     }
 
     return (
@@ -511,15 +495,16 @@ function ElementView({
           ...animationStyle,
           ...textStyles,
           fontSize,
-          fontWeight: textStyle === 'hero' ? 800 : textStyle === 'headline' ? 700 : 500,
+          fontWeight: textStyle === 'hero' ? 700 : textStyle === 'headline' ? 600 : 400,
           textAlign: 'center',
-          lineHeight: textStyle === 'hero' ? 1.1 : 1.3,
-          letterSpacing: textStyle === 'hero' ? '-0.03em' : '-0.01em',
-          maxWidth: '88%',
+          lineHeight: 1.3,
+          letterSpacing: '-0.02em',
+          maxWidth: '85%',
           margin: '0 auto',
-          fontFamily: 'var(--font-display), system-ui, sans-serif',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
           wordBreak: 'break-word',
-          willChange: 'transform, opacity',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
         }}
       >
         {textEl.content}
@@ -863,7 +848,7 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
     if (progressRef.current) clearInterval(progressRef.current)
   }, [])
 
-  // Go to next scene with SMOOTH, CINEMATIC transition
+  // Go to next scene - SIMPLE CROSSFADE (no fancy effects)
   const goToNextScene = useCallback(() => {
     const nextIndex = (currentSceneIndex + 1) % plan.scenes.length
 
@@ -872,53 +857,23 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
       return
     }
 
-    // CINEMATIC TRANSITION SEQUENCE
-    // Step 1: Start transition - store previous, begin crossfade
+    // SIMPLE CROSSFADE - just switch scene with opacity transition
     setPreviousSceneIndex(currentSceneIndex)
     setIsTransitioning(true)
+    setBackgroundOpacity(0)
 
-    // Step 2: Show transition overlay for smooth blend
-    setTimeout(() => {
-      setShowTransitionOverlay(true)
-      setBackgroundOpacity(0.3) // Start fading out old background
-    }, 100)
-
-    // Step 3: Gradual background fade
-    setTimeout(() => {
-      setBackgroundOpacity(0.1)
-    }, 300)
-
-    // Step 4: Switch to new scene at midpoint
+    // Switch scene after brief fade
     setTimeout(() => {
       setCurrentSceneIndex(nextIndex)
       sceneStartTime.current = Date.now()
-    }, 500)
-
-    // Step 5: Start fading in new background
-    setTimeout(() => {
-      setBackgroundOpacity(0.5)
-    }, 600)
-
-    // Step 6: Continue fading in
-    setTimeout(() => {
-      setBackgroundOpacity(0.8)
-    }, 800)
-
-    // Step 7: Full opacity
-    setTimeout(() => {
       setBackgroundOpacity(1)
-    }, 1000)
+    }, 400)
 
-    // Step 8: Hide overlay - let content shine
-    setTimeout(() => {
-      setShowTransitionOverlay(false)
-    }, 1100)
-
-    // Step 9: Transition complete
+    // Transition complete
     setTimeout(() => {
       setIsTransitioning(false)
       setPreviousSceneIndex(null)
-    }, 1300)
+    }, 800)
 
   }, [currentSceneIndex, plan.scenes.length, loop])
 
@@ -1073,38 +1028,17 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
           }}
         />
 
-        {/* Scene content - elements animate with word-by-word */}
-        {/* Content is always visible, only fades during brief overlay */}
+        {/* Scene content - SIMPLE rendering, no word animation */}
         <div style={{ position: 'relative', zIndex: 10 }}>
           <SceneContent
             scene={currentScene}
             isVisible={true}
             isExiting={false}
-            useWordAnimation={true}
+            useWordAnimation={false}
           />
         </div>
 
-        {/* Subtle transition overlay (very brief and gentle) */}
-        <TransitionOverlay
-          isActive={showTransitionOverlay}
-          type={currentTransitionType}
-          color={sceneColors[0]}
-        />
-
-        {/* Minimal color accent during transition (very subtle) */}
-        {showTransitionOverlay && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: `radial-gradient(ellipse at center, ${sceneColors[0]}15 0%, transparent 60%)`,
-              opacity: 0.5,
-              transition: 'opacity 0.5s ease-out',
-              zIndex: 90,
-              pointerEvents: 'none',
-            }}
-          />
-        )}
+        {/* NO transition overlay - just simple crossfade */}
 
         {/* Brand watermark */}
         <div
