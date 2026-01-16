@@ -31,6 +31,8 @@ const EASING = {
   bounce: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
   elegant: 'cubic-bezier(0.16, 1, 0.3, 1)',
   dramatic: 'cubic-bezier(0.87, 0, 0.13, 1)',
+  spring: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+  gentle: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
 }
 
 // Gradient presets for text
@@ -43,38 +45,98 @@ const TEXT_GRADIENTS = {
   cosmic: 'linear-gradient(135deg, #667eea, #764ba2)',
   warm: 'linear-gradient(135deg, #f97316, #ea580c, #dc2626)',
   cool: 'linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6)',
+  teal: 'linear-gradient(135deg, #0D9488, #14B8A6, #2DD4BF)',
+  gold: 'linear-gradient(135deg, #F59E0B, #D97706, #B45309)',
 }
 
-// Transition effect types
-type TransitionType = 'sunburst' | 'wipe' | 'dissolve' | 'zoom' | 'morph'
+// Transition effect types - now includes 'content' for no-overlay transitions
+type TransitionType = 'sunburst' | 'wipe' | 'dissolve' | 'zoom' | 'morph' | 'content' | 'blur' | 'slide' | 'scale'
 
-// Element animation styles
+// Animation styles for elements - more variety
+type ElementAnimationStyle = 'fadeUp' | 'fadeDown' | 'scaleIn' | 'slideLeft' | 'slideRight' | 'blur' | 'pop' | 'float'
+
+// Get animation style based on transition type and element index
+function getAnimationStyleForTransition(transitionType: TransitionType, index: number): ElementAnimationStyle {
+  const stylesByTransition: Record<TransitionType, ElementAnimationStyle[]> = {
+    sunburst: ['scaleIn', 'pop', 'fadeUp'],
+    wipe: ['slideLeft', 'slideRight', 'fadeUp'],
+    dissolve: ['blur', 'fadeUp', 'fadeDown'],
+    zoom: ['scaleIn', 'pop', 'fadeUp'],
+    morph: ['float', 'fadeUp', 'blur'],
+    content: ['fadeUp', 'scaleIn', 'slideLeft', 'slideRight', 'blur', 'pop'],
+    blur: ['blur', 'fadeUp', 'float'],
+    slide: ['slideLeft', 'slideRight', 'fadeUp'],
+    scale: ['scaleIn', 'pop', 'fadeUp'],
+  }
+
+  const styles = stylesByTransition[transitionType] || stylesByTransition.content
+  return styles[index % styles.length]
+}
+
+// Element animation styles - now with diverse animations
 function getElementAnimation(
   isVisible: boolean,
   isExiting: boolean,
   index: number,
-  elementType: string
+  elementType: string,
+  animationStyle: ElementAnimationStyle = 'fadeUp'
 ): React.CSSProperties {
-  const baseDelay = index * 0.12
-  const duration = 0.7
+  const baseDelay = index * 0.1
+  const duration = 0.6
+
+  // Initial state (before animation)
+  const initialStates: Record<ElementAnimationStyle, React.CSSProperties> = {
+    fadeUp: { opacity: 0, transform: 'translateY(40px) scale(0.95)', filter: 'blur(0px)' },
+    fadeDown: { opacity: 0, transform: 'translateY(-40px) scale(0.95)', filter: 'blur(0px)' },
+    scaleIn: { opacity: 0, transform: 'scale(0.8)', filter: 'blur(0px)' },
+    slideLeft: { opacity: 0, transform: 'translateX(60px)', filter: 'blur(0px)' },
+    slideRight: { opacity: 0, transform: 'translateX(-60px)', filter: 'blur(0px)' },
+    blur: { opacity: 0, transform: 'scale(1.02)', filter: 'blur(12px)' },
+    pop: { opacity: 0, transform: 'scale(0.6)', filter: 'blur(0px)' },
+    float: { opacity: 0, transform: 'translateY(25px) rotate(-2deg)', filter: 'blur(0px)' },
+  }
+
+  // Exit states
+  const exitStates: Record<ElementAnimationStyle, React.CSSProperties> = {
+    fadeUp: { opacity: 0, transform: 'translateY(-30px) scale(0.98)', filter: 'blur(0px)' },
+    fadeDown: { opacity: 0, transform: 'translateY(30px) scale(0.98)', filter: 'blur(0px)' },
+    scaleIn: { opacity: 0, transform: 'scale(1.1)', filter: 'blur(4px)' },
+    slideLeft: { opacity: 0, transform: 'translateX(-60px)', filter: 'blur(0px)' },
+    slideRight: { opacity: 0, transform: 'translateX(60px)', filter: 'blur(0px)' },
+    blur: { opacity: 0, transform: 'scale(0.98)', filter: 'blur(15px)' },
+    pop: { opacity: 0, transform: 'scale(0.9)', filter: 'blur(4px)' },
+    float: { opacity: 0, transform: 'translateY(-20px) rotate(2deg)', filter: 'blur(0px)' },
+  }
+
+  // Easing per animation style
+  const easingByStyle: Record<ElementAnimationStyle, string> = {
+    fadeUp: EASING.elegant,
+    fadeDown: EASING.elegant,
+    scaleIn: EASING.spring,
+    slideLeft: EASING.smooth,
+    slideRight: EASING.smooth,
+    blur: EASING.gentle,
+    pop: EASING.bounce,
+    float: EASING.elegant,
+  }
 
   if (!isVisible && !isExiting) {
-    return { opacity: 0, transform: 'translateY(30px) scale(0.95)' }
+    return initialStates[animationStyle]
   }
 
   if (isExiting) {
     return {
-      opacity: 0,
-      transform: 'translateY(-20px) scale(0.98)',
-      transition: `all 0.4s ${EASING.smooth}`,
+      ...exitStates[animationStyle],
+      transition: `all 0.35s ${EASING.smooth}`,
     }
   }
 
   // Entering animation
   return {
     opacity: 1,
-    transform: 'translateY(0) scale(1)',
-    transition: `all ${duration}s ${EASING.elegant} ${baseDelay}s`,
+    transform: 'translateY(0) translateX(0) scale(1) rotate(0deg)',
+    filter: 'blur(0px)',
+    transition: `all ${duration}s ${easingByStyle[animationStyle]} ${baseDelay}s`,
   }
 }
 
@@ -356,18 +418,20 @@ function ElementView({
   isExiting,
   index,
   useWordAnimation = false,
+  animationStyle = 'fadeUp',
 }: {
   element: SceneElement
   isVisible: boolean
   isExiting: boolean
   index: number
   useWordAnimation?: boolean
+  animationStyle?: ElementAnimationStyle
 }) {
   const elementType = element.type === 'text'
     ? (element as TextElement).style.style
     : element.type
 
-  const animationStyle = getElementAnimation(isVisible, isExiting, index, elementType)
+  const elementAnimation = getElementAnimation(isVisible, isExiting, index, elementType, animationStyle)
   const baseDelay = index * 0.15
 
   if (element.type === 'text') {
@@ -411,7 +475,7 @@ function ElementView({
     return (
       <div
         style={{
-          ...animationStyle,
+          ...elementAnimation,
           ...textStyles,
           fontSize,
           fontWeight: textStyle === 'hero' ? 800 : textStyle === 'headline' ? 700 : 500,
@@ -438,7 +502,7 @@ function ElementView({
     return (
       <div
         style={{
-          ...animationStyle,
+          ...elementAnimation,
           display: 'inline-block',
           background: variant.background,
           color: variant.color,
@@ -466,7 +530,7 @@ function ElementView({
     return (
       <div
         style={{
-          ...animationStyle,
+          ...elementAnimation,
           position: 'relative',
           willChange: 'transform, opacity',
         }}
@@ -564,7 +628,7 @@ function ElementView({
     return (
       <div
         style={{
-          ...animationStyle,
+          ...elementAnimation,
           ...shapeStyle,
           willChange: 'transform, opacity',
           position: 'absolute',
@@ -583,7 +647,7 @@ function ElementView({
     return (
       <div
         style={{
-          ...animationStyle,
+          ...elementAnimation,
           position: 'relative',
           willChange: 'transform, opacity',
         }}
@@ -620,7 +684,7 @@ function ElementView({
     return (
       <div
         style={{
-          ...animationStyle,
+          ...elementAnimation,
           width: dividerEl.width || '40%',
           height: dividerEl.thickness || 2,
           background: `linear-gradient(90deg, transparent, ${dividerEl.color || 'rgba(255,255,255,0.3)'}, transparent)`,
@@ -640,11 +704,13 @@ function SceneContent({
   isVisible,
   isExiting,
   useWordAnimation = true,
+  transitionType = 'content',
 }: {
   scene: Scene
   isVisible: boolean
   isExiting: boolean
   useWordAnimation?: boolean
+  transitionType?: TransitionType
 }) {
   // Sort elements with smart ordering:
   // 1. Logo (if at top position)
@@ -702,6 +768,7 @@ function SceneContent({
           isExiting={isExiting}
           index={index}
           useWordAnimation={useWordAnimation}
+          animationStyle={getAnimationStyleForTransition(transitionType, index)}
         />
       ))}
 
@@ -742,6 +809,7 @@ function SceneContent({
               isExiting={isExiting}
               index={contentElements.length + index}
               useWordAnimation={false}
+              animationStyle="blur"
             />
           </div>
         )
@@ -856,9 +924,42 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
   const currentScene = plan.scenes[currentSceneIndex]
   const totalDuration = plan.settings.totalDuration
 
-  // Determine transition type based on scene index (variety)
-  const transitionTypes: TransitionType[] = ['sunburst', 'wipe', 'dissolve', 'zoom', 'morph']
-  const currentTransitionType = transitionTypes[currentSceneIndex % transitionTypes.length]
+  // Varied transition types - alternate between overlay and content-only
+  const transitionSequence: TransitionType[] = [
+    'content',    // Scene 0->1: Just content animates (fluid)
+    'dissolve',   // Scene 1->2: Soft dissolve overlay
+    'content',    // Scene 2->3: Content animates (keeps it fresh)
+    'blur',       // Scene 3->4: Blur transition
+    'content',    // Scene 4->5: Content animates
+    'morph',      // Scene 5->0: Morph back to start
+  ]
+
+  // Get transition type from scene config, or use sequence fallback
+  const getTransitionType = (sceneIndex: number): TransitionType => {
+    const sceneTransition = plan.scenes[sceneIndex]?.transition?.type
+    if (sceneTransition) {
+      // Map scene transitions to our supported types
+      const transitionMap: Record<string, TransitionType> = {
+        'fade': 'dissolve',
+        'blur': 'blur',
+        'dissolve': 'dissolve',
+        'wipe': 'wipe',
+        'sunburst': 'sunburst',
+        'zoom': 'zoom',
+        'morph': 'morph',
+        'slide': 'slide',
+        'scale': 'scale',
+        'content': 'content', // No overlay, just elements animate
+      }
+      return transitionMap[sceneTransition] || 'content'
+    }
+    return transitionSequence[sceneIndex % transitionSequence.length]
+  }
+
+  const currentTransitionType = getTransitionType(currentSceneIndex)
+
+  // Determine if this transition uses overlay or just content animation
+  const isContentOnlyTransition = ['content', 'blur', 'slide', 'scale'].includes(currentTransitionType)
 
   // Extract colors for mesh gradient and transition
   const sceneColors = useMemo(() => {
@@ -878,7 +979,7 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
     if (progressRef.current) clearInterval(progressRef.current)
   }, [])
 
-  // Go to next scene with dramatic transition
+  // Go to next scene with varied transition style
   const goToNextScene = useCallback(() => {
     const nextIndex = (currentSceneIndex + 1) % plan.scenes.length
 
@@ -887,25 +988,39 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
       return
     }
 
+    const transitionType = getTransitionType(currentSceneIndex)
+    const useOverlay = !['content', 'blur', 'slide', 'scale'].includes(transitionType)
+
     // Step 1: Elements exit
     setIsTransitioning(true)
 
-    // Step 2: Show dramatic transition overlay
-    setTimeout(() => {
-      setShowTransitionOverlay(true)
-    }, 300)
+    if (useOverlay) {
+      // With overlay transition (dissolve, morph, sunburst, etc.)
+      setTimeout(() => {
+        setShowTransitionOverlay(true)
+      }, 250)
 
-    // Step 3: Switch scene during overlay peak
-    setTimeout(() => {
-      setCurrentSceneIndex(nextIndex)
-      sceneStartTime.current = Date.now()
-    }, 500)
+      setTimeout(() => {
+        setCurrentSceneIndex(nextIndex)
+        sceneStartTime.current = Date.now()
+      }, 450)
 
-    // Step 4: Hide overlay and show new elements
-    setTimeout(() => {
-      setShowTransitionOverlay(false)
-      setIsTransitioning(false)
-    }, 800)
+      setTimeout(() => {
+        setShowTransitionOverlay(false)
+        setIsTransitioning(false)
+      }, 750)
+    } else {
+      // Content-only transition - elements just animate out/in
+      // Longer crossfade for smoother effect
+      setTimeout(() => {
+        setCurrentSceneIndex(nextIndex)
+        sceneStartTime.current = Date.now()
+      }, 350)
+
+      setTimeout(() => {
+        setIsTransitioning(false)
+      }, 400)
+    }
 
   }, [currentSceneIndex, plan.scenes.length, loop])
 
@@ -1009,12 +1124,13 @@ export const PremiumVideoPlayer: React.FC<PremiumVideoPlayerProps> = ({
           }}
         />
 
-        {/* Scene content - elements animate with word-by-word */}
+        {/* Scene content - elements animate with varied styles */}
         <SceneContent
           scene={currentScene}
           isVisible={!isTransitioning}
           isExiting={isTransitioning}
           useWordAnimation={true}
+          transitionType={currentTransitionType}
         />
 
         {/* Dramatic transition overlay */}

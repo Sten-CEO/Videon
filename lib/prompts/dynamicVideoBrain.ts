@@ -194,12 +194,25 @@ Styles: "normal", "glow" (subtle glow effect), "glass" (glassmorphism)
 
 ## TRANSITIONS
 
-Use varied premium transitions for each scene:
-- "dissolve" - Soft, elegant (for calm transitions)
-- "morph" - Organic wave (for solution/benefit)
-- "wipe" - Clean directional (for problem)
-- "sunburst" - Dramatic radial (for hook/CTA)
-- "blur" - Modern cinematic
+Use VARIED transitions - mix overlay effects with smooth content animations:
+
+### With Overlay Effect (dramatic moments):
+- "dissolve" - Soft fade overlay (calm, elegant)
+- "morph" - Organic wave sweep (solution reveal)
+- "sunburst" - Radial burst from center (hook/CTA impact)
+- "wipe" - Directional sweep (problem/change)
+
+### Content-Only (fluid, no overlay):
+- "content" - Elements smoothly fade out/in, NO overlay. Very fluid and modern!
+- "blur" - Elements blur out/in, subtle and cinematic
+- "slide" - Elements slide out/in different directions
+- "scale" - Elements scale out/in with bounce
+
+⚠️ IMPORTANT: Alternate between overlay and content-only transitions:
+- Scene 1→2: Use "content" (fluid)
+- Scene 2→3: Use "dissolve" or "morph" (overlay)
+- Scene 3→4: Use "content" or "blur" (fluid)
+- Scene 4→5: Use "sunburst" (dramatic CTA)
 
 ## EXAMPLE OUTPUT
 
