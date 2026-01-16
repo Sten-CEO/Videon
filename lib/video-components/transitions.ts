@@ -17,7 +17,9 @@ export interface TransitionConfig {
   defaultDuration: number
 }
 
-export const transitions: Record<TransitionType, TransitionConfig> = {
+// Note: Premium transitions (sunburst, vortex, etc.) are handled by PremiumVideoPlayer
+// This record contains basic transitions for fallback compatibility
+export const transitions: Partial<Record<TransitionType, TransitionConfig>> = {
   fade: {
     name: 'fade',
     label: 'Fade',
@@ -191,19 +193,21 @@ export const transitions: Record<TransitionType, TransitionConfig> = {
 }
 
 // Liste des transitions pour l'IA
-export const transitionList = Object.values(transitions).map(t => ({
-  name: t.name,
-  label: t.label,
-  description: t.description,
-}))
+export const transitionList = Object.values(transitions)
+  .filter((t): t is TransitionConfig => t !== undefined)
+  .map(t => ({
+    name: t.name,
+    label: t.label,
+    description: t.description,
+  }))
 
 // Générer les keyframes CSS pour les transitions
 export function generateTransitionCSS(): string {
   const keyframeRules = Object.entries(transitions)
-    .filter(([name]) => name !== 'none')
+    .filter(([name, config]) => name !== 'none' && config !== undefined)
     .flatMap(([name, config]) => [
-      `@keyframes ${name}Exit { ${config.exitKeyframes} }`,
-      `@keyframes ${name}Enter { ${config.enterKeyframes} }`,
+      `@keyframes ${name}Exit { ${config!.exitKeyframes} }`,
+      `@keyframes ${name}Enter { ${config!.enterKeyframes} }`,
     ])
     .join('\n')
 
