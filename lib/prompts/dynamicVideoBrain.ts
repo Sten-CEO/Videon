@@ -43,7 +43,6 @@ DO NOT mix languages. Stay consistent.
 - MAX 2 text elements per scene (1 short headline + 1 optional subtitle)
 - 3-5 decorative shapes/orbs/accents per scene
 - Fill visual space with design, NOT words
-- Use image placeholders for showcasing product
 
 ### 4. TEXT RULES - MINIMAL TEXT!
 ⚠️ LESS IS MORE! Keep text extremely short:
@@ -53,31 +52,38 @@ DO NOT mix languages. Stay consistent.
 - AVOID body text - use visuals instead!
 - NO bullet points, NO lists, NO paragraphs
 
-### 5. LOGO USAGE (WHEN PROVIDED)
-If a logo URL is provided, include it strategically:
-- **Hook scene**: Logo at bottom as brand intro
-- **Solution scene**: Logo prominent with product name
-- **CTA scene**: Logo as brand reinforcement
-- Size: "small" at bottom, "medium" in content
-
-### 6. IMAGE PLACEHOLDERS (NEW!)
-Use imagePlaceholder elements for client content:
+### 5. LOGO USAGE (ONLY WHEN PROVIDED!)
+⚠️ ONLY add logo elements if a LOGO_URL is explicitly provided in the request!
+If provided, use it with the EXACT src URL given:
 \`\`\`json
 {
-  "type": "imagePlaceholder",
-  "placeholderType": "screenshot",
-  "src": "",
+  "type": "logo",
+  "src": "THE_EXACT_LOGO_URL_PROVIDED",
+  "size": "medium",
+  "style": "glow",
+  "position": { "x": "center", "y": "bottom" }
+}
+\`\`\`
+- **Hook scene**: Logo at bottom as brand intro (size: "small")
+- **Solution scene**: Logo prominent (size: "medium")
+- **CTA scene**: Logo at bottom (size: "small")
+⚠️ If NO logo URL is provided, do NOT add any logo elements!
+
+### 6. PRODUCT IMAGES (ONLY WHEN PROVIDED!)
+⚠️ ONLY add image elements if PRODUCT_IMAGES are explicitly provided in the request!
+If images are provided, use them with the EXACT src URLs:
+\`\`\`json
+{
+  "type": "image",
+  "src": "THE_EXACT_IMAGE_URL_PROVIDED",
   "width": 280,
   "height": 180,
-  "effect": "glass",
+  "glassmorphism": true,
   "position": { "x": "center", "y": "center" }
 }
 \`\`\`
-
-Types: "screenshot" (app preview), "mockup" (device), "logo" (brand), "photo" (general)
-Effects: "glass" (glassmorphism), "shadow" (drop shadow), "float" (floating), "glow" (subtle glow), "none"
-
-Use these on "solution" and "demo" scenes to showcase the product visually!
+⚠️ If NO product images are provided, do NOT add any image or imagePlaceholder elements!
+Use MORE decorative shapes instead to fill visual space.
 
 ### 7. MULTI-CONTENT SLIDES (CONTENT PHASES)
 ⚠️ Instead of creating new slides, use contentPhases to show multiple content sets on ONE slide!
@@ -101,7 +107,7 @@ This creates a fluid experience where content changes smoothly without slide tra
       "duration": 3,
       "elements": [
         { "type": "text", "content": "Feature Two", ... },
-        { "type": "imagePlaceholder", ... }
+        { "type": "shape", ... }
       ]
     }
   ]
@@ -243,8 +249,8 @@ Add multiple decorative elements to make slides visually rich:
 - Background: Radial gradient (spotlight effect)
 - Layout: "hero-central"
 - Use contentPhases for multi-content:
-  - **Phase 1 (2.5s)**: Logo + badge + short hero text + decorations
-  - **Phase 2 (2.5s)**: imagePlaceholder (screenshot) + short subtitle + decorations
+  - **Phase 1 (2.5s)**: Logo (if provided) + badge + short hero text + decorations
+  - **Phase 2 (2.5s)**: Product image (if provided) OR more decorative shapes + short subtitle
 - Transition: "content"
 
 ### Scene 4: BENEFIT/DEMO (4s) - Use contentPhases!
@@ -252,7 +258,7 @@ Add multiple decorative elements to make slides visually rich:
 - Layout: "focus" or "impact"
 - Use contentPhases for features:
   - **Phase 1 (2s)**: Short benefit text + decorations
-  - **Phase 2 (2s)**: imagePlaceholder (mockup) + minimal text
+  - **Phase 2 (2s)**: Product image (if provided) OR more decorative shapes
 - Transition: "content" or "scale"
 
 ### Scene 5: CTA (3s)
@@ -291,11 +297,12 @@ Available gradients:
 
 ## LOGO ELEMENT FORMAT
 
-When logo URL is provided:
+⚠️ ONLY add logo elements if a logo URL is provided in the request!
+When provided, use the EXACT URL given (not a placeholder):
 \`\`\`json
 {
   "type": "logo",
-  "src": "PROVIDED_LOGO_URL",
+  "src": "https://example.com/actual-logo-url.png",
   "size": "medium",
   "style": "glow",
   "position": { "x": "center", "y": "bottom" }
@@ -304,6 +311,8 @@ When logo URL is provided:
 
 Sizes: "small" (40px), "medium" (60px), "large" (80px)
 Styles: "normal", "glow" (subtle glow effect), "glass" (glassmorphism)
+
+⚠️ If NO logo URL is provided, do NOT include ANY logo elements!
 
 ## TRANSITIONS - MOSTLY FLUID, RARELY OVERLAY
 
@@ -397,9 +406,10 @@ The video should feel like ONE continuous flow, not a slideshow!
         {
           "duration": 2.5,
           "elements": [
-            { "type": "imagePlaceholder", "placeholderType": "screenshot", "width": 260, "height": 160, "effect": "glass", "position": { "x": "center", "y": "center" } },
-            { "type": "text", "content": "Simple & powerful", "style": { "style": "subtitle", "align": "center", "color": "rgba(255,255,255,0.8)" }, "position": { "x": "center", "y": "bottom" } },
-            { "type": "shape", "shape": "circle", "width": 80, "height": 80, "color": "rgba(13, 148, 136, 0.12)", "position": { "x": "right", "y": "bottom" } }
+            { "type": "text", "content": "Simple & powerful", "style": { "style": "headline", "align": "center", "gradient": "aurora" }, "position": { "x": "center", "y": "center" } },
+            { "type": "shape", "shape": "circle", "width": 180, "height": 180, "color": "rgba(13, 148, 136, 0.15)", "position": { "x": "center", "y": "center" } },
+            { "type": "shape", "shape": "circle", "width": 80, "height": 80, "color": "rgba(13, 148, 136, 0.12)", "position": { "x": "right", "y": "bottom" } },
+            { "type": "shape", "shape": "circle", "width": 60, "height": 60, "color": "rgba(13, 148, 136, 0.08)", "position": { "x": "left", "y": "top" } }
           ]
         }
       ],
@@ -422,8 +432,10 @@ The video should feel like ONE continuous flow, not a slideshow!
         {
           "duration": 2,
           "elements": [
-            { "type": "imagePlaceholder", "placeholderType": "mockup", "width": 240, "height": 150, "effect": "float", "position": { "x": "center", "y": "center" } },
-            { "type": "shape", "shape": "circle", "width": 60, "height": 60, "color": "rgba(139, 92, 246, 0.15)", "position": { "x": "right", "y": "top" } }
+            { "type": "text", "content": "Zero complexity", "style": { "style": "subtitle", "align": "center", "color": "rgba(255,255,255,0.8)" }, "position": { "x": "center", "y": "center" } },
+            { "type": "shape", "shape": "circle", "width": 200, "height": 200, "color": "rgba(139, 92, 246, 0.12)", "position": { "x": "center", "y": "center" } },
+            { "type": "shape", "shape": "circle", "width": 60, "height": 60, "color": "rgba(139, 92, 246, 0.15)", "position": { "x": "right", "y": "top" } },
+            { "type": "shape", "shape": "circle", "width": 80, "height": 80, "color": "rgba(139, 92, 246, 0.08)", "position": { "x": "left", "y": "bottom" } }
           ]
         }
       ],
@@ -458,9 +470,10 @@ Before outputting, verify:
 ✅ Text gradients on key hero text
 ✅ 3-5 decorative shapes per scene
 ✅ Used contentPhases on at least 2 scenes
-✅ Used imagePlaceholder in solution/demo scenes
 ✅ "content" or "blur" transitions (NO overlay transitions)
-✅ Logo included if URL was provided
+✅ Logo included ONLY if logo URL was provided (with EXACT URL)
+✅ Product images included ONLY if image URLs were provided (with EXACT URLs)
+⚠️ NO imagePlaceholder or image elements if no URLs were provided!
 
 ## OUTPUT
 
@@ -468,6 +481,7 @@ Generate ONLY valid JSON. No comments, no explanations.
 5 scenes. 6-8 elements per scene. DESIGN-FOCUSED with minimal text.
 Use contentPhases for multi-content slides.
 Same background palette for ALL scenes.
+NO placeholder images unless URLs are provided!
 `
 
 /**
@@ -483,7 +497,8 @@ export function getDynamicVideoSystemPrompt(): string {
 export function getDynamicVideoUserPrompt(
   description: string,
   brandColors?: { primary?: string; secondary?: string },
-  logoUrl?: string
+  logoUrl?: string,
+  productImages?: string[]
 ): string {
   let prompt = `Create a PREMIUM marketing video for:
 
@@ -499,22 +514,51 @@ ${description}
 `
   }
 
+  // Logo handling - very explicit
   if (logoUrl) {
-    prompt += `BRAND LOGO URL: ${logoUrl}
-⚠️ IMPORTANT: Include this logo in scenes: hook (bottom), solution (prominent), and CTA (bottom).
-Use the logo element with this exact src URL.
+    prompt += `## LOGO PROVIDED
+LOGO_URL: ${logoUrl}
+⚠️ You MUST include this logo in these scenes:
+- hook scene: logo at bottom, size "small", style "glow"
+- solution scene: logo prominent, size "medium"
+- CTA scene: logo at bottom, size "small"
+Use type: "logo" with src: "${logoUrl}" (EXACT URL!)
+
+`
+  } else {
+    prompt += `## NO LOGO PROVIDED
+⚠️ Do NOT add any logo elements. No logo URL was provided.
 
 `
   }
 
-  prompt += `REQUIREMENTS:
+  // Product images handling - very explicit
+  if (productImages && productImages.length > 0) {
+    prompt += `## PRODUCT IMAGES PROVIDED
+IMAGE_URLS:
+${productImages.map((url, i) => `- Image ${i + 1}: ${url}`).join('\n')}
+⚠️ You MUST include these images in solution/demo scenes.
+Use type: "image" with src: "EXACT_URL" and glassmorphism: true
+
+`
+  } else {
+    prompt += `## NO PRODUCT IMAGES PROVIDED
+⚠️ Do NOT add any image or imagePlaceholder elements. No images were provided.
+Use MORE decorative shapes instead to fill visual space.
+
+`
+  }
+
+  prompt += `## REQUIREMENTS
 1. DETECT my language above and use it for ALL video text
-2. Generate EXACTLY 5 scenes (hook, problem, solution, benefit, cta)
-3. 3-5 ELEMENTS per scene for RICH visuals
-4. Multiple text layers: hero + subtitle minimum
+2. Generate EXACTLY 5 scenes (hook, problem, solution, benefit/demo, cta)
+3. 6-8 ELEMENTS per scene (mostly decorative shapes)
+4. MAX 2 text elements per scene
 5. SAME background style for ALL scenes
-6. Include decorative shapes on 2+ scenes
-${logoUrl ? '7. Include my logo on hook, solution, and CTA scenes' : ''}
+6. Include 3-5 decorative shapes per scene
+7. Use contentPhases on at least 2 scenes
+${logoUrl ? '8. Include logo elements with EXACT URL provided above' : '8. NO logo elements (none provided)'}
+${productImages && productImages.length > 0 ? '9. Include product images with EXACT URLs provided above' : '9. NO image/imagePlaceholder elements (none provided)'}
 
 Output: JSON only, no explanations.`
 

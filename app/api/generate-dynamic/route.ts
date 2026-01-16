@@ -19,6 +19,7 @@ interface GenerateRequest {
     secondary?: string
   }
   logoUrl?: string  // URL of the brand logo
+  productImages?: string[]  // URLs of product screenshots/mockups
 }
 
 export async function POST(request: NextRequest) {
@@ -34,6 +35,9 @@ export async function POST(request: NextRequest) {
 
     console.log('[DYNAMIC API] Generating video plan for:', body.description.substring(0, 50))
 
+    console.log('[DYNAMIC API] Logo URL:', body.logoUrl || 'none')
+    console.log('[DYNAMIC API] Product images:', body.productImages?.length || 0)
+
     // Appel à Claude
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -41,7 +45,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: getDynamicVideoUserPrompt(body.description, body.brandColors, body.logoUrl),
+          content: getDynamicVideoUserPrompt(body.description, body.brandColors, body.logoUrl, body.productImages),
         },
       ],
       system: getDynamicVideoSystemPrompt(),
@@ -100,9 +104,14 @@ export async function POST(request: NextRequest) {
     videoPlan.createdAt = videoPlan.createdAt || new Date().toISOString()
     videoPlan.version = '2.0'
 
-    // Add logo URL to brand if provided
-    if (body.logoUrl && videoPlan.brand) {
-      videoPlan.brand.logoUrl = body.logoUrl
+    // Add logo URL and product images to brand if provided
+    if (videoPlan.brand) {
+      if (body.logoUrl) {
+        videoPlan.brand.logoUrl = body.logoUrl
+      }
+      if (body.productImages && body.productImages.length > 0) {
+        videoPlan.brand.productImages = body.productImages
+      }
     }
 
     // Ensure each scene has required properties including layout

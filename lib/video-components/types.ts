@@ -347,6 +347,7 @@ export interface VideoPlan {
     name: string
     tagline?: string
     logoUrl?: string            // URL du logo de la marque
+    productImages?: string[]    // URLs des images produit (screenshots, mockups)
     colors: {
       primary: string
       secondary: string
