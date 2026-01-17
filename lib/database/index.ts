@@ -1,8 +1,9 @@
 /**
  * DATABASE MODULE
  *
- * Exports all database types and operations.
+ * Re-exports all database operations.
  */
 
-export * from './types'
-export * from './videos'
+export * from './folders'
+export * from './campaigns'
+export * from './stats'

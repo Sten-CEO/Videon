@@ -11,21 +11,21 @@ const testimonials = [
   {
     name: 'Sarah Chen',
     role: 'Founder @ LaunchPad',
-    content: 'We went from idea to a professional promo video in under an hour. Videon completely transformed how we approach marketing.',
+    content: 'Finally, I can see at a glance if my marketing is working. No more spreadsheets, no more guessing. ClarityMetrics just tells me what I need to know.',
     avatar: 'SC',
     company: 'LaunchPad',
   },
   {
     name: 'Marcus Rodriguez',
-    role: 'Marketing Lead @ TechFlow',
-    content: 'No more expensive agencies. Videon understands what SaaS marketing needs and delivers professional results every single time.',
+    role: 'Solo Founder @ TechFlow',
+    content: 'I was spending hours analyzing campaign data. Now I open ClarityMetrics and instantly know which campaigns are working and which need attention.',
     avatar: 'MR',
     company: 'TechFlow',
   },
   {
     name: 'Emily Watson',
     role: 'CEO @ DataSync',
-    content: 'The AI actually gets our product. Videos feel like they were crafted by someone who truly understands B2B.',
+    content: 'The AI insights are like having a marketing analyst on the team. It tells me exactly what worked and why—no fluff, just answers.',
     avatar: 'EW',
     company: 'DataSync',
   },
@@ -35,18 +35,28 @@ const testimonials = [
 const steps = [
   {
     number: '01',
-    title: 'Describe your vision',
-    description: 'Share your product story in plain language. Our AI understands context, not just keywords.',
+    title: 'Add your campaigns',
+    description: 'Import your campaign data from any channel—Meta Ads, Google Ads, cold email, and more.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
       </svg>
     ),
   },
   {
     number: '02',
-    title: 'AI crafts your story',
-    description: 'Our AI analyzes your input and builds a compelling narrative structure optimized for conversions.',
+    title: 'See instant clarity',
+    description: 'One dashboard shows you what\'s improving, what\'s stable, and what\'s declining.',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+  },
+  {
+    number: '03',
+    title: 'Get AI insights',
+    description: 'Understand exactly what worked, what didn\'t, and why—with specific recommendations.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -54,23 +64,12 @@ const steps = [
     ),
   },
   {
-    number: '03',
-    title: 'Review and refine',
-    description: 'Watch your video come to life. Make adjustments through simple conversation—no timeline editing.',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-      </svg>
-    ),
-  },
-  {
     number: '04',
-    title: 'Export and share',
-    description: 'Download your video in multiple formats, perfectly optimized for every platform.',
+    title: 'Compare & improve',
+    description: 'Compare campaigns side-by-side and plan future ones with AI-powered predictions.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
       </svg>
     ),
   },
@@ -79,41 +78,42 @@ const steps = [
 // Features
 const features = [
   {
-    title: 'Lightning fast',
-    description: 'From idea to finished video in minutes, not days. Perfect for fast-moving teams.',
+    title: 'Visual clarity',
+    description: 'Green, yellow, red. At a glance, know if your campaigns are improving or need attention.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
       </svg>
     ),
     color: 'teal',
   },
   {
-    title: 'Built for B2B',
-    description: 'Not generic templates. Our AI is trained specifically on what makes SaaS marketing work.',
+    title: 'Built for founders',
+    description: 'No complex dashboards. Just answers to the question: Is my marketing working?',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
     ),
     color: 'coral',
   },
   {
-    title: 'Natural editing',
-    description: 'No complex timelines. Just tell the AI what you want to change, like talking to an editor.',
+    title: 'AI that explains',
+    description: 'Don\'t just see numbers—understand why campaigns work and what to do next.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
       </svg>
     ),
     color: 'teal',
   },
   {
-    title: 'Brand consistent',
-    description: 'Upload your assets once. Every video matches your colors, fonts, and style automatically.',
+    title: 'All channels',
+    description: 'Meta, Google, LinkedIn, TikTok, cold email, newsletter—track them all in one place.',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
       </svg>
     ),
     color: 'coral',
@@ -123,24 +123,24 @@ const features = [
 // FAQ items
 const faqs = [
   {
-    question: 'Do I need video editing experience?',
-    answer: 'Not at all. Videon is designed for founders and marketers, not video professionals. Just describe what you want, and our AI handles the rest.',
+    question: 'What makes this different from Google Analytics?',
+    answer: 'Google Analytics shows you data. ClarityMetrics tells you what it means. We focus on one question: Is your marketing getting better or worse? Everything else is noise.',
   },
   {
-    question: 'How long does it take to create a video?',
-    answer: 'Most videos are ready in 5-10 minutes. Complex projects might take a bit longer, but you can always refine through conversation.',
+    question: 'How does the AI analysis work?',
+    answer: 'Our AI compares your campaigns against previous performance and industry patterns to tell you what worked, what didn\'t, and specifically why. No generic advice—just insights based on your actual data.',
   },
   {
-    question: 'Can I customize the videos?',
-    answer: 'Absolutely. You can adjust everything through natural conversation—change the tone, swap scenes, modify text, or completely redirect the narrative.',
+    question: 'What marketing channels do you support?',
+    answer: 'All the major ones: Meta Ads, Google Ads, LinkedIn Ads, TikTok Ads, cold email campaigns, newsletters, organic social, SEO, and influencer marketing.',
   },
   {
-    question: 'What formats can I export?',
-    answer: 'We support all major formats including MP4, WebM, and optimized versions for Instagram, TikTok, LinkedIn, and YouTube.',
+    question: 'Can I import data from my ad platforms?',
+    answer: 'Currently you can manually enter campaign data. We\'re adding direct integrations with major ad platforms soon—join the waitlist to be first to know.',
   },
   {
-    question: 'Is there a free trial?',
-    answer: 'Yes! Start with our free plan and create your first video with no credit card required. Upgrade when you need more.',
+    question: 'Is there a free plan?',
+    answer: 'Yes! Start free with up to 3 folders and 10 campaigns. Upgrade when you need more.',
   },
 ]
 
@@ -182,23 +182,21 @@ export default function LandingPage() {
                 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 text-[#18181B] animate-fade-in-up"
                 style={{ fontFamily: 'var(--font-display)', lineHeight: 1.1 }}
               >
-                Turn ideas into{' '}
-                <span className="gradient-text">marketing videos</span>
-                <br className="hidden sm:block" />
-                with AI
+                Is your marketing{' '}
+                <span className="gradient-text">working?</span>
               </h1>
 
               {/* Subheadline */}
               <p className="text-lg sm:text-xl text-[#52525B] max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up stagger-1" style={{ animationFillMode: 'both' }}>
-                No video editing skills needed. No marketing expertise required.
-                Just describe your vision and let AI create professional videos that convert.
+                Stop guessing. See at a glance if your campaigns are improving, stable, or declining.
+                Get AI-powered insights on what&apos;s working and why.
               </p>
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in-up stagger-2" style={{ animationFillMode: 'both' }}>
                 <Link href="/signup">
                   <Button size="xl" variant="primary">
-                    Start creating free
+                    Get clarity free
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
@@ -207,8 +205,7 @@ export default function LandingPage() {
                 <Link href="/#how-it-works">
                   <Button size="xl" variant="secondary">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                     See how it works
                   </Button>
@@ -229,26 +226,39 @@ export default function LandingPage() {
                       </div>
                       <div className="flex-1 flex justify-center">
                         <div className="px-4 py-1 bg-white rounded-lg border border-[#E4E4E7] text-xs text-[#A1A1AA]">
-                          videon.ai/generate
+                          claritymetrics.io/dashboard
                         </div>
                       </div>
                     </div>
-                    {/* Video preview area */}
-                    <div className="aspect-video bg-gradient-to-br from-[#F0FDFA] via-white to-[#FFF7ED] flex items-center justify-center relative overflow-hidden">
-                      {/* Animated elements */}
-                      <div className="absolute inset-0">
-                        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-[#0D9488]/10 rounded-full blur-2xl animate-float" />
-                        <div className="absolute bottom-1/3 right-1/3 w-40 h-40 bg-[#F97316]/10 rounded-full blur-2xl animate-float" style={{ animationDelay: '0.5s' }} />
+                    {/* Dashboard preview area */}
+                    <div className="p-6 bg-gradient-to-br from-[#F0FDFA] via-white to-[#FFF7ED]">
+                      {/* Mock dashboard */}
+                      <div className="text-left mb-4">
+                        <p className="text-sm text-[#52525B] mb-1">The big question:</p>
+                        <p className="text-xl font-bold text-[#18181B]">Are you doing better or worse?</p>
                       </div>
-
-                      <div className="relative text-center p-8">
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#0D9488] to-[#14B8A6] flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#0D9488]/30">
-                          <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M8 5v14l11-7z"/>
-                          </svg>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-[#D1FAE5] rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-3 h-3 rounded-full bg-[#10B981]" />
+                            <span className="text-2xl font-bold text-[#10B981]">5</span>
+                          </div>
+                          <span className="text-sm text-[#52525B]">Improving</span>
                         </div>
-                        <p className="text-[#52525B] font-medium mb-2">AI-Powered Video Generation</p>
-                        <p className="text-sm text-[#A1A1AA]">Professional marketing videos in minutes</p>
+                        <div className="bg-[#FEF3C7] rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-3 h-3 rounded-full bg-[#F59E0B]" />
+                            <span className="text-2xl font-bold text-[#F59E0B]">2</span>
+                          </div>
+                          <span className="text-sm text-[#52525B]">Stable</span>
+                        </div>
+                        <div className="bg-[#FEE2E2] rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-3 h-3 rounded-full bg-[#EF4444]" />
+                            <span className="text-2xl font-bold text-[#EF4444]">1</span>
+                          </div>
+                          <span className="text-sm text-[#52525B]">Declining</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -258,12 +268,12 @@ export default function LandingPage() {
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-[#D1FAE5] flex items-center justify-center">
                         <svg className="w-4 h-4 text-[#10B981]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-[#18181B]">Video Ready</p>
-                        <p className="text-xs text-[#A1A1AA]">2:34 minutes</p>
+                        <p className="text-xs font-medium text-[#18181B]">ROI up 25%</p>
+                        <p className="text-xs text-[#A1A1AA]">vs last month</p>
                       </div>
                     </div>
                   </div>
@@ -272,12 +282,12 @@ export default function LandingPage() {
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-[#CCFBF1] flex items-center justify-center">
                         <svg className="w-4 h-4 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                         </svg>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-[#18181B]">AI Processing</p>
-                        <p className="text-xs text-[#A1A1AA]">3x faster</p>
+                        <p className="text-xs font-medium text-[#18181B]">AI Insight</p>
+                        <p className="text-xs text-[#A1A1AA]">New recommendation</p>
                       </div>
                     </div>
                   </div>
@@ -293,7 +303,7 @@ export default function LandingPage() {
         <section className="py-16 border-y border-[#E4E4E7] bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-center text-sm font-medium text-[#A1A1AA] mb-10">
-              Trusted by innovative teams at
+              Trusted by solo founders at
             </p>
             <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-8">
               {['TechFlow', 'LaunchPad', 'DataSync', 'CloudBase', 'ScaleUp', 'Growthly'].map((company) => (
@@ -315,10 +325,10 @@ export default function LandingPage() {
                 Features
               </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
-                Why teams choose Videon
+                Marketing clarity, finally
               </h2>
               <p className="text-lg text-[#52525B] max-w-2xl mx-auto">
-                Built specifically for B2B marketing, not generic video templates.
+                Built for founders who don&apos;t have time to become data analysts.
               </p>
             </div>
 
@@ -360,10 +370,10 @@ export default function LandingPage() {
                 How it works
               </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
-                From idea to video in 4 steps
+                From data to clarity in 4 steps
               </h2>
               <p className="text-lg text-[#52525B] max-w-2xl mx-auto">
-                No complex software to learn. Just describe, refine, and publish.
+                No complex setup. Just add campaigns and get insights.
               </p>
             </div>
 
@@ -406,10 +416,10 @@ export default function LandingPage() {
                 Testimonials
               </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
-                Loved by SaaS teams
+                Loved by founders
               </h2>
               <p className="text-lg text-[#52525B] max-w-2xl mx-auto">
-                See what founders and marketers are saying about Videon.
+                See what solo founders and small teams are saying.
               </p>
             </div>
 
@@ -429,7 +439,7 @@ export default function LandingPage() {
                   </div>
 
                   <p className="text-[#52525B] mb-6 leading-relaxed pr-8">
-                    "{testimonial.content}"
+                    &quot;{testimonial.content}&quot;
                   </p>
 
                   <div className="flex items-center gap-3">
@@ -460,7 +470,7 @@ export default function LandingPage() {
                 Questions & answers
               </h2>
               <p className="text-lg text-[#52525B]">
-                Everything you need to know about Videon.
+                Everything you need to know about ClarityMetrics.
               </p>
             </div>
 
@@ -513,16 +523,16 @@ export default function LandingPage() {
 
           <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 text-white" style={{ fontFamily: 'var(--font-display)' }}>
-              Ready to transform your marketing?
+              Stop guessing. Start knowing.
             </h2>
             <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
-              Join thousands of SaaS teams creating professional marketing videos with AI.
+              Join founders who finally have clarity on their marketing.
               Start free, no credit card required.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/signup">
                 <Button size="xl" variant="secondary" className="shadow-xl">
-                  Start creating free
+                  Get clarity free
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>

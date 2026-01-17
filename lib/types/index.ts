@@ -1,56 +1,193 @@
-// Core types for Videon
+/**
+ * CORE TYPES
+ *
+ * TypeScript types for the marketing clarity tool.
+ */
 
-// Video project status
-export type VideoStatus = 'draft' | 'generating' | 'ready' | 'failed'
+// =============================================================================
+// CHANNEL TYPES
+// =============================================================================
 
-// Video project
-export interface VideoProject {
-  id: string
-  title: string
-  description: string
-  status: VideoStatus
-  thumbnailUrl?: string
-  videoUrl?: string
-  createdAt: string
-  updatedAt: string
-  userId: string
+export type ChannelType =
+  | 'meta_ads'
+  | 'google_ads'
+  | 'linkedin_ads'
+  | 'tiktok_ads'
+  | 'cold_email'
+  | 'newsletter'
+  | 'organic_social'
+  | 'seo'
+  | 'influencer'
+  | 'other'
+
+export const CHANNEL_LABELS: Record<ChannelType, string> = {
+  meta_ads: 'Meta Ads',
+  google_ads: 'Google Ads',
+  linkedin_ads: 'LinkedIn Ads',
+  tiktok_ads: 'TikTok Ads',
+  cold_email: 'Cold Email',
+  newsletter: 'Newsletter',
+  organic_social: 'Organic Social',
+  seo: 'SEO',
+  influencer: 'Influencer',
+  other: 'Other',
 }
 
-// Chat message in conversation
-export interface ChatMessage {
+// =============================================================================
+// CAMPAIGN STATUS
+// =============================================================================
+
+export type CampaignStatus = 'completed' | 'upcoming' | 'active'
+
+// =============================================================================
+// PERFORMANCE STATUS (Color codes)
+// =============================================================================
+
+export type PerformanceStatus = 'improving' | 'stable' | 'declining'
+
+// =============================================================================
+// FOLDER
+// =============================================================================
+
+export interface Folder {
   id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: string
+  user_id: string
+  name: string
+  channel_type: ChannelType
+  created_at: string
+  updated_at: string
 }
 
-// Brand settings
-export interface BrandSettings {
-  id: string
-  userId: string
-  brandName: string
-  logoUrl?: string
-  primaryColor: string
-  secondaryColor: string
-  fontPreference: string
+export interface CreateFolderInput {
+  name: string
+  channel_type: ChannelType
 }
 
-// User profile
+export interface UpdateFolderInput {
+  name?: string
+  channel_type?: ChannelType
+}
+
+// =============================================================================
+// CAMPAIGN
+// =============================================================================
+
+export interface Campaign {
+  id: string
+  folder_id: string
+  user_id: string
+  name: string
+  status: CampaignStatus
+
+  // Metrics (nullable for upcoming campaigns)
+  budget: number | null
+  impressions: number | null
+  clicks: number | null
+  conversions: number | null
+  total_cost: number | null
+
+  // Description/notes
+  description: string | null
+
+  // Timestamps
+  start_date: string | null
+  end_date: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateCampaignInput {
+  folder_id: string
+  name: string
+  status: CampaignStatus
+  budget?: number
+  impressions?: number
+  clicks?: number
+  conversions?: number
+  total_cost?: number
+  description?: string
+  start_date?: string
+  end_date?: string
+}
+
+export interface UpdateCampaignInput {
+  name?: string
+  status?: CampaignStatus
+  budget?: number | null
+  impressions?: number | null
+  clicks?: number | null
+  conversions?: number | null
+  total_cost?: number | null
+  description?: string | null
+  start_date?: string | null
+  end_date?: string | null
+}
+
+// =============================================================================
+// CALCULATED METRICS
+// =============================================================================
+
+export interface CampaignMetrics {
+  ctr: number | null        // Click-through rate (clicks / impressions)
+  cpc: number | null        // Cost per click (total_cost / clicks)
+  cpa: number | null        // Cost per acquisition (total_cost / conversions)
+  roi: number | null        // Return on investment ((conversions * avg_value - total_cost) / total_cost)
+  conversion_rate: number | null  // Conversion rate (conversions / clicks)
+}
+
+export interface CampaignWithMetrics extends Campaign {
+  metrics: CampaignMetrics
+  performance: PerformanceStatus
+  previous_campaign?: Campaign | null  // For comparison
+}
+
+// =============================================================================
+// DASHBOARD STATS
+// =============================================================================
+
+export interface DashboardStats {
+  total_folders: number
+  total_campaigns: number
+  completed_campaigns: number
+  upcoming_campaigns: number
+  active_campaigns: number
+
+  // Aggregated metrics (last 30 days)
+  total_spend: number
+  total_impressions: number
+  total_clicks: number
+  total_conversions: number
+
+  // Performance
+  average_roi: number | null
+  improving_campaigns: number
+  stable_campaigns: number
+  declining_campaigns: number
+}
+
+// =============================================================================
+// USER PROFILE
+// =============================================================================
+
+export type PlanType = 'free' | 'pro' | 'enterprise'
+
 export interface UserProfile {
   id: string
-  email: string
-  fullName?: string
-  avatarUrl?: string
-  plan: 'free' | 'pro' | 'enterprise'
-  createdAt: string
+  full_name: string | null
+  avatar_url: string | null
+  plan: PlanType
+  plan_expires_at: string | null
+  created_at: string
+  updated_at: string
 }
 
-// Pricing plan
-export interface PricingPlan {
-  id: string
-  name: string
-  price: number
-  interval: 'month' | 'year'
-  features: string[]
-  highlighted?: boolean
+// =============================================================================
+// AI ANALYSIS (Mock)
+// =============================================================================
+
+export interface AIAnalysis {
+  what_worked: string[]
+  what_didnt_work: string[]
+  likely_reasons: string[]
+  priority_improvement: string
 }
