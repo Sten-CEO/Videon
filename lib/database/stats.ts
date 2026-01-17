@@ -72,12 +72,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .select('id')
       .eq('user_id', user.id)
 
-    // If tables don't exist yet, return default stats silently
+    // If any error (tables don't exist, RLS, etc.), return default stats silently
     if (foldersError) {
-      if (isTableNotFoundError(foldersError)) {
-        return getDefaultStats()
-      }
-      console.error('[DB] Error fetching folders:', foldersError)
       return getDefaultStats()
     }
 
@@ -88,10 +84,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .eq('user_id', user.id)
 
     if (campaignsError) {
-      if (isTableNotFoundError(campaignsError)) {
-        return getDefaultStats()
-      }
-      console.error('[DB] Error fetching campaigns:', campaignsError)
       return getDefaultStats()
     }
 
