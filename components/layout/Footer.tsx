@@ -29,16 +29,16 @@ export function Footer() {
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2 group">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0D9488] to-[#14B8A6] flex items-center justify-center shadow-md shadow-[#0D9488]/20">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z"/>
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
               <span className="text-xl font-semibold text-[#18181B] tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
-                Videon
+                ClarityMetrics
               </span>
             </Link>
             <p className="mt-4 text-sm text-[#52525B] max-w-xs leading-relaxed">
-              Transform your ideas into professional marketing videos with AI. No video editing skills required.
+              Finally know if your marketing is working. Visual clarity for solo founders.
             </p>
 
             {/* Social links */}
@@ -122,7 +122,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-[#E4E4E7] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-[#A1A1AA]">
-            &copy; {new Date().getFullYear()} Videon. All rights reserved.
+            &copy; {new Date().getFullYear()} ClarityMetrics. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-sm text-[#A1A1AA]">
             <Link href="/terms" className="hover:text-[#0D9488] transition-colors">

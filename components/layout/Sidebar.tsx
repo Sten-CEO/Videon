@@ -10,52 +10,55 @@ const navItems: Array<{
   name: string
   href: string
   icon: React.ReactNode
-  accent?: boolean
-  badge?: string
+  description?: string
 }> = [
   {
     name: 'Dashboard',
     href: '/dashboard',
+    description: 'Overview of your marketing',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
       </svg>
     ),
   },
   {
-    name: 'Generate',
-    href: '/generate',
+    name: 'Folders',
+    href: '/folders',
+    description: 'Organize your campaigns',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-      </svg>
-    ),
-    accent: true,
-  },
-  {
-    name: 'My Videos',
-    href: '/my-videos',
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
       </svg>
     ),
   },
   {
-    name: 'Brand',
-    href: '/brand-settings',
+    name: 'Analysis',
+    href: '/analysis',
+    description: 'AI insights on campaigns',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
   },
   {
-    name: 'Billing',
-    href: '/billing',
+    name: 'Upcoming',
+    href: '/upcoming',
+    description: 'Planned campaigns',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Comparison',
+    href: '/comparison',
+    description: 'Compare campaigns',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
       </svg>
     ),
   },
@@ -88,13 +91,13 @@ export function Sidebar({ user }: SidebarProps) {
       <div className="h-16 flex items-center justify-between px-4 border-b border-[#E4E4E7]">
         <Link href="/dashboard" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0D9488] to-[#14B8A6] flex items-center justify-center shadow-sm shadow-[#0D9488]/20">
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z"/>
+            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
           {!isCollapsed && (
             <span className="text-lg font-semibold text-[#18181B] tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
-              Videon
+              ClarityMetrics
             </span>
           )}
         </Link>
@@ -125,28 +128,19 @@ export function Sidebar({ user }: SidebarProps) {
                   className={`
                     flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                     ${isActive
-                      ? item.accent
-                        ? 'bg-gradient-to-r from-[#0D9488] to-[#14B8A6] text-white shadow-md shadow-[#0D9488]/20'
-                        : 'bg-[#F0FDFA] text-[#0D9488]'
-                      : item.accent
-                        ? 'text-[#0D9488] hover:bg-[#F0FDFA]'
-                        : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F5F5F4]'
+                      ? 'bg-[#F0FDFA] text-[#0D9488]'
+                      : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F5F5F4]'
                     }
                     ${isCollapsed ? 'justify-center' : ''}
                   `}
                   title={isCollapsed ? item.name : undefined}
                 >
-                  <span className={isActive && item.accent ? 'text-white' : ''}>
+                  <span>
                     {item.icon}
                   </span>
                   {!isCollapsed && (
-                    <span className="text-sm font-medium flex items-center gap-2">
+                    <span className="text-sm font-medium">
                       {item.name}
-                      {item.badge && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[#F97316]/10 text-[#F97316]">
-                          {item.badge}
-                        </span>
-                      )}
                     </span>
                   )}
                 </Link>
@@ -155,25 +149,26 @@ export function Sidebar({ user }: SidebarProps) {
           })}
         </ul>
 
-        {/* Usage indicator - only when not collapsed */}
+        {/* Quick Stats - only when not collapsed */}
         {!isCollapsed && (
           <div className="mt-6 mx-1 p-4 bg-gradient-to-br from-[#F0FDFA] to-[#FFF7ED] rounded-xl border border-[#E4E4E7]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-[#52525B]">Videos this month</span>
-              <span className="text-xs font-semibold text-[#0D9488]">2/3</span>
+            <div className="text-xs font-semibold text-[#18181B] mb-3">Quick Stats</div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#52525B]">Improving</span>
+                <span className="flex items-center gap-1 text-xs font-medium text-[#10B981]">
+                  <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                  4 campaigns
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#52525B]">Declining</span>
+                <span className="flex items-center gap-1 text-xs font-medium text-[#EF4444]">
+                  <span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>
+                  1 campaign
+                </span>
+              </div>
             </div>
-            <div className="h-1.5 bg-[#E4E4E7] rounded-full overflow-hidden">
-              <div className="h-full w-2/3 bg-gradient-to-r from-[#0D9488] to-[#14B8A6] rounded-full" />
-            </div>
-            <Link
-              href="/billing"
-              className="mt-3 flex items-center gap-1 text-xs font-medium text-[#F97316] hover:text-[#EA580C] transition-colors"
-            >
-              <span>Upgrade for unlimited</span>
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
           </div>
         )}
       </nav>
