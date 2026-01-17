@@ -15,13 +15,22 @@ import { calculateMetrics, determinePerformance } from './campaigns'
 function isTableNotFoundError(error: any): boolean {
   if (!error) return false
   const errorCode = error?.code || error?.error?.code
-  const errorMessage = error?.message || error?.error?.message || ''
+  const errorMessage = error?.message || error?.error?.message || error?.hint || ''
+  const errorDetails = error?.details || ''
+
+  // Check various error patterns that indicate table doesn't exist
   return (
-    errorCode === '42P01' ||
-    errorCode === 'PGRST116' ||
-    errorCode === 'PGRST204' ||
-    errorCode === '42501' ||
-    errorMessage.includes('does not exist')
+    errorCode === '42P01' ||           // PostgreSQL: undefined_table
+    errorCode === 'PGRST116' ||        // PostgREST: table not found
+    errorCode === 'PGRST204' ||        // PostgREST: column not found
+    errorCode === '42501' ||           // PostgreSQL: insufficient_privilege
+    errorCode === 'PGRST301' ||        // PostgREST: JWT error (could mean RLS blocking)
+    errorMessage.includes('does not exist') ||
+    errorMessage.includes('relation') ||
+    errorDetails.includes('does not exist') ||
+    // If error object is empty or has no meaningful content, assume table doesn't exist
+    (Object.keys(error).length === 0) ||
+    (!errorCode && !errorMessage)
   )
 }
 
@@ -63,8 +72,13 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .select('id')
       .eq('user_id', user.id)
 
-    if (foldersError && !isTableNotFoundError(foldersError)) {
+    // If tables don't exist yet, return default stats silently
+    if (foldersError) {
+      if (isTableNotFoundError(foldersError)) {
+        return getDefaultStats()
+      }
       console.error('[DB] Error fetching folders:', foldersError)
+      return getDefaultStats()
     }
 
     // Get campaigns
