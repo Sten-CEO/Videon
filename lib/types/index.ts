@@ -72,12 +72,18 @@ export interface UpdateFolderInput {
 // CAMPAIGN
 // =============================================================================
 
+export type CreativeType = 'image' | 'video'
+
 export interface Campaign {
   id: string
   folder_id: string
   user_id: string
   name: string
   status: CampaignStatus
+
+  // Creative content (image or video)
+  creative_url: string | null
+  creative_type: CreativeType | null
 
   // Metrics (nullable for upcoming campaigns)
   budget: number | null
@@ -100,6 +106,8 @@ export interface CreateCampaignInput {
   folder_id: string
   name: string
   status: CampaignStatus
+  creative_url?: string
+  creative_type?: CreativeType
   budget?: number
   impressions?: number
   clicks?: number
@@ -113,6 +121,8 @@ export interface CreateCampaignInput {
 export interface UpdateCampaignInput {
   name?: string
   status?: CampaignStatus
+  creative_url?: string | null
+  creative_type?: CreativeType | null
   budget?: number | null
   impressions?: number | null
   clicks?: number | null
@@ -190,4 +200,10 @@ export interface AIAnalysis {
   what_didnt_work: string[]
   likely_reasons: string[]
   priority_improvement: string
+  // Creative analysis (when image/video is provided)
+  creative_analysis?: {
+    visual_strengths: string[]
+    visual_weaknesses: string[]
+    recommendations: string[]
+  }
 }

@@ -1,19 +1,61 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { Button, Card, Input } from '@/components/ui'
-import { CHANNEL_LABELS, type ChannelType, type CampaignStatus, type PerformanceStatus } from '@/lib/types'
+import { CHANNEL_LABELS, type ChannelType, type CampaignStatus, type PerformanceStatus, type CreativeType } from '@/lib/types'
 
-// Mock campaigns for this folder
-const MOCK_CAMPAIGNS = [
+// Storage keys
+const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
+const FOLDERS_STORAGE_KEY = 'claritymetrics_folders'
+
+// Helper to load campaigns from localStorage
+function loadCampaigns() {
+  if (typeof window === 'undefined') return []
+  try {
+    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  } catch {
+    return []
+  }
+}
+
+// Helper to save campaigns to localStorage
+function saveCampaigns(campaigns: any[]) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(CAMPAIGNS_STORAGE_KEY, JSON.stringify(campaigns))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+// Helper to load folder from localStorage
+function loadFolder(folderId: string) {
+  if (typeof window === 'undefined') return null
+  try {
+    const saved = localStorage.getItem(FOLDERS_STORAGE_KEY)
+    if (saved) {
+      const folders = JSON.parse(saved)
+      return folders.find((f: any) => f.id === folderId) || null
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+// Default campaigns for demo
+const DEFAULT_CAMPAIGNS = [
   {
     id: '1',
     folder_id: '1',
     user_id: '1',
     name: 'January Brand Awareness',
     status: 'completed' as CampaignStatus,
+    creative_url: null,
+    creative_type: null,
     budget: 5000,
     impressions: 150000,
     clicks: 4500,
@@ -34,6 +76,8 @@ const MOCK_CAMPAIGNS = [
     user_id: '1',
     name: 'December Retargeting',
     status: 'completed' as CampaignStatus,
+    creative_url: null,
+    creative_type: null,
     budget: 3000,
     impressions: 80000,
     clicks: 2000,
@@ -54,6 +98,8 @@ const MOCK_CAMPAIGNS = [
     user_id: '1',
     name: 'November Promo',
     status: 'completed' as CampaignStatus,
+    creative_url: null,
+    creative_type: null,
     budget: 4000,
     impressions: 120000,
     clicks: 2400,
@@ -70,7 +116,7 @@ const MOCK_CAMPAIGNS = [
   },
 ]
 
-const MOCK_FOLDER = {
+const DEFAULT_FOLDER = {
   id: '1',
   name: 'Meta Ads Q1 2025',
   channel_type: 'meta_ads' as ChannelType,
@@ -109,6 +155,8 @@ function AddCampaignModal({
   const [clicks, setClicks] = useState('')
   const [conversions, setConversions] = useState('')
   const [totalCost, setTotalCost] = useState('')
+  const [creativeUrl, setCreativeUrl] = useState('')
+  const [creativeType, setCreativeType] = useState<CreativeType | ''>('')
 
   if (!isOpen) return null
 
@@ -122,6 +170,8 @@ function AddCampaignModal({
         clicks: parseInt(clicks) || 0,
         conversions: parseInt(conversions) || 0,
         total_cost: parseFloat(totalCost) || 0,
+        creative_url: creativeUrl || null,
+        creative_type: creativeType || null,
       })
       setName('')
       setBudget('')
@@ -129,6 +179,8 @@ function AddCampaignModal({
       setClicks('')
       setConversions('')
       setTotalCost('')
+      setCreativeUrl('')
+      setCreativeType('')
       onClose()
     }
   }
@@ -151,6 +203,56 @@ function AddCampaignModal({
                 autoFocus
               />
             </div>
+
+            {/* Creative section */}
+            <div className="p-4 bg-[#F5F5F4] rounded-xl space-y-3">
+              <label className="block text-sm font-medium text-[#18181B]">
+                Creative (Image or Video)
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCreativeType('image')}
+                  className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
+                    creativeType === 'image'
+                      ? 'border-[#0D9488] bg-[#F0FDFA]'
+                      : 'border-[#E4E4E7] bg-white hover:border-[#A1A1AA]'
+                  }`}
+                >
+                  <svg className="w-6 h-6 text-[#52525B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-xs font-medium">Image</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreativeType('video')}
+                  className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
+                    creativeType === 'video'
+                      ? 'border-[#0D9488] bg-[#F0FDFA]'
+                      : 'border-[#E4E4E7] bg-white hover:border-[#A1A1AA]'
+                  }`}
+                >
+                  <svg className="w-6 h-6 text-[#52525B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-xs font-medium">Video</span>
+                </button>
+              </div>
+              {creativeType && (
+                <div>
+                  <Input
+                    value={creativeUrl}
+                    onChange={(e) => setCreativeUrl(e.target.value)}
+                    placeholder={creativeType === 'image' ? 'https://example.com/image.jpg' : 'https://example.com/video.mp4'}
+                  />
+                  <p className="text-xs text-[#A1A1AA] mt-1">
+                    Enter the URL of your {creativeType}. AI will analyze it for insights.
+                  </p>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-[#52525B] mb-1">Budget ($)</label>
@@ -217,15 +319,56 @@ function AddCampaignModal({
 
 export default function FolderDetailPage() {
   const params = useParams()
-  const [campaigns, setCampaigns] = useState(MOCK_CAMPAIGNS)
+  const folderId = params.id as string
+  const [campaigns, setCampaigns] = useState<typeof DEFAULT_CAMPAIGNS>([])
+  const [folder, setFolder] = useState<typeof DEFAULT_FOLDER | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  const folder = MOCK_FOLDER // In real app, fetch by params.id
+  // Load folder and campaigns from localStorage on mount
+  useEffect(() => {
+    // Load folder
+    const savedFolder = loadFolder(folderId)
+    if (savedFolder) {
+      setFolder(savedFolder)
+    } else if (folderId === '1') {
+      // Default folder for demo
+      setFolder(DEFAULT_FOLDER)
+    } else {
+      setFolder({ id: folderId, name: 'Unknown Folder', channel_type: 'other' as ChannelType })
+    }
+
+    // Load campaigns for this folder
+    const allCampaigns = loadCampaigns()
+    const folderCampaigns = allCampaigns.filter((c: any) => c.folder_id === folderId)
+
+    if (folderCampaigns.length > 0) {
+      setCampaigns(folderCampaigns)
+    } else if (folderId === '1') {
+      // Default campaigns for demo folder
+      setCampaigns(DEFAULT_CAMPAIGNS)
+      // Save default campaigns to localStorage
+      const existing = loadCampaigns()
+      saveCampaigns([...existing, ...DEFAULT_CAMPAIGNS])
+    }
+
+    setIsLoaded(true)
+  }, [folderId])
+
+  // Save campaigns to localStorage whenever they change
+  useEffect(() => {
+    if (isLoaded) {
+      // Get all campaigns, filter out this folder's campaigns, then add updated ones
+      const allCampaigns = loadCampaigns()
+      const otherCampaigns = allCampaigns.filter((c: any) => c.folder_id !== folderId)
+      saveCampaigns([...otherCampaigns, ...campaigns])
+    }
+  }, [campaigns, isLoaded, folderId])
 
   const handleAddCampaign = (data: any) => {
     const newCampaign = {
       id: Date.now().toString(),
-      folder_id: params.id as string,
+      folder_id: folderId,
       user_id: '1',
       ...data,
       status: 'completed' as CampaignStatus,
@@ -243,6 +386,15 @@ export default function FolderDetailPage() {
 
   const formatCurrency = (value: number) => `$${value.toLocaleString()}`
   const formatNumber = (value: number) => value.toLocaleString()
+
+  // Show loading while data loads
+  if (!isLoaded || !folder) {
+    return (
+      <div className="max-w-6xl flex items-center justify-center py-20">
+        <div className="animate-pulse text-[#A1A1AA]">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl">
@@ -305,7 +457,22 @@ export default function FolderDetailPage() {
                   >
                     <td className="px-6 py-4">
                       <Link href={`/analysis/${campaign.id}`} className="block">
-                        <div className="font-medium text-[#18181B]">{campaign.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-[#18181B]">{campaign.name}</span>
+                          {campaign.creative_url && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#F0FDFA] text-[#0D9488]" title={`Has ${campaign.creative_type}`}>
+                              {campaign.creative_type === 'image' ? (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              )}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-[#A1A1AA]">
                           {new Date(campaign.start_date || campaign.created_at).toLocaleDateString('en-US', {
                             month: 'short',
