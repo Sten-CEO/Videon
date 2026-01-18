@@ -324,6 +324,7 @@ export default function FolderDetailPage() {
   const [folder, setFolder] = useState<typeof DEFAULT_FOLDER | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [hasUserChanges, setHasUserChanges] = useState(false)
 
   // Load folder and campaigns from localStorage on mount
   useEffect(() => {
@@ -355,15 +356,15 @@ export default function FolderDetailPage() {
     setIsLoaded(true)
   }, [folderId])
 
-  // Save campaigns to localStorage whenever they change
+  // Save campaigns to localStorage only when user makes changes
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && hasUserChanges) {
       // Get all campaigns, filter out this folder's campaigns, then add updated ones
       const allCampaigns = loadCampaigns()
       const otherCampaigns = allCampaigns.filter((c: any) => c.folder_id !== folderId)
       saveCampaigns([...otherCampaigns, ...campaigns])
     }
-  }, [campaigns, isLoaded, folderId])
+  }, [campaigns, isLoaded, folderId, hasUserChanges])
 
   const handleAddCampaign = (data: any) => {
     const newCampaign = {
@@ -371,6 +372,9 @@ export default function FolderDetailPage() {
       folder_id: folderId,
       user_id: '1',
       ...data,
+      // Add folder info for analysis page
+      folder_name: folder?.name || 'Unknown Folder',
+      channel_type: folder?.channel_type || 'other',
       status: 'completed' as CampaignStatus,
       description: null,
       start_date: new Date().toISOString(),
@@ -382,6 +386,7 @@ export default function FolderDetailPage() {
       cpa: data.conversions ? (data.total_cost / data.conversions) : 0,
     }
     setCampaigns([newCampaign, ...campaigns])
+    setHasUserChanges(true)
   }
 
   const formatCurrency = (value: number) => `$${value.toLocaleString()}`
