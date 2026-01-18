@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { Button, Card, Input } from '@/components/ui'
-import { CHANNEL_LABELS, type ChannelType, type CampaignStatus, type PerformanceStatus, type CreativeType } from '@/lib/types'
+import { CHANNEL_LABELS, type ChannelType, type CampaignStatus, type PerformanceStatus } from '@/lib/types'
 
 // Storage keys
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
@@ -52,67 +52,70 @@ const DEFAULT_CAMPAIGNS = [
     id: '1',
     folder_id: '1',
     user_id: '1',
-    name: 'January Brand Awareness',
+    name: 'Campagne Janvier - Notoriété',
     status: 'completed' as CampaignStatus,
-    creative_url: null,
-    creative_type: null,
+    creative_urls: ['https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop'],
+    is_video_screenshots: false,
+    video_description: null,
     budget: 5000,
     impressions: 150000,
     clicks: 4500,
-    conversions: 120,
     total_cost: 4800,
-    description: 'Brand awareness campaign targeting new audiences',
+    leads: 120,
+    clients: 18,
+    revenue: 27000,
+    notes: 'Campagne de notoriété ciblant une nouvelle audience',
     start_date: '2025-01-01',
     end_date: '2025-01-15',
     created_at: '2025-01-01',
     updated_at: '2025-01-15',
     performance: 'improving' as PerformanceStatus,
-    ctr: 3.0,
-    cpa: 40,
   },
   {
     id: '2',
     folder_id: '1',
     user_id: '1',
-    name: 'December Retargeting',
+    name: 'Retargeting Décembre',
     status: 'completed' as CampaignStatus,
-    creative_url: null,
-    creative_type: null,
+    creative_urls: ['https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop'],
+    is_video_screenshots: false,
+    video_description: null,
     budget: 3000,
     impressions: 80000,
     clicks: 2000,
-    conversions: 45,
     total_cost: 2900,
-    description: 'Retargeting campaign for cart abandoners',
+    leads: 65,
+    clients: 12,
+    revenue: 15000,
+    notes: 'Retargeting des abandons de panier',
     start_date: '2024-12-15',
     end_date: '2024-12-31',
     created_at: '2024-12-15',
     updated_at: '2024-12-31',
     performance: 'stable' as PerformanceStatus,
-    ctr: 2.5,
-    cpa: 64,
   },
   {
     id: '3',
     folder_id: '1',
     user_id: '1',
-    name: 'November Promo',
+    name: 'Promo Black Friday',
     status: 'completed' as CampaignStatus,
-    creative_url: null,
-    creative_type: null,
+    creative_urls: [],
+    is_video_screenshots: false,
+    video_description: null,
     budget: 4000,
     impressions: 120000,
     clicks: 2400,
-    conversions: 30,
     total_cost: 3800,
-    description: 'Black Friday promotion',
+    leads: 45,
+    clients: 5,
+    revenue: 6500,
+    notes: 'Promotion Black Friday',
     start_date: '2024-11-20',
     end_date: '2024-11-30',
     created_at: '2024-11-20',
     updated_at: '2024-11-30',
     performance: 'declining' as PerformanceStatus,
-    ctr: 2.0,
-    cpa: 127,
   },
 ]
 
@@ -153,12 +156,35 @@ function AddCampaignModal({
   const [budget, setBudget] = useState('')
   const [impressions, setImpressions] = useState('')
   const [clicks, setClicks] = useState('')
-  const [conversions, setConversions] = useState('')
   const [totalCost, setTotalCost] = useState('')
-  const [creativeUrl, setCreativeUrl] = useState('')
-  const [creativeType, setCreativeType] = useState<CreativeType | ''>('')
+  const [leads, setLeads] = useState('')
+  const [clients, setClients] = useState('')
+  const [revenue, setRevenue] = useState('')
+  const [notes, setNotes] = useState('')
+
+  // Creative fields (up to 6 images)
+  const [creativeUrls, setCreativeUrls] = useState<string[]>([''])
+  const [isVideoScreenshots, setIsVideoScreenshots] = useState(false)
+  const [videoDescription, setVideoDescription] = useState('')
 
   if (!isOpen) return null
+
+  const addImageField = () => {
+    if (creativeUrls.length < 6) {
+      setCreativeUrls([...creativeUrls, ''])
+    }
+  }
+
+  const removeImageField = (index: number) => {
+    const newUrls = creativeUrls.filter((_, i) => i !== index)
+    setCreativeUrls(newUrls.length > 0 ? newUrls : [''])
+  }
+
+  const updateImageUrl = (index: number, value: string) => {
+    const newUrls = [...creativeUrls]
+    newUrls[index] = value
+    setCreativeUrls(newUrls)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -168,19 +194,28 @@ function AddCampaignModal({
         budget: parseFloat(budget) || 0,
         impressions: parseInt(impressions) || 0,
         clicks: parseInt(clicks) || 0,
-        conversions: parseInt(conversions) || 0,
         total_cost: parseFloat(totalCost) || 0,
-        creative_url: creativeUrl || null,
-        creative_type: creativeType || null,
+        leads: parseInt(leads) || 0,
+        clients: parseInt(clients) || 0,
+        revenue: parseFloat(revenue) || 0,
+        notes: notes || null,
+        creative_urls: creativeUrls.filter(url => url.trim() !== ''),
+        is_video_screenshots: isVideoScreenshots,
+        video_description: isVideoScreenshots ? videoDescription : null,
       })
+      // Reset form
       setName('')
       setBudget('')
       setImpressions('')
       setClicks('')
-      setConversions('')
       setTotalCost('')
-      setCreativeUrl('')
-      setCreativeType('')
+      setLeads('')
+      setClients('')
+      setRevenue('')
+      setNotes('')
+      setCreativeUrls([''])
+      setIsVideoScreenshots(false)
+      setVideoDescription('')
       onClose()
     }
   }
@@ -188,127 +223,225 @@ function AddCampaignModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold text-[#18181B] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-          Add Campaign Results
+          Ajouter une campagne
         </h2>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Campaign Name */}
             <div>
-              <label className="block text-sm font-medium text-[#52525B] mb-1">Campaign Name</label>
+              <label className="block text-sm font-medium text-[#52525B] mb-1">Nom de la campagne</label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., February Brand Campaign"
+                placeholder="ex: Campagne Facebook Février"
                 autoFocus
               />
             </div>
 
-            {/* Creative section */}
-            <div className="p-4 bg-[#F5F5F4] rounded-xl space-y-3">
-              <label className="block text-sm font-medium text-[#18181B]">
-                Creative (Image or Video)
-              </label>
-              <div className="grid grid-cols-2 gap-3">
+            {/* Creative section - Multi-image */}
+            <div className="p-4 bg-[#F5F5F4] rounded-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-[#18181B]">
+                  Visuels de la campagne (max 6 images)
+                </label>
+                {creativeUrls.length < 6 && (
+                  <button
+                    type="button"
+                    onClick={addImageField}
+                    className="text-xs text-[#0D9488] hover:text-[#0F766E] font-medium flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Ajouter une image
+                  </button>
+                )}
+              </div>
+
+              {/* Image/Video toggle */}
+              <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-[#E4E4E7]">
                 <button
                   type="button"
-                  onClick={() => setCreativeType('image')}
-                  className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
-                    creativeType === 'image'
-                      ? 'border-[#0D9488] bg-[#F0FDFA]'
-                      : 'border-[#E4E4E7] bg-white hover:border-[#A1A1AA]'
+                  onClick={() => setIsVideoScreenshots(false)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                    !isVideoScreenshots
+                      ? 'bg-[#0D9488] text-white'
+                      : 'bg-[#F5F5F4] text-[#52525B] hover:bg-[#E4E4E7]'
                   }`}
                 >
-                  <svg className="w-6 h-6 text-[#52525B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span className="text-xs font-medium">Image</span>
+                  Images publicitaires
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCreativeType('video')}
-                  className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
-                    creativeType === 'video'
-                      ? 'border-[#0D9488] bg-[#F0FDFA]'
-                      : 'border-[#E4E4E7] bg-white hover:border-[#A1A1AA]'
+                  onClick={() => setIsVideoScreenshots(true)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                    isVideoScreenshots
+                      ? 'bg-[#0D9488] text-white'
+                      : 'bg-[#F5F5F4] text-[#52525B] hover:bg-[#E4E4E7]'
                   }`}
                 >
-                  <svg className="w-6 h-6 text-[#52525B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  <span className="text-xs font-medium">Video</span>
+                  Screenshots de vidéo
                 </button>
               </div>
-              {creativeType && (
-                <div>
-                  <Input
-                    value={creativeUrl}
-                    onChange={(e) => setCreativeUrl(e.target.value)}
-                    placeholder={creativeType === 'image' ? 'https://example.com/image.jpg' : 'https://example.com/video.mp4'}
-                  />
-                  <p className="text-xs text-[#A1A1AA] mt-1">
-                    Enter the URL of your {creativeType}. AI will analyze it for insights.
+
+              {isVideoScreenshots && (
+                <div className="p-3 bg-[#FFF7ED] border border-[#FDBA74] rounded-lg">
+                  <p className="text-xs text-[#9A3412] mb-2">
+                    <strong>Conseil :</strong> Ajoutez les screenshots les plus représentatifs de votre vidéo (intro, moments clés, CTA, etc.)
                   </p>
+                  <textarea
+                    value={videoDescription}
+                    onChange={(e) => setVideoDescription(e.target.value)}
+                    placeholder="Décrivez brièvement votre vidéo (durée, message principal, style...)"
+                    className="w-full px-3 py-2 text-sm border border-[#E4E4E7] rounded-lg focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 outline-none resize-none"
+                    rows={2}
+                  />
                 </div>
               )}
+
+              {/* Image URL fields */}
+              <div className="space-y-2">
+                {creativeUrls.map((url, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      value={url}
+                      onChange={(e) => updateImageUrl(index, e.target.value)}
+                      placeholder={`URL image ${index + 1}`}
+                      className="flex-1"
+                    />
+                    {creativeUrls.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeImageField(index)}
+                        className="px-2 text-[#EF4444] hover:text-[#DC2626]"
+                      >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-[#A1A1AA]">
+                L'IA analysera vos visuels pour des insights personnalisés.
+              </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#52525B] mb-1">Budget ($)</label>
-                <Input
-                  type="number"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  placeholder="5000"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#52525B] mb-1">Total Cost ($)</label>
-                <Input
-                  type="number"
-                  value={totalCost}
-                  onChange={(e) => setTotalCost(e.target.value)}
-                  placeholder="4800"
-                />
+            {/* Traffic Metrics */}
+            <div>
+              <h3 className="text-sm font-semibold text-[#18181B] mb-3 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#F0FDFA] flex items-center justify-center text-xs text-[#0D9488]">1</span>
+                Données de trafic
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Impressions</label>
+                  <Input
+                    type="number"
+                    value={impressions}
+                    onChange={(e) => setImpressions(e.target.value)}
+                    placeholder="150000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Clics</label>
+                  <Input
+                    type="number"
+                    value={clicks}
+                    onChange={(e) => setClicks(e.target.value)}
+                    placeholder="4500"
+                  />
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#52525B] mb-1">Impressions</label>
-                <Input
-                  type="number"
-                  value={impressions}
-                  onChange={(e) => setImpressions(e.target.value)}
-                  placeholder="150000"
-                />
+
+            {/* Budget/Cost */}
+            <div>
+              <h3 className="text-sm font-semibold text-[#18181B] mb-3 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#F0FDFA] flex items-center justify-center text-xs text-[#0D9488]">2</span>
+                Budget & Dépenses
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Budget prévu (€)</label>
+                  <Input
+                    type="number"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    placeholder="5000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Dépense totale (€)</label>
+                  <Input
+                    type="number"
+                    value={totalCost}
+                    onChange={(e) => setTotalCost(e.target.value)}
+                    placeholder="4800"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[#52525B] mb-1">Clicks</label>
-                <Input
-                  type="number"
-                  value={clicks}
-                  onChange={(e) => setClicks(e.target.value)}
-                  placeholder="4500"
-                />
+            </div>
+
+            {/* Business Results */}
+            <div>
+              <h3 className="text-sm font-semibold text-[#18181B] mb-3 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#F0FDFA] flex items-center justify-center text-xs text-[#0D9488]">3</span>
+                Résultats business
+              </h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Leads</label>
+                  <Input
+                    type="number"
+                    value={leads}
+                    onChange={(e) => setLeads(e.target.value)}
+                    placeholder="120"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Clients</label>
+                  <Input
+                    type="number"
+                    value={clients}
+                    onChange={(e) => setClients(e.target.value)}
+                    placeholder="15"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">CA généré (€)</label>
+                  <Input
+                    type="number"
+                    value={revenue}
+                    onChange={(e) => setRevenue(e.target.value)}
+                    placeholder="25000"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[#52525B] mb-1">Conversions</label>
-                <Input
-                  type="number"
-                  value={conversions}
-                  onChange={(e) => setConversions(e.target.value)}
-                  placeholder="120"
-                />
-              </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium text-[#52525B] mb-1">Notes personnelles</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Contexte, observations, détails importants sur la campagne..."
+                className="w-full px-4 py-3 border border-[#E4E4E7] rounded-xl focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 outline-none resize-none text-sm"
+                rows={3}
+              />
             </div>
           </div>
+
           <div className="flex gap-3 mt-6">
             <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancel
+              Annuler
             </Button>
             <Button variant="primary" type="submit" className="flex-1">
-              Add Campaign
+              Ajouter la campagne
             </Button>
           </div>
         </form>
@@ -371,19 +504,32 @@ export default function FolderDetailPage() {
       id: Date.now().toString(),
       folder_id: folderId,
       user_id: '1',
-      ...data,
-      // Add folder info for analysis page
+      name: data.name,
+      status: 'completed' as CampaignStatus,
+      // Creative
+      creative_urls: data.creative_urls || [],
+      is_video_screenshots: data.is_video_screenshots || false,
+      video_description: data.video_description || null,
+      // Metrics
+      budget: data.budget || 0,
+      impressions: data.impressions || 0,
+      clicks: data.clicks || 0,
+      total_cost: data.total_cost || 0,
+      // Business results
+      leads: data.leads || 0,
+      clients: data.clients || 0,
+      revenue: data.revenue || 0,
+      notes: data.notes || null,
+      // Folder info for analysis page
       folder_name: folder?.name || 'Unknown Folder',
       channel_type: folder?.channel_type || 'other',
-      status: 'completed' as CampaignStatus,
-      description: null,
+      // Timestamps
       start_date: new Date().toISOString(),
       end_date: new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      // Performance will be calculated based on metrics
       performance: 'stable' as PerformanceStatus,
-      ctr: data.impressions ? ((data.clicks / data.impressions) * 100) : 0,
-      cpa: data.conversions ? (data.total_cost / data.conversions) : 0,
     }
     setCampaigns([newCampaign, ...campaigns])
     setHasUserChanges(true)
@@ -444,71 +590,69 @@ export default function FolderDetailPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#E4E4E7]">
-                  <th className="text-left px-6 py-4 text-sm font-medium text-[#52525B]">Campaign</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Impressions</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Clicks</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">CTR</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Conversions</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">CPA</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Cost</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-[#52525B]">Campagne</th>
+                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Dépense</th>
+                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Leads</th>
+                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Clients</th>
+                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">CA</th>
+                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">ROAS</th>
                   <th className="text-center px-6 py-4 text-sm font-medium text-[#52525B]">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {campaigns.map(campaign => (
-                  <tr
-                    key={campaign.id}
-                    className="border-b border-[#E4E4E7] last:border-0 hover:bg-[#FAFAF9] transition-colors cursor-pointer"
-                  >
-                    <td className="px-6 py-4">
-                      <Link href={`/analysis/${campaign.id}`} className="block">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-[#18181B]">{campaign.name}</span>
-                          {campaign.creative_url && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#F0FDFA] text-[#0D9488]" title={`Has ${campaign.creative_type}`}>
-                              {campaign.creative_type === 'image' ? (
+                {campaigns.map(campaign => {
+                  const roas = campaign.total_cost > 0 ? (campaign.revenue / campaign.total_cost) : 0
+                  return (
+                    <tr
+                      key={campaign.id}
+                      className="border-b border-[#E4E4E7] last:border-0 hover:bg-[#FAFAF9] transition-colors cursor-pointer"
+                    >
+                      <td className="px-6 py-4">
+                        <Link href={`/analysis/${campaign.id}`} className="block">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-[#18181B]">{campaign.name}</span>
+                            {campaign.creative_urls && campaign.creative_urls.length > 0 && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#F0FDFA] text-[#0D9488]" title={`${campaign.creative_urls.length} visuel(s)`}>
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
-                              ) : (
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                              )}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-[#A1A1AA]">
-                          {new Date(campaign.start_date || campaign.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </div>
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-right text-[#18181B]">
-                      {formatNumber(campaign.impressions || 0)}
-                    </td>
-                    <td className="px-6 py-4 text-right text-[#18181B]">
-                      {formatNumber(campaign.clicks || 0)}
-                    </td>
-                    <td className="px-6 py-4 text-right text-[#18181B]">
-                      {campaign.ctr?.toFixed(1)}%
-                    </td>
-                    <td className="px-6 py-4 text-right text-[#18181B]">
-                      {formatNumber(campaign.conversions || 0)}
-                    </td>
-                    <td className="px-6 py-4 text-right text-[#18181B]">
-                      {formatCurrency(campaign.cpa || 0)}
-                    </td>
-                    <td className="px-6 py-4 text-right text-[#18181B]">
-                      {formatCurrency(campaign.total_cost || 0)}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <PerformanceBadge status={campaign.performance} />
-                    </td>
-                  </tr>
-                ))}
+                                {campaign.creative_urls.length > 1 && (
+                                  <span className="text-[10px]">{campaign.creative_urls.length}</span>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-[#A1A1AA]">
+                            {new Date(campaign.start_date || campaign.created_at).toLocaleDateString('fr-FR', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </div>
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-right text-[#18181B]">
+                        {formatCurrency(campaign.total_cost || 0).replace('$', '')}€
+                      </td>
+                      <td className="px-6 py-4 text-right text-[#18181B]">
+                        {formatNumber(campaign.leads || 0)}
+                      </td>
+                      <td className="px-6 py-4 text-right text-[#18181B]">
+                        {formatNumber(campaign.clients || 0)}
+                      </td>
+                      <td className="px-6 py-4 text-right text-[#18181B] font-medium">
+                        {formatCurrency(campaign.revenue || 0).replace('$', '')}€
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className={`font-medium ${roas >= 2 ? 'text-[#10B981]' : roas >= 1 ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>
+                          {roas.toFixed(1)}x
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <PerformanceBadge status={campaign.performance} />
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
