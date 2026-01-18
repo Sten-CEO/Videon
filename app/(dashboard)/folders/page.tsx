@@ -5,8 +5,11 @@ import Link from 'next/link'
 import { Button, Card, Input } from '@/components/ui'
 import { CHANNEL_LABELS, type ChannelType, type Folder } from '@/lib/types'
 
-// Mock data for folders (will be replaced with real data)
-const MOCK_FOLDERS: (Folder & { campaignCount: number })[] = [
+// Storage key for localStorage
+const FOLDERS_STORAGE_KEY = 'claritymetrics_folders'
+
+// Default folders for first-time users
+const DEFAULT_FOLDERS: (Folder & { campaignCount: number })[] = [
   {
     id: '1',
     user_id: '1',
@@ -35,6 +38,31 @@ const MOCK_FOLDERS: (Folder & { campaignCount: number })[] = [
     campaignCount: 8,
   },
 ]
+
+// Helper functions for localStorage
+function loadFolders(): (Folder & { campaignCount: number })[] {
+  if (typeof window === 'undefined') return DEFAULT_FOLDERS
+  try {
+    const saved = localStorage.getItem(FOLDERS_STORAGE_KEY)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+    // First time - save and return default folders
+    localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(DEFAULT_FOLDERS))
+    return DEFAULT_FOLDERS
+  } catch {
+    return DEFAULT_FOLDERS
+  }
+}
+
+function saveFolders(folders: (Folder & { campaignCount: number })[]) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders))
+  } catch {
+    // Ignore storage errors
+  }
+}
 
 // Channel icon component
 function ChannelIcon({ type, className = '' }: { type: ChannelType; className?: string }) {
@@ -162,9 +190,23 @@ function CreateFolderModal({
 }
 
 export default function FoldersPage() {
-  const [folders, setFolders] = useState<(Folder & { campaignCount: number })[]>(MOCK_FOLDERS)
+  const [folders, setFolders] = useState<(Folder & { campaignCount: number })[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // Load folders from localStorage on mount
+  useEffect(() => {
+    setFolders(loadFolders())
+    setIsLoaded(true)
+  }, [])
+
+  // Save folders to localStorage when they change
+  useEffect(() => {
+    if (isLoaded) {
+      saveFolders(folders)
+    }
+  }, [folders, isLoaded])
 
   const filteredFolders = folders.filter(folder =>
     folder.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -181,7 +223,7 @@ export default function FoldersPage() {
       updated_at: new Date().toISOString(),
       campaignCount: 0,
     }
-    setFolders([newFolder, ...folders])
+    setFolders(prev => [newFolder, ...prev])
   }
 
   return (

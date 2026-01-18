@@ -212,52 +212,35 @@ export default function LandingPage() {
                 </Link>
               </div>
 
-              {/* Hero Visual */}
+              {/* Hero Visual - Video Demo Placeholder */}
               <div className="max-w-4xl mx-auto animate-scale-in stagger-3" style={{ animationFillMode: 'both' }}>
                 <div className="relative">
-                  {/* Browser frame */}
+                  {/* Video container */}
                   <div className="bg-white rounded-2xl shadow-2xl shadow-black/5 border border-[#E4E4E7] overflow-hidden">
-                    {/* Browser header */}
-                    <div className="flex items-center gap-2 px-4 py-3 border-b border-[#E4E4E7] bg-[#FAFAF9]">
-                      <div className="flex gap-1.5">
-                        <div className="w-3 h-3 rounded-full bg-[#EF4444]/60" />
-                        <div className="w-3 h-3 rounded-full bg-[#F59E0B]/60" />
-                        <div className="w-3 h-3 rounded-full bg-[#10B981]/60" />
-                      </div>
-                      <div className="flex-1 flex justify-center">
-                        <div className="px-4 py-1 bg-white rounded-lg border border-[#E4E4E7] text-xs text-[#A1A1AA]">
-                          claritymetrics.io/dashboard
-                        </div>
-                      </div>
-                    </div>
-                    {/* Dashboard preview area */}
-                    <div className="p-6 bg-gradient-to-br from-[#F0FDFA] via-white to-[#FFF7ED]">
-                      {/* Mock dashboard */}
-                      <div className="text-left mb-4">
-                        <p className="text-sm text-[#52525B] mb-1">The big question:</p>
-                        <p className="text-xl font-bold text-[#18181B]">Are you doing better or worse?</p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-[#D1FAE5] rounded-xl p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-3 h-3 rounded-full bg-[#10B981]" />
-                            <span className="text-2xl font-bold text-[#10B981]">5</span>
+                    {/* Video placeholder - Replace src with your demo video */}
+                    <div className="aspect-video bg-gradient-to-br from-[#18181B] to-[#27272A] flex items-center justify-center relative overflow-hidden">
+                      {/* Placeholder content - will be replaced by actual video */}
+                      <div className="absolute inset-0 flex items-center justify-center" id="demo-video-container">
+                        {/* Uncomment and add your video URL below */}
+                        {/* <video
+                          className="w-full h-full object-cover"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                        >
+                          <source src="/demo-video.mp4" type="video/mp4" />
+                        </video> */}
+
+                        {/* Temporary placeholder - remove when adding video */}
+                        <div className="text-center p-8">
+                          <div className="w-20 h-20 rounded-2xl bg-white/10 flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+                            <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M8 5v14l11-7z"/>
+                            </svg>
                           </div>
-                          <span className="text-sm text-[#52525B]">Improving</span>
-                        </div>
-                        <div className="bg-[#FEF3C7] rounded-xl p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-3 h-3 rounded-full bg-[#F59E0B]" />
-                            <span className="text-2xl font-bold text-[#F59E0B]">2</span>
-                          </div>
-                          <span className="text-sm text-[#52525B]">Stable</span>
-                        </div>
-                        <div className="bg-[#FEE2E2] rounded-xl p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-3 h-3 rounded-full bg-[#EF4444]" />
-                            <span className="text-2xl font-bold text-[#EF4444]">1</span>
-                          </div>
-                          <span className="text-sm text-[#52525B]">Declining</span>
+                          <p className="text-white/80 font-medium mb-2">Demo Video</p>
+                          <p className="text-sm text-white/50">Your app demo will appear here</p>
                         </div>
                       </div>
                     </div>

@@ -1,17 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button, Card } from '@/components/ui'
-import { CHANNEL_LABELS, type ChannelType, type Campaign, type PerformanceStatus } from '@/lib/types'
+import { CHANNEL_LABELS, type ChannelType, type Campaign, type PerformanceStatus, type CreativeType } from '@/lib/types'
 
-// Mock completed campaigns for comparison
-const MOCK_CAMPAIGNS: (Campaign & { folder_name: string; channel_type: ChannelType; performance: PerformanceStatus; ctr: number; cpa: number; roi: number })[] = [
+// Storage key for campaigns
+const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
+
+// Type for comparison campaigns
+type ComparisonCampaign = Campaign & {
+  folder_name: string
+  channel_type: ChannelType
+  performance: PerformanceStatus
+  ctr: number
+  cpa: number
+  roi: number
+}
+
+// Default campaigns for demo
+const DEFAULT_CAMPAIGNS: ComparisonCampaign[] = [
   {
     id: '1',
     folder_id: '1',
     user_id: '1',
     name: 'January Brand Awareness',
     status: 'completed',
+    creative_url: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop',
+    creative_type: 'image',
     budget: 5000,
     impressions: 150000,
     clicks: 4500,
@@ -35,6 +50,8 @@ const MOCK_CAMPAIGNS: (Campaign & { folder_name: string; channel_type: ChannelTy
     user_id: '1',
     name: 'December Retargeting',
     status: 'completed',
+    creative_url: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop',
+    creative_type: 'image',
     budget: 3000,
     impressions: 80000,
     clicks: 2000,
@@ -58,6 +75,8 @@ const MOCK_CAMPAIGNS: (Campaign & { folder_name: string; channel_type: ChannelTy
     user_id: '1',
     name: 'Holiday Search Ads',
     status: 'completed',
+    creative_url: null,
+    creative_type: null,
     budget: 8000,
     impressions: 250000,
     clicks: 5000,
@@ -81,6 +100,8 @@ const MOCK_CAMPAIGNS: (Campaign & { folder_name: string; channel_type: ChannelTy
     user_id: '1',
     name: 'Cold Outreach Q4',
     status: 'completed',
+    creative_url: null,
+    creative_type: null,
     budget: 200,
     impressions: 1000,
     clicks: 80,
@@ -99,6 +120,30 @@ const MOCK_CAMPAIGNS: (Campaign & { folder_name: string; channel_type: ChannelTy
     roi: 220,
   },
 ]
+
+// Load campaigns from localStorage
+function loadCampaigns(): ComparisonCampaign[] {
+  if (typeof window === 'undefined') return DEFAULT_CAMPAIGNS
+  try {
+    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    if (saved) {
+      const campaigns = JSON.parse(saved)
+      // Merge with folder info for display
+      return campaigns.map((c: any) => ({
+        ...c,
+        folder_name: c.folder_name || 'Unknown Folder',
+        channel_type: c.channel_type || 'other',
+        performance: c.performance || 'stable',
+        ctr: c.ctr || (c.impressions ? (c.clicks / c.impressions) * 100 : 0),
+        cpa: c.cpa || (c.conversions ? c.total_cost / c.conversions : 0),
+        roi: c.roi || 0,
+      }))
+    }
+    return DEFAULT_CAMPAIGNS
+  } catch {
+    return DEFAULT_CAMPAIGNS
+  }
+}
 
 // Channel icon component
 function ChannelIcon({ type, className = '' }: { type: ChannelType; className?: string }) {
@@ -207,6 +252,45 @@ function MetricRow({
   )
 }
 
+// Creative display component
+function CreativePreview({ campaign }: { campaign: ComparisonCampaign }) {
+  if (!campaign.creative_url) {
+    return (
+      <div className="aspect-video bg-[#F5F5F4] rounded-xl flex items-center justify-center">
+        <div className="text-center p-4">
+          <svg className="w-10 h-10 text-[#A1A1AA] mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <p className="text-xs text-[#A1A1AA]">No creative</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (campaign.creative_type === 'video') {
+    return (
+      <div className="aspect-video bg-[#18181B] rounded-xl overflow-hidden relative">
+        <video
+          src={campaign.creative_url}
+          className="w-full h-full object-cover"
+          controls
+          muted
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="aspect-video bg-[#F5F5F4] rounded-xl overflow-hidden">
+      <img
+        src={campaign.creative_url}
+        alt={`${campaign.name} creative`}
+        className="w-full h-full object-cover"
+      />
+    </div>
+  )
+}
+
 // Campaign selector dropdown
 function CampaignSelector({
   value,
@@ -217,7 +301,7 @@ function CampaignSelector({
 }: {
   value: string | null
   onChange: (id: string) => void
-  campaigns: typeof MOCK_CAMPAIGNS
+  campaigns: ComparisonCampaign[]
   excludeId: string | null
   label: string
 }) {
@@ -243,13 +327,23 @@ function CampaignSelector({
 }
 
 export default function ComparisonPage() {
+  const [campaigns, setCampaigns] = useState<ComparisonCampaign[]>([])
   const [campaignAId, setCampaignAId] = useState<string | null>(null)
   const [campaignBId, setCampaignBId] = useState<string | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  const campaignA = MOCK_CAMPAIGNS.find(c => c.id === campaignAId)
-  const campaignB = MOCK_CAMPAIGNS.find(c => c.id === campaignBId)
+  // Load campaigns from localStorage on mount
+  useEffect(() => {
+    const loaded = loadCampaigns()
+    setCampaigns(loaded.length > 0 ? loaded : DEFAULT_CAMPAIGNS)
+    setIsLoaded(true)
+  }, [])
+
+  const campaignA = campaigns.find(c => c.id === campaignAId)
+  const campaignB = campaigns.find(c => c.id === campaignBId)
 
   const hasComparison = campaignA && campaignB
+  const hasAnyCreative = hasComparison && (campaignA.creative_url || campaignB.creative_url)
 
   return (
     <div className="max-w-5xl">
@@ -269,14 +363,14 @@ export default function ComparisonPage() {
           <CampaignSelector
             value={campaignAId}
             onChange={setCampaignAId}
-            campaigns={MOCK_CAMPAIGNS}
+            campaigns={campaigns}
             excludeId={campaignBId}
             label="Campaign A"
           />
           <CampaignSelector
             value={campaignBId}
             onChange={setCampaignBId}
-            campaigns={MOCK_CAMPAIGNS}
+            campaigns={campaigns}
             excludeId={campaignAId}
             label="Campaign B"
           />
@@ -334,6 +428,53 @@ export default function ComparisonPage() {
               </div>
             </div>
           </Card>
+
+          {/* Creatives Comparison */}
+          {hasAnyCreative && (
+            <Card variant="elevated" padding="lg">
+              <h3 className="text-lg font-semibold text-[#18181B] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+                Creative Comparison
+              </h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm font-medium text-[#52525B] mb-3">{campaignA.name}</p>
+                  <CreativePreview campaign={campaignA} />
+                  {campaignA.creative_type && (
+                    <p className="text-xs text-[#A1A1AA] mt-2 flex items-center gap-1.5">
+                      {campaignA.creative_type === 'image' ? (
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                      {campaignA.creative_type.charAt(0).toUpperCase() + campaignA.creative_type.slice(1)}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[#52525B] mb-3">{campaignB.name}</p>
+                  <CreativePreview campaign={campaignB} />
+                  {campaignB.creative_type && (
+                    <p className="text-xs text-[#A1A1AA] mt-2 flex items-center gap-1.5">
+                      {campaignB.creative_type === 'image' ? (
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                      {campaignB.creative_type.charAt(0).toUpperCase() + campaignB.creative_type.slice(1)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Metrics Comparison */}
           <Card variant="elevated" padding="lg">
