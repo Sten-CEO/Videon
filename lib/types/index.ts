@@ -186,13 +186,16 @@ export interface DashboardStats {
   upcoming_campaigns: number
   active_campaigns: number
 
-  // Aggregated metrics (last 30 days)
+  // Aggregated metrics
   total_spend: number
   total_impressions: number
   total_clicks: number
-  total_conversions: number
+  total_leads: number
+  total_clients: number
+  total_revenue: number
 
   // Performance
+  average_roas: number | null
   average_roi: number | null
   improving_campaigns: number
   stable_campaigns: number

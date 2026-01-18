@@ -6,48 +6,48 @@ const anthropic = new Anthropic({
 })
 
 // System prompt for marketing campaign analysis
-const SYSTEM_PROMPT = `Tu es un expert en marketing digital et analyse de campagnes publicitaires. Tu travailles pour ClarityMetrics, un outil qui aide les solo founders à comprendre leurs performances marketing.
+const SYSTEM_PROMPT = `You are a digital marketing expert and advertising campaign analyst. You work for ClarityMetrics, a tool that helps solo founders understand their marketing performance.
 
-Ton rôle est d'analyser les métriques d'une campagne marketing et fournir des insights actionnables.
+Your role is to analyze marketing campaign metrics and provide actionable insights.
 
-RÈGLES IMPORTANTES:
-1. Sois concis et direct - les fondateurs sont occupés
-2. Donne des insights spécifiques basés sur les données, pas des généralités
-3. Si les métriques sont bonnes, dis-le clairement. Si elles sont mauvaises, sois honnête mais constructif
-4. Adapte tes recommandations au contexte du canal (Meta Ads, Google Ads, Email, etc.)
-5. Utilise les benchmarks de l'industrie pour contextualiser les performances:
-   - CTR moyen Meta/Facebook: 0.9-1.5%
-   - CTR moyen Google Ads: 2-5%
-   - CTR moyen Email: 2-5%
-   - CPL (Coût par Lead) acceptable: 5-50€ selon le secteur B2B/B2C
-   - CAC (Coût d'Acquisition Client) acceptable: 50-500€ selon le secteur
-   - ROAS minimum viable: 2x (pour chaque euro dépensé, 2€ de revenus)
-   - Taux de conversion Lead→Client moyen: 10-25%
+IMPORTANT RULES:
+1. Be concise and direct - founders are busy
+2. Give specific insights based on data, not generalities
+3. If metrics are good, say so clearly. If they're bad, be honest but constructive
+4. Adapt recommendations to the channel context (Meta Ads, Google Ads, Email, etc.)
+5. Use industry benchmarks to contextualize performance:
+   - Average Meta/Facebook CTR: 0.9-1.5%
+   - Average Google Ads CTR: 2-5%
+   - Average Email CTR: 2-5%
+   - Acceptable CPL (Cost per Lead): $5-50 depending on B2B/B2C sector
+   - Acceptable CAC (Customer Acquisition Cost): $50-500 depending on sector
+   - Minimum viable ROAS: 2x (for every dollar spent, $2 in revenue)
+   - Average Lead-to-Client conversion rate: 10-25%
 
-6. Si des images de créatifs sont fournies, analyse-les en détail:
-   - Qualité visuelle et professionnalisme
-   - Clarté du message/proposition de valeur
-   - Call-to-action visible et clair
-   - Cohérence avec le canal publicitaire
-   - Éléments qui attirent l'attention
-   - Suggestions d'amélioration visuelle
+6. If creative images are provided, analyze them in detail:
+   - Visual quality and professionalism
+   - Message/value proposition clarity
+   - Visible and clear call-to-action
+   - Consistency with the advertising channel
+   - Attention-grabbing elements
+   - Visual improvement suggestions
 
-FORMAT DE RÉPONSE (JSON uniquement, pas de texte avant/après):
+RESPONSE FORMAT (JSON only, no text before/after):
 {
   "what_worked": ["point 1", "point 2", "point 3"],
   "what_didnt_work": ["point 1", "point 2"],
-  "likely_reasons": ["raison 1", "raison 2", "raison 3"],
-  "priority_improvement": "Une phrase claire sur la prochaine action prioritaire à faire",
+  "likely_reasons": ["reason 1", "reason 2", "reason 3"],
+  "priority_improvement": "A clear sentence about the next priority action to take",
   "creative_analysis": {
-    "visual_strengths": ["force visuelle 1", "force visuelle 2"],
-    "visual_weaknesses": ["faiblesse visuelle 1", "faiblesse visuelle 2"],
-    "recommendations": ["recommandation créative 1", "recommandation créative 2"]
+    "visual_strengths": ["visual strength 1", "visual strength 2"],
+    "visual_weaknesses": ["visual weakness 1", "visual weakness 2"],
+    "recommendations": ["creative recommendation 1", "creative recommendation 2"]
   }
 }
 
-NOTE: Si aucun créatif n'est fourni, omets la section "creative_analysis" du JSON.
+NOTE: If no creative is provided, omit the "creative_analysis" section from the JSON.
 
-IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans markdown, sans explication, juste le JSON brut.`
+IMPORTANT: Respond ONLY with the JSON, no markdown, no explanation, just the raw JSON.`
 
 // Helper function to format numbers safely
 function formatNumber(value: number | null | undefined, decimals: number = 2): string {
@@ -76,26 +76,26 @@ export async function POST(request: NextRequest) {
     const messageContent: Anthropic.MessageParam['content'] = []
 
     // Build the analysis prompt
-    let userPrompt = `Analyse cette campagne marketing:
+    let userPrompt = `Analyze this marketing campaign:
 
-**Campagne: ${campaign.name}**
-- Canal: ${campaign.channel_type || 'Non spécifié'}
-- Période: ${campaign.start_date || 'N/A'} à ${campaign.end_date || 'N/A'}
+**Campaign: ${campaign.name}**
+- Channel: ${campaign.channel_type || 'Not specified'}
+- Period: ${campaign.start_date || 'N/A'} to ${campaign.end_date || 'N/A'}
 
-**Données de Performance (entrées utilisateur):**
-- Budget prévu: ${campaign.budget || 0}€
-- Dépense totale: ${campaign.total_cost || 0}€
+**Performance Data (user input):**
+- Planned Budget: $${campaign.budget || 0}
+- Total Spend: $${campaign.total_cost || 0}
 - Impressions: ${formatLocale(campaign.impressions)}
-- Clics: ${formatLocale(campaign.clicks)}
-- Leads générés: ${campaign.leads || 0}
-- Clients acquis: ${campaign.clients || 0}
-- Chiffre d'affaires généré: ${campaign.revenue || 0}€`
+- Clicks: ${formatLocale(campaign.clicks)}
+- Leads Generated: ${campaign.leads || 0}
+- Clients Acquired: ${campaign.clients || 0}
+- Revenue Generated: $${campaign.revenue || 0}`
 
     // Add notes if provided
     if (campaign.notes) {
       userPrompt += `
 
-**Notes de l'utilisateur:**
+**User Notes:**
 ${campaign.notes}`
     }
 
@@ -103,14 +103,14 @@ ${campaign.notes}`
     if (metrics) {
       userPrompt += `
 
-**Métriques calculées:**
-- CTR (Taux de clic): ${formatNumber(metrics.ctr)}%
-- CPC (Coût par clic): ${formatNumber(metrics.cpc)}€
-- CPL (Coût par lead): ${formatNumber(metrics.cpl)}€
-- CAC (Coût d'acquisition client): ${formatNumber(metrics.cac)}€
-- Taux Clic→Lead: ${formatNumber(metrics.click_to_lead)}%
-- Taux Lead→Client: ${formatNumber(metrics.lead_to_client)}%
-- ROAS (Retour sur dépense pub): ${formatNumber(metrics.roas)}x
+**Calculated Metrics:**
+- CTR (Click-through Rate): ${formatNumber(metrics.ctr)}%
+- CPC (Cost per Click): $${formatNumber(metrics.cpc)}
+- CPL (Cost per Lead): $${formatNumber(metrics.cpl)}
+- CAC (Customer Acquisition Cost): $${formatNumber(metrics.cac)}
+- Click-to-Lead Rate: ${formatNumber(metrics.click_to_lead)}%
+- Lead-to-Client Rate: ${formatNumber(metrics.lead_to_client)}%
+- ROAS (Return on Ad Spend): ${formatNumber(metrics.roas)}x
 - ROI: ${formatNumber(metrics.roi)}%`
     }
 
@@ -131,11 +131,11 @@ ${campaign.notes}`
 
       userPrompt += `
 
-**Comparaison avec campagne précédente (${previousCampaign.name}):**
-- Leads: ${leadsChange}% (${previousCampaign.leads} → ${campaign.leads})
-- Clients: ${clientsChange}% (${previousCampaign.clients} → ${campaign.clients})
-- Chiffre d'affaires: ${revenueChange}% (${previousCampaign.revenue}€ → ${campaign.revenue}€)
-- ROAS: ${roasChange}% (${formatNumber(previousCampaign.metrics?.roas)}x → ${formatNumber(metrics.roas)}x)`
+**Comparison with Previous Campaign (${previousCampaign.name}):**
+- Leads: ${leadsChange}% (${previousCampaign.leads} -> ${campaign.leads})
+- Clients: ${clientsChange}% (${previousCampaign.clients} -> ${campaign.clients})
+- Revenue: ${revenueChange}% ($${previousCampaign.revenue} -> $${campaign.revenue})
+- ROAS: ${roasChange}% (${formatNumber(previousCampaign.metrics?.roas)}x -> ${formatNumber(metrics.roas)}x)`
     }
 
     // Add creative context
@@ -143,20 +143,20 @@ ${campaign.notes}`
       if (isVideoScreenshots && videoDescription) {
         userPrompt += `
 
-**Créatif utilisé:** Screenshots d'une vidéo publicitaire
-**Description de la vidéo:** ${videoDescription}
-${creativeUrls.length} screenshot(s) de la vidéo sont fournis ci-dessous. Analyse la progression visuelle et le storytelling de la vidéo.`
+**Creative Used:** Screenshots from an advertising video
+**Video Description:** ${videoDescription}
+${creativeUrls.length} screenshot(s) from the video are provided below. Analyze the visual progression and storytelling of the video.`
       } else {
         userPrompt += `
 
-**Créatif(s) utilisé(s):** ${creativeUrls.length} image(s) publicitaire(s)
-Analyse les visuels fournis ci-dessous.`
+**Creative(s) Used:** ${creativeUrls.length} advertising image(s)
+Analyze the visuals provided below.`
       }
     }
 
     userPrompt += `
 
-Analyse ces données et fournis tes insights en JSON.${creativeUrls && creativeUrls.length > 0 ? ' Inclus une analyse détaillée des créatifs dans creative_analysis.' : ''}`
+Analyze this data and provide your insights in JSON.${creativeUrls && creativeUrls.length > 0 ? ' Include a detailed creative analysis in creative_analysis.' : ''}`
 
     // Add text prompt first
     messageContent.push({
