@@ -44,7 +44,10 @@ function getDefaultStats(): DashboardStats {
     total_spend: 0,
     total_impressions: 0,
     total_clicks: 0,
-    total_conversions: 0,
+    total_leads: 0,
+    total_clients: 0,
+    total_revenue: 0,
+    average_roas: null,
     average_roi: null,
     improving_campaigns: 0,
     stable_campaigns: 0,
@@ -96,7 +99,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     let totalSpend = 0
     let totalImpressions = 0
     let totalClicks = 0
-    let totalConversions = 0
+    let totalLeads = 0
+    let totalClients = 0
+    let totalRevenue = 0
+    let roasSum = 0
+    let roasCount = 0
     let roiSum = 0
     let roiCount = 0
 
@@ -111,13 +118,19 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       campaignsByFolder.set(c.folder_id, [...existing, c])
     })
 
-    completedCampaigns.forEach((campaign, index) => {
+    completedCampaigns.forEach((campaign) => {
       totalSpend += campaign.total_cost || 0
       totalImpressions += campaign.impressions || 0
       totalClicks += campaign.clicks || 0
-      totalConversions += campaign.conversions || 0
+      totalLeads += campaign.leads || 0
+      totalClients += campaign.clients || 0
+      totalRevenue += campaign.revenue || 0
 
       const metrics = calculateMetrics(campaign)
+      if (metrics.roas !== null && metrics.roas > 0) {
+        roasSum += metrics.roas
+        roasCount++
+      }
       if (metrics.roi !== null) {
         roiSum += metrics.roi
         roiCount++
@@ -146,7 +159,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       total_spend: totalSpend,
       total_impressions: totalImpressions,
       total_clicks: totalClicks,
-      total_conversions: totalConversions,
+      total_leads: totalLeads,
+      total_clients: totalClients,
+      total_revenue: totalRevenue,
+      average_roas: roasCount > 0 ? roasSum / roasCount : null,
       average_roi: roiCount > 0 ? roiSum / roiCount : null,
       improving_campaigns: improving,
       stable_campaigns: stable,
