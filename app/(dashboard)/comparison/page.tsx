@@ -391,6 +391,19 @@ export default function ComparisonPage() {
                 <div className="min-w-0">
                   <h3 className="font-semibold text-[#18181B] truncate">{campaignA.name}</h3>
                   <p className="text-xs text-[#52525B]">{campaignA.folder_name}</p>
+                  <p className="text-xs text-[#A1A1AA] mt-0.5">
+                    {campaignA.start_date && campaignA.end_date ? (
+                      <>
+                        {new Date(campaignA.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        {' → '}
+                        {new Date(campaignA.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </>
+                    ) : campaignA.start_date ? (
+                      new Date(campaignA.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                    ) : (
+                      'Date non définie'
+                    )}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -402,6 +415,19 @@ export default function ComparisonPage() {
                 <div className="min-w-0">
                   <h3 className="font-semibold text-[#18181B] truncate">{campaignB.name}</h3>
                   <p className="text-xs text-[#52525B]">{campaignB.folder_name}</p>
+                  <p className="text-xs text-[#A1A1AA] mt-0.5">
+                    {campaignB.start_date && campaignB.end_date ? (
+                      <>
+                        {new Date(campaignB.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        {' → '}
+                        {new Date(campaignB.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </>
+                    ) : campaignB.start_date ? (
+                      new Date(campaignB.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                    ) : (
+                      'Date non définie'
+                    )}
+                  </p>
                 </div>
               </div>
             </Card>
