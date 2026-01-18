@@ -19,23 +19,51 @@ RÈGLES IMPORTANTES:
    - CTR moyen Meta/Facebook: 0.9-1.5%
    - CTR moyen Google Ads: 2-5%
    - CTR moyen Email: 2-5%
-   - Taux de conversion e-commerce: 1-3%
-   - CPA acceptable dépend du secteur, mais généralement < 50€ pour du B2C
+   - CPL (Coût par Lead) acceptable: 5-50€ selon le secteur B2B/B2C
+   - CAC (Coût d'Acquisition Client) acceptable: 50-500€ selon le secteur
+   - ROAS minimum viable: 2x (pour chaque euro dépensé, 2€ de revenus)
+   - Taux de conversion Lead→Client moyen: 10-25%
+
+6. Si des images de créatifs sont fournies, analyse-les en détail:
+   - Qualité visuelle et professionnalisme
+   - Clarté du message/proposition de valeur
+   - Call-to-action visible et clair
+   - Cohérence avec le canal publicitaire
+   - Éléments qui attirent l'attention
+   - Suggestions d'amélioration visuelle
 
 FORMAT DE RÉPONSE (JSON uniquement, pas de texte avant/après):
 {
   "what_worked": ["point 1", "point 2", "point 3"],
   "what_didnt_work": ["point 1", "point 2"],
   "likely_reasons": ["raison 1", "raison 2", "raison 3"],
-  "priority_improvement": "Une phrase claire sur la prochaine action prioritaire à faire"
+  "priority_improvement": "Une phrase claire sur la prochaine action prioritaire à faire",
+  "creative_analysis": {
+    "visual_strengths": ["force visuelle 1", "force visuelle 2"],
+    "visual_weaknesses": ["faiblesse visuelle 1", "faiblesse visuelle 2"],
+    "recommendations": ["recommandation créative 1", "recommandation créative 2"]
+  }
 }
 
+NOTE: Si aucun créatif n'est fourni, omets la section "creative_analysis" du JSON.
+
 IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans markdown, sans explication, juste le JSON brut.`
+
+// Helper function to format numbers safely
+function formatNumber(value: number | null | undefined, decimals: number = 2): string {
+  if (value === null || value === undefined || isNaN(value)) return '0'
+  return value.toFixed(decimals)
+}
+
+function formatLocale(value: number | null | undefined): string {
+  if (value === null || value === undefined || isNaN(value)) return '0'
+  return value.toLocaleString()
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { campaign, previousCampaign, creativeUrl, creativeType } = body
+    const { campaign, previousCampaign, metrics, creativeUrls, isVideoScreenshots, videoDescription } = body
 
     if (!campaign) {
       return NextResponse.json(
@@ -44,6 +72,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Build the message content array (for vision support)
+    const messageContent: Anthropic.MessageParam['content'] = []
+
     // Build the analysis prompt
     let userPrompt = `Analyse cette campagne marketing:
 
@@ -51,60 +82,128 @@ export async function POST(request: NextRequest) {
 - Canal: ${campaign.channel_type || 'Non spécifié'}
 - Période: ${campaign.start_date || 'N/A'} à ${campaign.end_date || 'N/A'}
 
-**Métriques:**
-- Budget: $${campaign.budget || 0}
-- Dépense totale: $${campaign.total_cost || 0}
-- Impressions: ${campaign.impressions?.toLocaleString() || 0}
-- Clics: ${campaign.clicks?.toLocaleString() || 0}
-- CTR (Click-through Rate): ${campaign.ctr?.toFixed(2) || 0}%
-- Conversions: ${campaign.conversions || 0}
-- CPA (Coût par Acquisition): $${campaign.cpa?.toFixed(2) || 0}
-- Taux de conversion (clics→conversions): ${campaign.clicks > 0 ? ((campaign.conversions / campaign.clicks) * 100).toFixed(2) : 0}%`
+**Données de Performance (entrées utilisateur):**
+- Budget prévu: ${campaign.budget || 0}€
+- Dépense totale: ${campaign.total_cost || 0}€
+- Impressions: ${formatLocale(campaign.impressions)}
+- Clics: ${formatLocale(campaign.clicks)}
+- Leads générés: ${campaign.leads || 0}
+- Clients acquis: ${campaign.clients || 0}
+- Chiffre d'affaires généré: ${campaign.revenue || 0}€`
+
+    // Add notes if provided
+    if (campaign.notes) {
+      userPrompt += `
+
+**Notes de l'utilisateur:**
+${campaign.notes}`
+    }
+
+    // Add calculated metrics
+    if (metrics) {
+      userPrompt += `
+
+**Métriques calculées:**
+- CTR (Taux de clic): ${formatNumber(metrics.ctr)}%
+- CPC (Coût par clic): ${formatNumber(metrics.cpc)}€
+- CPL (Coût par lead): ${formatNumber(metrics.cpl)}€
+- CAC (Coût d'acquisition client): ${formatNumber(metrics.cac)}€
+- Taux Clic→Lead: ${formatNumber(metrics.click_to_lead)}%
+- Taux Lead→Client: ${formatNumber(metrics.lead_to_client)}%
+- ROAS (Retour sur dépense pub): ${formatNumber(metrics.roas)}x
+- ROI: ${formatNumber(metrics.roi)}%`
+    }
 
     // Add comparison if previous campaign exists
     if (previousCampaign) {
-      const impressionChange = previousCampaign.impressions > 0
-        ? ((campaign.impressions - previousCampaign.impressions) / previousCampaign.impressions * 100).toFixed(1)
+      const leadsChange = previousCampaign.leads > 0
+        ? ((campaign.leads - previousCampaign.leads) / previousCampaign.leads * 100).toFixed(1)
         : 'N/A'
-      const ctrChange = previousCampaign.ctr > 0
-        ? ((campaign.ctr - previousCampaign.ctr) / previousCampaign.ctr * 100).toFixed(1)
+      const clientsChange = previousCampaign.clients > 0
+        ? ((campaign.clients - previousCampaign.clients) / previousCampaign.clients * 100).toFixed(1)
         : 'N/A'
-      const conversionChange = previousCampaign.conversions > 0
-        ? ((campaign.conversions - previousCampaign.conversions) / previousCampaign.conversions * 100).toFixed(1)
+      const revenueChange = previousCampaign.revenue > 0
+        ? ((campaign.revenue - previousCampaign.revenue) / previousCampaign.revenue * 100).toFixed(1)
         : 'N/A'
-      const cpaChange = previousCampaign.cpa > 0
-        ? ((campaign.cpa - previousCampaign.cpa) / previousCampaign.cpa * 100).toFixed(1)
+      const roasChange = previousCampaign.metrics?.roas > 0
+        ? ((metrics.roas - previousCampaign.metrics.roas) / previousCampaign.metrics.roas * 100).toFixed(1)
         : 'N/A'
 
       userPrompt += `
 
 **Comparaison avec campagne précédente (${previousCampaign.name}):**
-- Impressions: ${impressionChange}% (${previousCampaign.impressions?.toLocaleString()} → ${campaign.impressions?.toLocaleString()})
-- CTR: ${ctrChange}% (${previousCampaign.ctr?.toFixed(2)}% → ${campaign.ctr?.toFixed(2)}%)
-- Conversions: ${conversionChange}% (${previousCampaign.conversions} → ${campaign.conversions})
-- CPA: ${cpaChange}% ($${previousCampaign.cpa?.toFixed(2)} → $${campaign.cpa?.toFixed(2)})`
+- Leads: ${leadsChange}% (${previousCampaign.leads} → ${campaign.leads})
+- Clients: ${clientsChange}% (${previousCampaign.clients} → ${campaign.clients})
+- Chiffre d'affaires: ${revenueChange}% (${previousCampaign.revenue}€ → ${campaign.revenue}€)
+- ROAS: ${roasChange}% (${formatNumber(previousCampaign.metrics?.roas)}x → ${formatNumber(metrics.roas)}x)`
     }
 
-    // Add creative context if provided
-    if (creativeUrl && creativeType) {
-      userPrompt += `
+    // Add creative context
+    if (creativeUrls && creativeUrls.length > 0) {
+      if (isVideoScreenshots && videoDescription) {
+        userPrompt += `
 
-**Créatif utilisé:** ${creativeType} (URL: ${creativeUrl})
-Note: Prends en compte le type de créatif dans ton analyse si pertinent.`
+**Créatif utilisé:** Screenshots d'une vidéo publicitaire
+**Description de la vidéo:** ${videoDescription}
+${creativeUrls.length} screenshot(s) de la vidéo sont fournis ci-dessous. Analyse la progression visuelle et le storytelling de la vidéo.`
+      } else {
+        userPrompt += `
+
+**Créatif(s) utilisé(s):** ${creativeUrls.length} image(s) publicitaire(s)
+Analyse les visuels fournis ci-dessous.`
+      }
     }
 
     userPrompt += `
 
-Analyse ces données et fournis tes insights en JSON.`
+Analyse ces données et fournis tes insights en JSON.${creativeUrls && creativeUrls.length > 0 ? ' Inclus une analyse détaillée des créatifs dans creative_analysis.' : ''}`
+
+    // Add text prompt first
+    messageContent.push({
+      type: 'text',
+      text: userPrompt,
+    })
+
+    // Add images if provided (Claude Vision)
+    if (creativeUrls && creativeUrls.length > 0) {
+      for (const url of creativeUrls) {
+        if (url && url.trim()) {
+          // Check if it's a base64 data URL or a regular URL
+          if (url.startsWith('data:')) {
+            // Extract media type and base64 data
+            const matches = url.match(/^data:(image\/[^;]+);base64,(.+)$/)
+            if (matches) {
+              messageContent.push({
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: matches[1] as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+                  data: matches[2],
+                },
+              })
+            }
+          } else if (url.startsWith('http')) {
+            // For external URLs, use URL source type
+            messageContent.push({
+              type: 'image',
+              source: {
+                type: 'url',
+                url: url,
+              },
+            })
+          }
+        }
+      }
+    }
 
     // Call Claude API
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
+      max_tokens: 1500,
       messages: [
         {
           role: 'user',
-          content: userPrompt,
+          content: messageContent,
         },
       ],
       system: SYSTEM_PROMPT,

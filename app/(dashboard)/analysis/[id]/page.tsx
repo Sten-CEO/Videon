@@ -17,18 +17,37 @@ type CampaignData = {
   folder_name?: string
   channel_type?: ChannelType
   performance: PerformanceStatus
+  // Traffic
   impressions: number
   clicks: number
-  conversions: number
-  total_cost: number
+  // Budget
   budget: number
-  ctr: number
-  cpa: number
-  roi?: number
+  total_cost: number
+  // Business results
+  leads: number
+  clients: number
+  revenue: number
+  // Notes
+  notes: string | null
+  // Creative
+  creative_urls: string[]
+  is_video_screenshots: boolean
+  video_description: string | null
+  // Dates
   start_date: string
   end_date: string
-  creative_url?: string | null
-  creative_type?: 'image' | 'video' | null
+}
+
+// Calculated metrics
+interface CalculatedMetrics {
+  ctr: number       // Click-through rate
+  cpc: number       // Cost per click
+  cpl: number       // Cost per lead
+  cac: number       // Customer acquisition cost
+  click_to_lead: number  // Click to lead rate
+  lead_to_client: number // Lead to client conversion
+  roas: number      // Return on ad spend
+  roi: number       // Return on investment
 }
 
 // Load campaigns from localStorage
@@ -46,117 +65,173 @@ function loadCampaigns(): CampaignData[] {
 const DEFAULT_CAMPAIGNS: CampaignData[] = [
   {
     id: '1',
-    name: 'January Brand Awareness',
+    name: 'Campagne Janvier - Notoriété',
     folder_id: '1',
     folder_name: 'Meta Ads Q1 2025',
     channel_type: 'meta_ads',
     performance: 'improving',
     impressions: 150000,
     clicks: 4500,
-    conversions: 120,
-    total_cost: 4800,
     budget: 5000,
-    ctr: 3.0,
-    cpa: 40,
-    roi: 125,
+    total_cost: 4800,
+    leads: 120,
+    clients: 18,
+    revenue: 27000,
+    notes: 'Campagne de notoriété ciblant une nouvelle audience',
+    creative_urls: ['https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop'],
+    is_video_screenshots: false,
+    video_description: null,
     start_date: '2025-01-01',
     end_date: '2025-01-15',
-    creative_url: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop',
-    creative_type: 'image',
   },
   {
     id: '2',
-    name: 'December Retargeting',
+    name: 'Retargeting Décembre',
     folder_id: '1',
     folder_name: 'Meta Ads Q1 2025',
     channel_type: 'meta_ads',
     performance: 'stable',
     impressions: 80000,
     clicks: 2000,
-    conversions: 45,
-    total_cost: 2900,
     budget: 3000,
-    ctr: 2.5,
-    cpa: 64,
-    roi: 80,
-    start_date: '2024-12-01',
+    total_cost: 2900,
+    leads: 65,
+    clients: 12,
+    revenue: 15000,
+    notes: 'Retargeting des abandons de panier',
+    creative_urls: ['https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop'],
+    is_video_screenshots: false,
+    video_description: null,
+    start_date: '2024-12-15',
     end_date: '2024-12-31',
-    creative_url: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop',
-    creative_type: 'image',
-  },
-  {
-    id: '3',
-    name: 'November Promo',
-    folder_id: '1',
-    folder_name: 'Meta Ads Q1 2025',
-    channel_type: 'meta_ads',
-    performance: 'declining',
-    impressions: 120000,
-    clicks: 2400,
-    conversions: 30,
-    total_cost: 3800,
-    budget: 4000,
-    ctr: 2.0,
-    cpa: 127,
-    roi: 50,
-    start_date: '2024-11-20',
-    end_date: '2024-11-30',
-    creative_url: null,
-    creative_type: null,
   },
 ]
 
-// Metric comparison component
-function MetricComparison({
+// Calculate metrics from campaign data
+function calculateMetrics(campaign: CampaignData): CalculatedMetrics {
+  const ctr = campaign.impressions > 0 ? (campaign.clicks / campaign.impressions) * 100 : 0
+  const cpc = campaign.clicks > 0 ? campaign.total_cost / campaign.clicks : 0
+  const cpl = campaign.leads > 0 ? campaign.total_cost / campaign.leads : 0
+  const cac = campaign.clients > 0 ? campaign.total_cost / campaign.clients : 0
+  const click_to_lead = campaign.clicks > 0 ? (campaign.leads / campaign.clicks) * 100 : 0
+  const lead_to_client = campaign.leads > 0 ? (campaign.clients / campaign.leads) * 100 : 0
+  const roas = campaign.total_cost > 0 ? campaign.revenue / campaign.total_cost : 0
+  const roi = campaign.total_cost > 0 ? ((campaign.revenue - campaign.total_cost) / campaign.total_cost) * 100 : 0
+
+  return { ctr, cpc, cpl, cac, click_to_lead, lead_to_client, roas, roi }
+}
+
+// Get metric status (good, neutral, bad)
+type MetricStatus = 'good' | 'neutral' | 'bad'
+
+function getMetricStatus(metric: string, value: number): MetricStatus {
+  switch (metric) {
+    case 'ctr':
+      return value >= 2 ? 'good' : value >= 1 ? 'neutral' : 'bad'
+    case 'cpc':
+      return value <= 1 ? 'good' : value <= 2 ? 'neutral' : 'bad'
+    case 'cpl':
+      return value <= 30 ? 'good' : value <= 60 ? 'neutral' : 'bad'
+    case 'cac':
+      return value <= 100 ? 'good' : value <= 200 ? 'neutral' : 'bad'
+    case 'click_to_lead':
+      return value >= 3 ? 'good' : value >= 1.5 ? 'neutral' : 'bad'
+    case 'lead_to_client':
+      return value >= 15 ? 'good' : value >= 8 ? 'neutral' : 'bad'
+    case 'roas':
+      return value >= 3 ? 'good' : value >= 1.5 ? 'neutral' : 'bad'
+    case 'roi':
+      return value >= 100 ? 'good' : value >= 0 ? 'neutral' : 'bad'
+    default:
+      return 'neutral'
+  }
+}
+
+// Status indicator component
+function StatusIndicator({ status }: { status: MetricStatus }) {
+  if (status === 'good') {
+    return (
+      <div className="flex items-center gap-1 text-[#10B981]">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      </div>
+    )
+  }
+  if (status === 'bad') {
+    return (
+      <div className="flex items-center gap-1 text-[#EF4444]">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+      </div>
+    )
+  }
+  return (
+    <div className="flex items-center gap-1 text-[#F59E0B]">
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+      </svg>
+    </div>
+  )
+}
+
+// Metric card component
+function MetricCard({
   label,
-  current,
-  previous,
-  format = 'number',
-  inverse = false,
+  value,
+  format,
+  status,
+  description,
 }: {
   label: string
-  current: number
-  previous: number
-  format?: 'number' | 'currency' | 'percent'
-  inverse?: boolean
+  value: number
+  format: 'number' | 'currency' | 'percent' | 'multiplier'
+  status: MetricStatus
+  description: string
 }) {
-  const diff = current - previous
-  const percentChange = previous > 0 ? ((diff / previous) * 100) : 0
-  const isPositive = inverse ? diff < 0 : diff > 0
+  const formatValue = () => {
+    switch (format) {
+      case 'currency':
+        return `${value.toFixed(2)}€`
+      case 'percent':
+        return `${value.toFixed(1)}%`
+      case 'multiplier':
+        return `${value.toFixed(2)}x`
+      default:
+        return value.toLocaleString()
+    }
+  }
 
-  const formatValue = (val: number) => {
-    if (format === 'currency') return `$${val.toLocaleString()}`
-    if (format === 'percent') return `${val.toFixed(1)}%`
-    return val.toLocaleString()
+  const statusColors = {
+    good: 'border-[#10B981] bg-[#F0FDF4]',
+    neutral: 'border-[#F59E0B] bg-[#FFFBEB]',
+    bad: 'border-[#EF4444] bg-[#FEF2F2]',
   }
 
   return (
-    <div className="p-4 bg-[#FAFAF9] rounded-xl">
-      <div className="text-sm text-[#52525B] mb-1">{label}</div>
-      <div className="flex items-end gap-2">
-        <span className="text-2xl font-bold text-[#18181B]">{formatValue(current)}</span>
-        {previous > 0 && (
-          <span className={`text-sm font-medium flex items-center gap-1 ${
-            isPositive ? 'text-[#10B981]' : 'text-[#EF4444]'
-          }`}>
-            {isPositive ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            )}
-            {Math.abs(percentChange).toFixed(1)}%
-          </span>
-        )}
+    <div className={`p-4 rounded-xl border-2 ${statusColors[status]}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium text-[#52525B]">{label}</span>
+        <StatusIndicator status={status} />
       </div>
-      {previous > 0 && (
-        <div className="text-xs text-[#A1A1AA] mt-1">
-          vs {formatValue(previous)} previous
-        </div>
-      )}
+      <div className="text-2xl font-bold text-[#18181B] mb-1">{formatValue()}</div>
+      <p className="text-xs text-[#A1A1AA]">{description}</p>
+    </div>
+  )
+}
+
+// Performance stat component
+function PerformanceStat({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 p-4 bg-[#FAFAF9] rounded-xl">
+      <div className="w-10 h-10 rounded-lg bg-white border border-[#E4E4E7] flex items-center justify-center text-[#52525B]">
+        {icon}
+      </div>
+      <div>
+        <div className="text-lg font-bold text-[#18181B]">{value}</div>
+        <div className="text-xs text-[#A1A1AA]">{label}</div>
+      </div>
     </div>
   )
 }
@@ -193,7 +268,6 @@ export default function CampaignAnalysisPage() {
   const campaignId = params.id as string
 
   const [campaign, setCampaign] = useState<CampaignData | null>(null)
-  const [previousCampaign, setPreviousCampaign] = useState<CampaignData | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
@@ -204,23 +278,11 @@ export default function CampaignAnalysisPage() {
     const allCampaigns = loadCampaigns()
     const campaigns = allCampaigns.length > 0 ? allCampaigns : DEFAULT_CAMPAIGNS
 
-    // Find the current campaign
     const currentCampaign = campaigns.find(c => c.id === campaignId)
     if (currentCampaign) {
       setCampaign(currentCampaign)
-
-      // Find a previous campaign from same folder for comparison
-      const folderCampaigns = campaigns
-        .filter(c => c.folder_id === currentCampaign.folder_id && c.id !== campaignId)
-        .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
-
-      if (folderCampaigns.length > 0) {
-        setPreviousCampaign(folderCampaigns[0])
-      }
     } else {
-      // Fallback to default first campaign
       setCampaign(DEFAULT_CAMPAIGNS[0])
-      setPreviousCampaign(DEFAULT_CAMPAIGNS[1])
     }
 
     setIsLoaded(true)
@@ -239,9 +301,10 @@ export default function CampaignAnalysisPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaign,
-          previousCampaign,
-          creativeUrl: campaign.creative_url,
-          creativeType: campaign.creative_type,
+          metrics: calculateMetrics(campaign),
+          creativeUrls: campaign.creative_urls,
+          isVideoScreenshots: campaign.is_video_screenshots,
+          videoDescription: campaign.video_description,
         }),
       })
 
@@ -262,18 +325,20 @@ export default function CampaignAnalysisPage() {
   // Loading state
   if (!isLoaded || !campaign) {
     return (
-      <div className="max-w-4xl flex items-center justify-center py-20">
+      <div className="max-w-5xl flex items-center justify-center py-20">
         <div className="animate-pulse text-[#A1A1AA]">Chargement...</div>
       </div>
     )
   }
 
+  const metrics = calculateMetrics(campaign)
+
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-5xl">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm mb-6">
         <Link href="/folders" className="text-[#52525B] hover:text-[#0D9488] transition-colors">
-          Folders
+          Dossiers
         </Link>
         <svg className="w-4 h-4 text-[#A1A1AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -297,75 +362,188 @@ export default function CampaignAnalysisPage() {
               campaign.performance === 'stable' ? 'bg-[#F59E0B]' :
               'bg-[#EF4444]'
             }`} />
-            {campaign.performance.charAt(0).toUpperCase() + campaign.performance.slice(1)}
+            {campaign.performance === 'improving' ? 'En progression' :
+             campaign.performance === 'stable' ? 'Stable' : 'En baisse'}
           </span>
         </div>
         <p className="text-[#52525B]">
-          {campaign.folder_name || 'Folder'} • {new Date(campaign.start_date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })} - {new Date(campaign.end_date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric', year: 'numeric' })}
+          {campaign.folder_name || 'Dossier'} • {new Date(campaign.start_date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })} - {new Date(campaign.end_date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric', year: 'numeric' })}
         </p>
       </div>
 
-      {/* Creative Preview if exists */}
-      {campaign.creative_url && (
+      {/* Visuals Preview */}
+      {campaign.creative_urls && campaign.creative_urls.length > 0 && (
         <Card variant="elevated" padding="md" className="mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-32 h-20 rounded-lg overflow-hidden bg-[#F5F5F4] flex-shrink-0">
-              {campaign.creative_type === 'video' ? (
-                <video src={campaign.creative_url} className="w-full h-full object-cover" muted />
-              ) : (
-                <img src={campaign.creative_url} alt="Creative" className="w-full h-full object-cover" />
-              )}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-[#18181B]">Créatif de la campagne</p>
-              <p className="text-xs text-[#A1A1AA] flex items-center gap-1.5 mt-1">
-                {campaign.creative_type === 'image' ? (
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                )}
-                {campaign.creative_type === 'image' ? 'Image' : 'Vidéo'}
-              </p>
-            </div>
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-semibold text-[#18181B]">
+              {campaign.is_video_screenshots ? 'Screenshots vidéo' : 'Visuels de la campagne'}
+            </h3>
+            <span className="text-xs text-[#A1A1AA]">({campaign.creative_urls.length} image{campaign.creative_urls.length > 1 ? 's' : ''})</span>
+          </div>
+          {campaign.is_video_screenshots && campaign.video_description && (
+            <p className="text-xs text-[#52525B] mb-3 p-2 bg-[#F5F5F4] rounded-lg">
+              <strong>Description vidéo :</strong> {campaign.video_description}
+            </p>
+          )}
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {campaign.creative_urls.map((url, index) => (
+              <div key={index} className="w-32 h-20 rounded-lg overflow-hidden bg-[#F5F5F4] flex-shrink-0">
+                <img src={url} alt={`Visuel ${index + 1}`} className="w-full h-full object-cover" />
+              </div>
+            ))}
           </div>
         </Card>
       )}
 
-      {/* Metrics Comparison */}
-      <div className="mb-8">
+      {/* Performance Section */}
+      <Card variant="elevated" padding="lg" className="mb-6">
         <h2 className="text-lg font-semibold text-[#18181B] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-          {previousCampaign ? 'Performance vs Campagne Précédente' : 'Performance'}
+          Performance
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricComparison
+          <PerformanceStat
             label="Impressions"
-            current={campaign.impressions}
-            previous={previousCampaign?.impressions || 0}
+            value={campaign.impressions.toLocaleString()}
+            icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>}
           />
-          <MetricComparison
-            label="Click-through Rate"
-            current={campaign.ctr}
-            previous={previousCampaign?.ctr || 0}
-            format="percent"
+          <PerformanceStat
+            label="Clics"
+            value={campaign.clicks.toLocaleString()}
+            icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>}
           />
-          <MetricComparison
-            label="Conversions"
-            current={campaign.conversions}
-            previous={previousCampaign?.conversions || 0}
+          <PerformanceStat
+            label="Leads"
+            value={campaign.leads.toLocaleString()}
+            icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
           />
-          <MetricComparison
-            label="Cost per Acquisition"
-            current={campaign.cpa}
-            previous={previousCampaign?.cpa || 0}
-            format="currency"
-            inverse
+          <PerformanceStat
+            label="Clients"
+            value={campaign.clients.toLocaleString()}
+            icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
           />
         </div>
-      </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          <PerformanceStat
+            label="Budget prévu"
+            value={`${campaign.budget.toLocaleString()}€`}
+            icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>}
+          />
+          <PerformanceStat
+            label="Dépensé"
+            value={`${campaign.total_cost.toLocaleString()}€`}
+            icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+          />
+          <PerformanceStat
+            label="CA généré"
+            value={`${campaign.revenue.toLocaleString()}€`}
+            icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
+          />
+        </div>
+
+        {/* Notes */}
+        {campaign.notes && (
+          <div className="mt-4 p-4 bg-[#F5F5F4] rounded-xl">
+            <p className="text-sm text-[#52525B]">
+              <span className="font-medium text-[#18181B]">Notes : </span>
+              {campaign.notes}
+            </p>
+          </div>
+        )}
+      </Card>
+
+      {/* Metrics Section */}
+      <Card variant="elevated" padding="lg" className="mb-6">
+        <h2 className="text-lg font-semibold text-[#18181B] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+          Métriques calculées
+        </h2>
+        <p className="text-sm text-[#52525B] mb-4">
+          Indicateurs clés calculés automatiquement à partir de vos données
+        </p>
+
+        {/* Traffic Metrics */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-[#A1A1AA] uppercase tracking-wide mb-3">Trafic</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <MetricCard
+              label="CTR"
+              value={metrics.ctr}
+              format="percent"
+              status={getMetricStatus('ctr', metrics.ctr)}
+              description="Taux de clic (clics / impressions)"
+            />
+            <MetricCard
+              label="CPC"
+              value={metrics.cpc}
+              format="currency"
+              status={getMetricStatus('cpc', metrics.cpc)}
+              description="Coût par clic"
+            />
+          </div>
+        </div>
+
+        {/* Lead Metrics */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-[#A1A1AA] uppercase tracking-wide mb-3">Acquisition leads</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <MetricCard
+              label="CPL"
+              value={metrics.cpl}
+              format="currency"
+              status={getMetricStatus('cpl', metrics.cpl)}
+              description="Coût par lead"
+            />
+            <MetricCard
+              label="Taux clic→lead"
+              value={metrics.click_to_lead}
+              format="percent"
+              status={getMetricStatus('click_to_lead', metrics.click_to_lead)}
+              description="Conversion clics en leads"
+            />
+          </div>
+        </div>
+
+        {/* Client Metrics */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-[#A1A1AA] uppercase tracking-wide mb-3">Acquisition clients</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <MetricCard
+              label="CAC"
+              value={metrics.cac}
+              format="currency"
+              status={getMetricStatus('cac', metrics.cac)}
+              description="Coût d'acquisition client"
+            />
+            <MetricCard
+              label="Taux lead→client"
+              value={metrics.lead_to_client}
+              format="percent"
+              status={getMetricStatus('lead_to_client', metrics.lead_to_client)}
+              description="Conversion leads en clients"
+            />
+          </div>
+        </div>
+
+        {/* Revenue Metrics */}
+        <div>
+          <h3 className="text-sm font-medium text-[#A1A1AA] uppercase tracking-wide mb-3">Rentabilité</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <MetricCard
+              label="ROAS"
+              value={metrics.roas}
+              format="multiplier"
+              status={getMetricStatus('roas', metrics.roas)}
+              description="Retour sur dépense pub (CA / dépense)"
+            />
+            <MetricCard
+              label="ROI"
+              value={metrics.roi}
+              format="percent"
+              status={getMetricStatus('roi', metrics.roi)}
+              description="Retour sur investissement"
+            />
+          </div>
+        </div>
+      </Card>
 
       {/* AI Analysis */}
       <Card variant="elevated" padding="lg">
@@ -378,9 +556,9 @@ export default function CampaignAnalysisPage() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
-                AI Analysis
+                Analyse IA
               </h2>
-              <p className="text-sm text-[#52525B]">Insights automatisés basés sur vos données</p>
+              <p className="text-sm text-[#52525B]">Insights personnalisés basés sur vos données et visuels</p>
             </div>
           </div>
 
@@ -405,7 +583,12 @@ export default function CampaignAnalysisPage() {
             </div>
             <h3 className="text-lg font-semibold text-[#18181B] mb-2">Prêt pour l'analyse</h3>
             <p className="text-sm text-[#52525B] max-w-md mx-auto">
-              Cliquez sur "Analyser" pour obtenir des insights IA sur cette campagne : ce qui a marché, ce qui n'a pas marché, et les actions prioritaires.
+              Cliquez sur "Analyser" pour obtenir des insights IA sur cette campagne : ce qui a marché, ce qui peut être amélioré, et les actions prioritaires.
+              {campaign.creative_urls && campaign.creative_urls.length > 0 && (
+                <span className="block mt-2 text-[#0D9488]">
+                  L'IA analysera aussi vos {campaign.creative_urls.length} visuel{campaign.creative_urls.length > 1 ? 's' : ''}.
+                </span>
+              )}
             </p>
           </div>
         )}
@@ -418,7 +601,7 @@ export default function CampaignAnalysisPage() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
               <p className="text-[#52525B]">Analyse en cours...</p>
-              <p className="text-xs text-[#A1A1AA] mt-1">Claude analyse vos données de campagne</p>
+              <p className="text-xs text-[#A1A1AA] mt-1">Claude analyse vos données et visuels</p>
             </div>
           </div>
         )}
@@ -440,7 +623,7 @@ export default function CampaignAnalysisPage() {
         {analysis && (
           <div>
             <AIInsightSection
-              title="What Worked"
+              title="Ce qui a fonctionné"
               items={analysis.what_worked}
               icon={
                 <svg className="w-4 h-4 text-[#10B981]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -451,7 +634,7 @@ export default function CampaignAnalysisPage() {
             />
 
             <AIInsightSection
-              title="What Didn't Work"
+              title="Points d'amélioration"
               items={analysis.what_didnt_work}
               icon={
                 <svg className="w-4 h-4 text-[#EF4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -462,7 +645,7 @@ export default function CampaignAnalysisPage() {
             />
 
             <AIInsightSection
-              title="Likely Reasons"
+              title="Raisons probables"
               items={analysis.likely_reasons}
               icon={
                 <svg className="w-4 h-4 text-[#6366F1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -472,25 +655,85 @@ export default function CampaignAnalysisPage() {
               color="bg-[#EEF2FF]"
             />
 
+            {/* Creative Analysis */}
+            {analysis.creative_analysis && (
+              <div className="mb-6 p-4 bg-[#FAFAF9] rounded-xl border border-[#E4E4E7]">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-[#FFF7ED] flex items-center justify-center">
+                    <svg className="w-4 h-4 text-[#F97316]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-[#18181B]">Analyse des visuels</h3>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4">
+                  {/* Visual Strengths */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <svg className="w-4 h-4 text-[#10B981]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-xs font-medium text-[#52525B]">Forces visuelles</span>
+                    </div>
+                    <ul className="space-y-1">
+                      {analysis.creative_analysis.visual_strengths?.map((item: string, index: number) => (
+                        <li key={index} className="text-xs text-[#52525B] flex items-start gap-1.5">
+                          <span className="w-1 h-1 rounded-full bg-[#10B981] mt-1.5 flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Visual Weaknesses */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <svg className="w-4 h-4 text-[#EF4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span className="text-xs font-medium text-[#52525B]">Points faibles</span>
+                    </div>
+                    <ul className="space-y-1">
+                      {analysis.creative_analysis.visual_weaknesses?.map((item: string, index: number) => (
+                        <li key={index} className="text-xs text-[#52525B] flex items-start gap-1.5">
+                          <span className="w-1 h-1 rounded-full bg-[#EF4444] mt-1.5 flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Recommendations */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <svg className="w-4 h-4 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      <span className="text-xs font-medium text-[#52525B]">Recommandations</span>
+                    </div>
+                    <ul className="space-y-1">
+                      {analysis.creative_analysis.recommendations?.map((item: string, index: number) => (
+                        <li key={index} className="text-xs text-[#52525B] flex items-start gap-1.5">
+                          <span className="w-1 h-1 rounded-full bg-[#0D9488] mt-1.5 flex-shrink-0" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Priority Improvement */}
             <div className="p-4 bg-gradient-to-r from-[#F0FDFA] to-[#FFF7ED] rounded-xl border border-[#E4E4E7]">
               <div className="flex items-center gap-2 mb-2">
                 <svg className="w-5 h-5 text-[#F97316]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span className="font-semibold text-[#18181B]">Priority Improvement</span>
+                <span className="font-semibold text-[#18181B]">Action prioritaire</span>
               </div>
               <p className="text-sm text-[#52525B]">{analysis.priority_improvement}</p>
-            </div>
-
-            {/* Re-analyze button */}
-            <div className="mt-6 pt-4 border-t border-[#E4E4E7]">
-              <Button variant="outline" onClick={handleAnalyze} className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Relancer l'analyse
-              </Button>
             </div>
           </div>
         )}

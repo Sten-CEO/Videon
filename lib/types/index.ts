@@ -72,7 +72,12 @@ export interface UpdateFolderInput {
 // CAMPAIGN
 // =============================================================================
 
-export type CreativeType = 'image' | 'video'
+// Creative can be images or video screenshots (up to 6)
+export interface CampaignCreative {
+  urls: string[]  // Up to 6 image URLs
+  is_video_screenshots: boolean  // If true, images are screenshots from a video
+  video_description?: string  // Description of the video if is_video_screenshots is true
+}
 
 export interface Campaign {
   id: string
@@ -81,19 +86,24 @@ export interface Campaign {
   name: string
   status: CampaignStatus
 
-  // Creative content (image or video)
-  creative_url: string | null
-  creative_type: CreativeType | null
+  // Creative content (up to 6 images)
+  creative_urls: string[]  // Array of image URLs (max 6)
+  is_video_screenshots: boolean  // True if images are screenshots from a video
+  video_description: string | null  // Description if video screenshots
 
-  // Metrics (nullable for upcoming campaigns)
+  // Core metrics (user input)
   budget: number | null
   impressions: number | null
   clicks: number | null
-  conversions: number | null
   total_cost: number | null
 
-  // Description/notes
-  description: string | null
+  // Business results (user input)
+  leads: number | null  // Number of leads acquired
+  clients: number | null  // Number of clients acquired
+  revenue: number | null  // Revenue generated (Chiffre d'affaires)
+
+  // Notes
+  notes: string | null  // Personal notes about the campaign
 
   // Timestamps
   start_date: string | null
@@ -106,14 +116,17 @@ export interface CreateCampaignInput {
   folder_id: string
   name: string
   status: CampaignStatus
-  creative_url?: string
-  creative_type?: CreativeType
+  creative_urls?: string[]
+  is_video_screenshots?: boolean
+  video_description?: string
   budget?: number
   impressions?: number
   clicks?: number
-  conversions?: number
   total_cost?: number
-  description?: string
+  leads?: number
+  clients?: number
+  revenue?: number
+  notes?: string
   start_date?: string
   end_date?: string
 }
@@ -121,14 +134,17 @@ export interface CreateCampaignInput {
 export interface UpdateCampaignInput {
   name?: string
   status?: CampaignStatus
-  creative_url?: string | null
-  creative_type?: CreativeType | null
+  creative_urls?: string[]
+  is_video_screenshots?: boolean
+  video_description?: string | null
   budget?: number | null
   impressions?: number | null
   clicks?: number | null
-  conversions?: number | null
   total_cost?: number | null
-  description?: string | null
+  leads?: number | null
+  clients?: number | null
+  revenue?: number | null
+  notes?: string | null
   start_date?: string | null
   end_date?: string | null
 }
@@ -138,11 +154,19 @@ export interface UpdateCampaignInput {
 // =============================================================================
 
 export interface CampaignMetrics {
-  ctr: number | null        // Click-through rate (clicks / impressions)
+  // Traffic metrics
+  ctr: number | null        // Click-through rate (clicks / impressions) * 100
   cpc: number | null        // Cost per click (total_cost / clicks)
-  cpa: number | null        // Cost per acquisition (total_cost / conversions)
-  roi: number | null        // Return on investment ((conversions * avg_value - total_cost) / total_cost)
-  conversion_rate: number | null  // Conversion rate (conversions / clicks)
+
+  // Lead metrics
+  cpl: number | null        // Cost per lead (total_cost / leads)
+  click_to_lead: number | null  // Click to lead rate (leads / clicks) * 100
+
+  // Client/Revenue metrics
+  cac: number | null        // Customer acquisition cost (total_cost / clients)
+  lead_to_client: number | null  // Lead to client conversion (clients / leads) * 100
+  roas: number | null       // Return on ad spend (revenue / total_cost)
+  roi: number | null        // Return on investment ((revenue - total_cost) / total_cost) * 100
 }
 
 export interface CampaignWithMetrics extends Campaign {
