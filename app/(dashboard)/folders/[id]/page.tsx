@@ -128,7 +128,7 @@ const DEFAULT_FOLDER = {
   channel_type: 'meta_ads' as ChannelType,
 }
 
-// Performance badge component
+// Performance badge component - smaller
 function PerformanceBadge({ status }: { status: PerformanceStatus }) {
   const config = {
     improving: { bg: 'bg-[#D1FAE5]', text: 'text-[#059669]', dot: 'bg-[#10B981]' },
@@ -138,9 +138,42 @@ function PerformanceBadge({ status }: { status: PerformanceStatus }) {
   const { bg, text, dot } = config[status]
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${bg} ${text}`}>
-      <span className={`w-2 h-2 rounded-full ${dot}`} />
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${bg} ${text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
       {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
+  )
+}
+
+// Ranking indicator - shows position relative to other campaigns in folder
+function RankingIndicator({ rank, total }: { rank: number, total: number }) {
+  const isTop = rank === 1
+  const isBottom = rank === total
+  const isTopQuarter = rank <= Math.ceil(total / 4)
+  const isBottomQuarter = rank > total - Math.ceil(total / 4)
+
+  if (total <= 1) return null
+
+  let bg = 'bg-[#E4E4E7]'
+  let text = 'text-[#71717A]'
+
+  if (isTop) {
+    bg = 'bg-[#FEF3C7]'
+    text = 'text-[#B45309]'
+  } else if (isBottom) {
+    bg = 'bg-[#FEE2E2]'
+    text = 'text-[#DC2626]'
+  } else if (isTopQuarter) {
+    bg = 'bg-[#D1FAE5]'
+    text = 'text-[#059669]'
+  } else if (isBottomQuarter) {
+    bg = 'bg-[#FFEDD5]'
+    text = 'text-[#C2410C]'
+  }
+
+  return (
+    <span className={`inline-flex items-center justify-center w-6 h-5 rounded text-[10px] font-medium ${bg} ${text}`}>
+      #{rank}
     </span>
   )
 }
@@ -607,80 +640,113 @@ export default function FolderDetailPage() {
         </Button>
       </div>
 
-      {/* Campaigns Table */}
+      {/* Campaigns Table - Thinner rows */}
       {campaigns.length > 0 ? (
-        <Card variant="elevated" padding="none">
-          <div className="overflow-x-auto">
+        <>
+          <div className="bg-white rounded-xl border border-[#E4E4E7] overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#E4E4E7]">
-                  <th className="text-left px-6 py-4 text-sm font-medium text-[#52525B]">Campaign</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Spend</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Leads</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Clients</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Revenue</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">ROAS</th>
-                  <th className="text-center px-6 py-4 text-sm font-medium text-[#52525B]">Status</th>
+                <tr className="border-b border-[#E4E4E7] bg-[#FAFAFA]">
+                  <th className="text-left px-4 py-2 text-xs font-medium text-[#71717A]">Campaign</th>
+                  <th className="text-center px-3 py-2 text-xs font-medium text-[#71717A]">Rank</th>
+                  <th className="text-right px-3 py-2 text-xs font-medium text-[#71717A]">Spend</th>
+                  <th className="text-right px-3 py-2 text-xs font-medium text-[#71717A]">Revenue</th>
+                  <th className="text-right px-3 py-2 text-xs font-medium text-[#71717A]">ROAS</th>
+                  <th className="text-center px-3 py-2 text-xs font-medium text-[#71717A]">Status</th>
+                  <th className="w-8"></th>
                 </tr>
               </thead>
               <tbody>
-                {campaigns.map(campaign => {
-                  const roas = campaign.total_cost > 0 ? (campaign.revenue / campaign.total_cost) : 0
-                  return (
-                    <tr
-                      key={campaign.id}
-                      className="border-b border-[#E4E4E7] last:border-0 hover:bg-[#FAFAF9] transition-colors cursor-pointer"
-                    >
-                      <td className="px-6 py-4">
-                        <Link href={`/analysis/${campaign.id}`} className="block">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-[#18181B]">{campaign.name}</span>
-                            {campaign.creative_urls && campaign.creative_urls.length > 0 && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#F0FDFA] text-[#0D9488]" title={`${campaign.creative_urls.length} visual(s)`}>
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                {campaign.creative_urls.length > 1 && (
-                                  <span className="text-[10px]">{campaign.creative_urls.length}</span>
-                                )}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-[#A1A1AA]">
-                            {new Date(campaign.start_date || campaign.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </div>
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 text-right text-[#18181B]">
-                        ${formatNumber(campaign.total_cost || 0)}
-                      </td>
-                      <td className="px-6 py-4 text-right text-[#18181B]">
-                        {formatNumber(campaign.leads || 0)}
-                      </td>
-                      <td className="px-6 py-4 text-right text-[#18181B]">
-                        {formatNumber(campaign.clients || 0)}
-                      </td>
-                      <td className="px-6 py-4 text-right text-[#18181B] font-medium">
-                        ${formatNumber(campaign.revenue || 0)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className={`font-medium ${roas >= 2 ? 'text-[#10B981]' : roas >= 1 ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>
-                          {roas.toFixed(1)}x
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <PerformanceBadge status={campaign.performance} />
-                      </td>
-                    </tr>
-                  )
-                })}
+                {(() => {
+                  // Sort campaigns by ROAS for ranking
+                  const sortedByRoas = [...campaigns].sort((a, b) => {
+                    const roasA = a.total_cost > 0 ? a.revenue / a.total_cost : 0
+                    const roasB = b.total_cost > 0 ? b.revenue / b.total_cost : 0
+                    return roasB - roasA
+                  })
+                  const getRank = (id: string) => sortedByRoas.findIndex(c => c.id === id) + 1
+
+                  return campaigns.map(campaign => {
+                    const roas = campaign.total_cost > 0 ? (campaign.revenue / campaign.total_cost) : 0
+                    const rank = getRank(campaign.id)
+                    return (
+                      <tr
+                        key={campaign.id}
+                        className="border-b border-[#E4E4E7] last:border-0 hover:bg-[#FAFAFA] transition-colors"
+                      >
+                        <td className="px-4 py-2.5">
+                          <Link href={`/analysis/${campaign.id}`} className="block">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-[#18181B]">{campaign.name}</span>
+                              {campaign.creative_urls && campaign.creative_urls.length > 0 && (
+                                <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-[#F0FDFA] text-[#0D9488]" title={`${campaign.creative_urls.length} visual(s)`}>
+                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  {campaign.creative_urls.length > 1 && (
+                                    <span className="text-[9px]">{campaign.creative_urls.length}</span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-[#A1A1AA]">
+                              {new Date(campaign.start_date || campaign.created_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                              })}
+                            </div>
+                          </Link>
+                        </td>
+                        <td className="px-3 py-2.5 text-center">
+                          <RankingIndicator rank={rank} total={campaigns.length} />
+                        </td>
+                        <td className="px-3 py-2.5 text-right text-sm text-[#18181B]">
+                          ${formatNumber(campaign.total_cost || 0)}
+                        </td>
+                        <td className="px-3 py-2.5 text-right text-sm text-[#18181B]">
+                          ${formatNumber(campaign.revenue || 0)}
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <span className={`text-sm font-medium ${roas >= 2 ? 'text-[#10B981]' : roas >= 1 ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>
+                            {roas.toFixed(2)}x
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-center">
+                          <PerformanceBadge status={campaign.performance} />
+                        </td>
+                        <td className="px-2 py-2.5">
+                          <Link href={`/analysis/${campaign.id}`}>
+                            <svg className="w-4 h-4 text-[#A1A1AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </Link>
+                        </td>
+                      </tr>
+                    )
+                  })
+                })()}
               </tbody>
             </table>
           </div>
-        </Card>
+          {/* Legend */}
+          {campaigns.length > 1 && (
+            <div className="mt-3 flex items-center gap-4 text-[10px] text-[#71717A]">
+              <span>Rank by ROAS:</span>
+              <span className="flex items-center gap-1">
+                <span className="w-4 h-3 rounded bg-[#FEF3C7]"></span> Best
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-4 h-3 rounded bg-[#D1FAE5]"></span> Top 25%
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-4 h-3 rounded bg-[#E4E4E7]"></span> Average
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-4 h-3 rounded bg-[#FEE2E2]"></span> Lowest
+              </span>
+            </div>
+          )}
+        </>
       ) : (
         <Card variant="elevated" padding="xl" className="text-center">
           <div className="max-w-sm mx-auto">

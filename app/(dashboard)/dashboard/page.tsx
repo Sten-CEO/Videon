@@ -124,7 +124,7 @@ function calculateStats(campaigns: Campaign[], folders: Folder[]): DashboardStat
   }
 }
 
-// Performance indicator component
+// Performance indicator component - Thinner version
 function PerformanceIndicator({ type, count }: { type: 'improving' | 'stable' | 'declining', count: number }) {
   const config = {
     improving: {
@@ -150,17 +150,17 @@ function PerformanceIndicator({ type, count }: { type: 'improving' | 'stable' | 
   const { color, textColor, bgColor, label } = config[type]
 
   return (
-    <div className={`flex items-center gap-3 p-4 rounded-xl ${bgColor}`}>
-      <div className={`w-3 h-3 rounded-full ${color}`} />
-      <div>
-        <div className={`text-2xl font-bold ${textColor}`}>{count}</div>
-        <div className="text-sm text-[#52525B]">{label}</div>
+    <div className={`flex items-center gap-2.5 px-4 py-3 rounded-lg ${bgColor}`}>
+      <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
+      <div className="flex items-baseline gap-2">
+        <span className={`text-xl font-semibold ${textColor}`}>{count}</span>
+        <span className="text-xs text-[#52525B]">{label}</span>
       </div>
     </div>
   )
 }
 
-// Stat card component
+// Stat card component - Minimalist/Thin version
 function StatCard({
   icon,
   label,
@@ -177,18 +177,20 @@ function StatCard({
   valueColor?: string
 }) {
   return (
-    <Card variant="elevated" padding="lg">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center`}>
+    <Card variant="elevated" padding="md">
+      <div className="flex items-center gap-3">
+        <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0`}>
           {icon}
         </div>
-      </div>
-      <div className="text-sm text-[#52525B] mb-1">{label}</div>
-      <div className={`text-3xl font-bold ${valueColor || 'text-[#18181B]'}`} style={{ fontFamily: 'var(--font-display)' }}>
-        {value}
+        <div className="min-w-0">
+          <div className="text-xs text-[#71717A]">{label}</div>
+          <div className={`text-xl font-semibold ${valueColor || 'text-[#18181B]'}`}>
+            {value}
+          </div>
+        </div>
       </div>
       {subValue && (
-        <div className="text-xs text-[#A1A1AA] mt-1">{subValue}</div>
+        <div className="text-[10px] text-[#A1A1AA] mt-1 ml-11">{subValue}</div>
       )}
     </Card>
   )
@@ -285,48 +287,45 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           icon={
-            <svg className="w-5 h-5 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
           }
-          label="Total Folders"
+          label="Folders"
           value={stats.total_folders}
           iconBg="bg-[#F0FDFA]"
         />
 
         <StatCard
           icon={
-            <svg className="w-5 h-5 text-[#6366F1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[#6366F1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           }
-          label="Total Campaigns"
+          label="Campaigns"
           value={stats.total_campaigns}
-          subValue={`${stats.completed_campaigns} tracked`}
           iconBg="bg-[#EEF2FF]"
         />
 
         <StatCard
           icon={
-            <svg className="w-5 h-5 text-[#F97316]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[#F97316]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
           label="Total Spend"
           value={formatCurrency(stats.total_spend)}
-          subValue="All campaigns"
           iconBg="bg-[#FFF7ED]"
         />
 
         <StatCard
           icon={
-            <svg className="w-5 h-5 text-[#10B981]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[#10B981]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           }
-          label="Total Revenue"
+          label="Revenue"
           value={formatCurrency(stats.total_revenue)}
-          subValue="From campaigns"
           iconBg="bg-[#D1FAE5]"
         />
       </div>
@@ -335,48 +334,46 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           icon={
-            <svg className="w-5 h-5 text-[#8B5CF6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[#8B5CF6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           }
-          label="Total Leads"
+          label="Leads"
           value={stats.total_leads.toLocaleString()}
           iconBg="bg-[#EDE9FE]"
         />
 
         <StatCard
           icon={
-            <svg className="w-5 h-5 text-[#EC4899]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[#EC4899]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
-          label="Total Clients"
+          label="Clients"
           value={stats.total_clients.toLocaleString()}
           iconBg="bg-[#FCE7F3]"
         />
 
         <StatCard
           icon={
-            <svg className="w-5 h-5 text-[#0891B2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[#0891B2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
             </svg>
           }
           label="Avg. ROAS"
           value={stats.average_roas !== null ? `${stats.average_roas.toFixed(2)}x` : '—'}
-          subValue="Return on ad spend"
           iconBg="bg-[#CFFAFE]"
           valueColor={stats.average_roas !== null ? (stats.average_roas >= 2 ? 'text-[#10B981]' : stats.average_roas >= 1 ? 'text-[#F59E0B]' : 'text-[#EF4444]') : undefined}
         />
 
         <StatCard
           icon={
-            <svg className="w-5 h-5 text-[#059669]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[#059669]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
           label="Avg. CPL"
           value={stats.average_cpl !== null ? `$${stats.average_cpl.toFixed(2)}` : '—'}
-          subValue="Cost per lead"
           iconBg="bg-[#D1FAE5]"
         />
       </div>
