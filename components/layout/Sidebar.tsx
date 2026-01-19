@@ -64,6 +64,32 @@ const navItems: Array<{
   },
 ]
 
+// Bottom navigation items
+const bottomNavItems: Array<{
+  name: string
+  href: string
+  icon: React.ReactNode
+}> = [
+  {
+    name: 'Billing',
+    href: '/billing',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Support',
+    href: '/support',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+]
+
 interface SidebarProps {
   user?: {
     email?: string
@@ -117,7 +143,7 @@ export function Sidebar({ user }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 overflow-y-auto">
+      <nav className="flex-1 py-4 px-3 overflow-y-auto flex flex-col">
         <ul className="space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -171,6 +197,40 @@ export function Sidebar({ user }: SidebarProps) {
             </div>
           </div>
         )}
+
+        {/* Bottom navigation - Billing & Support */}
+        <div className="mt-auto pt-4 border-t border-[#E4E4E7]">
+          <ul className="space-y-1">
+            {bottomNavItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className={`
+                      flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                      ${isActive
+                        ? 'bg-[#F0FDFA] text-[#0D9488]'
+                        : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F5F5F4]'
+                      }
+                      ${isCollapsed ? 'justify-center' : ''}
+                    `}
+                    title={isCollapsed ? item.name : undefined}
+                  >
+                    <span>
+                      {item.icon}
+                    </span>
+                    {!isCollapsed && (
+                      <span className="text-sm font-medium">
+                        {item.name}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       </nav>
 
       {/* User section */}
