@@ -1,7 +1,128 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui'
-import { getUser } from '@/lib/actions/auth'
-import { getDashboardStats } from '@/lib/database'
+import type { PerformanceStatus, ChannelType } from '@/lib/types'
+
+// Storage keys
+const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
+const FOLDERS_STORAGE_KEY = 'claritymetrics_folders'
+
+// Campaign type
+type Campaign = {
+  id: string
+  folder_id: string
+  name: string
+  status: string
+  performance: PerformanceStatus
+  impressions: number
+  clicks: number
+  budget: number
+  total_cost: number
+  leads: number
+  clients: number
+  revenue: number
+  start_date: string
+  end_date: string
+  created_at: string
+}
+
+// Folder type
+type Folder = {
+  id: string
+  name: string
+  channel_type: ChannelType
+}
+
+// Stats type
+type DashboardStats = {
+  total_folders: number
+  total_campaigns: number
+  completed_campaigns: number
+  total_spend: number
+  total_impressions: number
+  total_clicks: number
+  total_leads: number
+  total_clients: number
+  total_revenue: number
+  average_roas: number | null
+  average_cpl: number | null
+  average_cac: number | null
+  improving_campaigns: number
+  stable_campaigns: number
+  declining_campaigns: number
+}
+
+// Load from localStorage
+function loadCampaigns(): Campaign[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  } catch {
+    return []
+  }
+}
+
+function loadFolders(): Folder[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const saved = localStorage.getItem(FOLDERS_STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  } catch {
+    return []
+  }
+}
+
+// Calculate dashboard stats from campaigns
+function calculateStats(campaigns: Campaign[], folders: Folder[]): DashboardStats {
+  let totalSpend = 0
+  let totalImpressions = 0
+  let totalClicks = 0
+  let totalLeads = 0
+  let totalClients = 0
+  let totalRevenue = 0
+  let improving = 0
+  let stable = 0
+  let declining = 0
+
+  campaigns.forEach(campaign => {
+    totalSpend += campaign.total_cost || 0
+    totalImpressions += campaign.impressions || 0
+    totalClicks += campaign.clicks || 0
+    totalLeads += campaign.leads || 0
+    totalClients += campaign.clients || 0
+    totalRevenue += campaign.revenue || 0
+
+    if (campaign.performance === 'improving') improving++
+    else if (campaign.performance === 'declining') declining++
+    else stable++
+  })
+
+  // Calculate averages
+  const avgRoas = totalSpend > 0 ? totalRevenue / totalSpend : null
+  const avgCpl = totalLeads > 0 ? totalSpend / totalLeads : null
+  const avgCac = totalClients > 0 ? totalSpend / totalClients : null
+
+  return {
+    total_folders: folders.length,
+    total_campaigns: campaigns.length,
+    completed_campaigns: campaigns.length,
+    total_spend: totalSpend,
+    total_impressions: totalImpressions,
+    total_clicks: totalClicks,
+    total_leads: totalLeads,
+    total_clients: totalClients,
+    total_revenue: totalRevenue,
+    average_roas: avgRoas,
+    average_cpl: avgCpl,
+    average_cac: avgCac,
+    improving_campaigns: improving,
+    stable_campaigns: stable,
+    declining_campaigns: declining,
+  }
+}
 
 // Performance indicator component
 function PerformanceIndicator({ type, count }: { type: 'improving' | 'stable' | 'declining', count: number }) {
@@ -45,13 +166,15 @@ function StatCard({
   label,
   value,
   subValue,
-  iconBg
+  iconBg,
+  valueColor
 }: {
   icon: React.ReactNode
   label: string
   value: string | number
   subValue?: string
   iconBg: string
+  valueColor?: string
 }) {
   return (
     <Card variant="elevated" padding="lg">
@@ -61,7 +184,7 @@ function StatCard({
         </div>
       </div>
       <div className="text-sm text-[#52525B] mb-1">{label}</div>
-      <div className="text-3xl font-bold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
+      <div className={`text-3xl font-bold ${valueColor || 'text-[#18181B]'}`} style={{ fontFamily: 'var(--font-display)' }}>
         {value}
       </div>
       {subValue && (
@@ -71,18 +194,35 @@ function StatCard({
   )
 }
 
-export default async function DashboardPage() {
-  const user = await getUser()
-  const stats = await getDashboardStats()
+export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  const userName = user?.user_metadata?.full_name?.split(' ')[0] || 'there'
+  useEffect(() => {
+    const campaigns = loadCampaigns()
+    const folders = loadFolders()
+    const calculatedStats = calculateStats(campaigns, folders)
+    setStats(calculatedStats)
+    setIsLoaded(true)
+  }, [])
 
   // Format currency
   const formatCurrency = (value: number) => {
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`
+    }
     if (value >= 1000) {
       return `$${(value / 1000).toFixed(1)}k`
     }
     return `$${value.toFixed(0)}`
+  }
+
+  if (!isLoaded || !stats) {
+    return (
+      <div className="max-w-6xl flex items-center justify-center py-20">
+        <div className="animate-pulse text-[#A1A1AA]">Loading...</div>
+      </div>
+    )
   }
 
   // Calculate percentage improving
@@ -96,10 +236,10 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[#18181B] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-          Welcome back, {userName}
+          Dashboard
         </h1>
         <p className="text-[#52525B]">
-          Here&apos;s your marketing performance at a glance.
+          Your marketing performance at a glance.
         </p>
       </div>
 
@@ -141,7 +281,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Overview Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           icon={
@@ -162,7 +302,7 @@ export default async function DashboardPage() {
           }
           label="Total Campaigns"
           value={stats.total_campaigns}
-          subValue={`${stats.completed_campaigns} completed`}
+          subValue={`${stats.completed_campaigns} tracked`}
           iconBg="bg-[#EEF2FF]"
         />
 
@@ -186,12 +326,12 @@ export default async function DashboardPage() {
           }
           label="Total Revenue"
           value={formatCurrency(stats.total_revenue)}
-          subValue="Across campaigns"
+          subValue="From campaigns"
           iconBg="bg-[#D1FAE5]"
         />
       </div>
 
-      {/* Business Stats */}
+      {/* Business Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           icon={
@@ -225,6 +365,7 @@ export default async function DashboardPage() {
           value={stats.average_roas !== null ? `${stats.average_roas.toFixed(2)}x` : '—'}
           subValue="Return on ad spend"
           iconBg="bg-[#CFFAFE]"
+          valueColor={stats.average_roas !== null ? (stats.average_roas >= 2 ? 'text-[#10B981]' : stats.average_roas >= 1 ? 'text-[#F59E0B]' : 'text-[#EF4444]') : undefined}
         />
 
         <StatCard
@@ -233,9 +374,9 @@ export default async function DashboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
-          label="Avg. ROI"
-          value={stats.average_roi !== null ? `${stats.average_roi.toFixed(0)}%` : '—'}
-          subValue="Return on investment"
+          label="Avg. CPL"
+          value={stats.average_cpl !== null ? `$${stats.average_cpl.toFixed(2)}` : '—'}
+          subValue="Cost per lead"
           iconBg="bg-[#D1FAE5]"
         />
       </div>
@@ -298,9 +439,11 @@ export default async function DashboardPage() {
             <p className="text-sm text-[#52525B]">
               {stats.total_campaigns === 0
                 ? "Start by adding your first campaign. We'll help you understand what's working and what isn't."
-                : stats.improving_campaigns > stats.declining_campaigns
-                  ? "Your marketing is trending positive! Keep doing what's working and consider scaling those channels."
-                  : "Some campaigns need attention. Check the Analysis section for detailed insights."
+                : stats.average_roas !== null && stats.average_roas >= 2
+                  ? `Excellent performance! Your average ROAS of ${stats.average_roas.toFixed(2)}x means you're generating $${stats.average_roas.toFixed(2)} for every $1 spent.`
+                  : stats.improving_campaigns > stats.declining_campaigns
+                    ? "Your marketing is trending positive! Keep doing what's working and consider scaling those channels."
+                    : "Some campaigns need attention. Check the Analysis section for detailed AI insights."
               }
             </p>
           </div>
