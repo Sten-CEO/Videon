@@ -1,9 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from '@/lib/actions/auth'
+
+// Storage key for campaigns
+const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
+
+// Load campaign stats from localStorage
+function loadCampaignStats(): { improving: number; declining: number } {
+  if (typeof window === 'undefined') return { improving: 0, declining: 0 }
+  try {
+    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    if (saved) {
+      const campaigns = JSON.parse(saved)
+      let improving = 0
+      let declining = 0
+      campaigns.forEach((c: { performance?: string }) => {
+        if (c.performance === 'improving') improving++
+        else if (c.performance === 'declining') declining++
+      })
+      return { improving, declining }
+    }
+    return { improving: 0, declining: 0 }
+  } catch {
+    return { improving: 0, declining: 0 }
+  }
+}
 
 // Navigation items for the dashboard sidebar
 const navItems: Array<{
@@ -100,6 +124,12 @@ interface SidebarProps {
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [stats, setStats] = useState({ improving: 0, declining: 0 })
+
+  // Load campaign stats on mount and when pathname changes (to refresh after adding campaigns)
+  useEffect(() => {
+    setStats(loadCampaignStats())
+  }, [pathname])
 
   const handleSignOut = async () => {
     await signOut()
@@ -176,7 +206,7 @@ export function Sidebar({ user }: SidebarProps) {
         </ul>
 
         {/* Quick Stats - only when not collapsed */}
-        {!isCollapsed && (
+        {!isCollapsed && (stats.improving > 0 || stats.declining > 0) && (
           <div className="mt-6 mx-1 p-4 bg-gradient-to-br from-[#F0FDFA] to-[#FFF7ED] rounded-xl border border-[#E4E4E7]">
             <div className="text-xs font-semibold text-[#18181B] mb-3">Quick Stats</div>
             <div className="space-y-2">
@@ -184,14 +214,14 @@ export function Sidebar({ user }: SidebarProps) {
                 <span className="text-xs text-[#52525B]">Improving</span>
                 <span className="flex items-center gap-1 text-xs font-medium text-[#10B981]">
                   <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
-                  4 campaigns
+                  {stats.improving} campaign{stats.improving !== 1 ? 's' : ''}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[#52525B]">Declining</span>
                 <span className="flex items-center gap-1 text-xs font-medium text-[#EF4444]">
                   <span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>
-                  1 campaign
+                  {stats.declining} campaign{stats.declining !== 1 ? 's' : ''}
                 </span>
               </div>
             </div>
