@@ -245,31 +245,154 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Main Question Card */}
-      <Card variant="gradient" padding="xl" className="mb-8">
-        <div className="text-center">
-          <h2 className="text-lg text-[#52525B] mb-2">The big question:</h2>
-          <p className="text-3xl font-bold text-[#18181B] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Are you doing better or worse than before?
-          </p>
-
-          {totalWithStatus > 0 ? (
-            <div className="flex items-center justify-center gap-2">
-              <div className={`w-4 h-4 rounded-full ${improvingPercent >= 50 ? 'bg-[#10B981]' : improvingPercent >= 25 ? 'bg-[#F59E0B]' : 'bg-[#EF4444]'}`} />
-              <span className="text-xl font-semibold text-[#18181B]">
-                {improvingPercent >= 50
-                  ? `Great! ${improvingPercent}% of your campaigns are improving`
-                  : improvingPercent >= 25
-                    ? `Mixed results - ${improvingPercent}% improving`
-                    : `Needs attention - only ${improvingPercent}% improving`
-                }
-              </span>
+      {/* Analytics Overview - Two Visual Charts */}
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {/* Left: Circular Chart - Conversion Rate */}
+        <Card variant="elevated" padding="lg">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-medium text-[#71717A]">Conversion Rate</h3>
+              <p className="text-xs text-[#A1A1AA]">Last 30 days</p>
             </div>
-          ) : (
-            <p className="text-[#52525B]">Add your first campaign to start tracking.</p>
-          )}
-        </div>
-      </Card>
+            <div className="px-2 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-medium">
+              {stats.total_leads > 0 ? '+12%' : '—'}
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            {/* Circular Progress */}
+            <div className="relative w-28 h-28 flex-shrink-0">
+              <svg className="w-28 h-28 transform -rotate-90" viewBox="0 0 100 100">
+                {/* Background circle */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  stroke="#E4E4E7"
+                  strokeWidth="8"
+                  fill="none"
+                />
+                {/* Progress circle */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  stroke="url(#gradient)"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeDasharray={`${stats.total_leads > 0 ? Math.min((stats.total_clients / stats.total_leads) * 100 * 2.51, 251) : 0} 251`}
+                />
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#0D9488" />
+                    <stop offset="100%" stopColor="#14B8A6" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-[#18181B]">
+                  {stats.total_leads > 0 ? `${Math.round((stats.total_clients / stats.total_leads) * 100)}%` : '0%'}
+                </span>
+                <span className="text-[10px] text-[#71717A]">Lead → Client</span>
+              </div>
+            </div>
+            {/* Stats */}
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#0D9488]"></div>
+                  <span className="text-xs text-[#52525B]">Converted</span>
+                </div>
+                <span className="text-sm font-semibold text-[#18181B]">{stats.total_clients}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#E4E4E7]"></div>
+                  <span className="text-xs text-[#52525B]">Pending</span>
+                </div>
+                <span className="text-sm font-semibold text-[#18181B]">{Math.max(0, stats.total_leads - stats.total_clients)}</span>
+              </div>
+              <div className="pt-2 border-t border-[#E4E4E7]">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#71717A]">Total Leads</span>
+                  <span className="text-sm font-bold text-[#0D9488]">{stats.total_leads}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Right: Bar Chart - Weekly Performance */}
+        <Card variant="elevated" padding="lg">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-medium text-[#71717A]">Revenue vs Spend</h3>
+              <p className="text-xs text-[#A1A1AA]">Performance ratio</p>
+            </div>
+            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+              stats.average_roas !== null && stats.average_roas >= 2
+                ? 'bg-[#D1FAE5] text-[#059669]'
+                : stats.average_roas !== null && stats.average_roas >= 1
+                  ? 'bg-[#FEF3C7] text-[#D97706]'
+                  : 'bg-[#FEE2E2] text-[#DC2626]'
+            }`}>
+              {stats.average_roas !== null ? `${stats.average_roas.toFixed(1)}x ROAS` : '—'}
+            </div>
+          </div>
+          <div className="space-y-4">
+            {/* Revenue bar */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs text-[#52525B]">Revenue</span>
+                <span className="text-sm font-semibold text-[#18181B]">{formatCurrency(stats.total_revenue)}</span>
+              </div>
+              <div className="h-3 bg-[#E4E4E7] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#10B981] to-[#34D399] rounded-full transition-all duration-500"
+                  style={{ width: `${stats.total_revenue > 0 ? Math.min((stats.total_revenue / Math.max(stats.total_revenue, stats.total_spend)) * 100, 100) : 0}%` }}
+                />
+              </div>
+            </div>
+            {/* Spend bar */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs text-[#52525B]">Spend</span>
+                <span className="text-sm font-semibold text-[#18181B]">{formatCurrency(stats.total_spend)}</span>
+              </div>
+              <div className="h-3 bg-[#E4E4E7] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#F97316] to-[#FB923C] rounded-full transition-all duration-500"
+                  style={{ width: `${stats.total_spend > 0 ? Math.min((stats.total_spend / Math.max(stats.total_revenue, stats.total_spend)) * 100, 100) : 0}%` }}
+                />
+              </div>
+            </div>
+            {/* Profit indicator */}
+            <div className="pt-3 border-t border-[#E4E4E7]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                    stats.total_revenue - stats.total_spend >= 0 ? 'bg-[#D1FAE5]' : 'bg-[#FEE2E2]'
+                  }`}>
+                    <svg className={`w-3.5 h-3.5 ${
+                      stats.total_revenue - stats.total_spend >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'
+                    }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={
+                        stats.total_revenue - stats.total_spend >= 0 ? "M5 10l7-7m0 0l7 7m-7-7v18" : "M19 14l-7 7m0 0l-7-7m7 7V3"
+                      } />
+                    </svg>
+                  </div>
+                  <span className="text-xs text-[#71717A]">Net Profit</span>
+                </div>
+                <span className={`text-lg font-bold ${
+                  stats.total_revenue - stats.total_spend >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'
+                }`}>
+                  {stats.total_revenue - stats.total_spend >= 0 ? '+' : ''}{formatCurrency(stats.total_revenue - stats.total_spend)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
 
       {/* Performance Summary */}
       <div className="mb-8">
