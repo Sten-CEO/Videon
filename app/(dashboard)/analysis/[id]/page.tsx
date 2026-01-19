@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { Button, Card } from '@/components/ui'
 import { type PerformanceStatus, type AIAnalysis, type ChannelType } from '@/lib/types'
+import { useUser, getUserStorageKey } from '@/contexts/UserContext'
 
-// Storage keys
+// Base storage keys
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 const ANALYSIS_STORAGE_KEY = 'claritymetrics_analysis'
 
@@ -34,22 +35,24 @@ type CampaignData = {
   end_date: string
 }
 
-// Load campaigns from localStorage
-function loadCampaigns(): CampaignData[] {
+// Load campaigns from localStorage with user-specific key
+function loadCampaigns(userId: string | null): CampaignData[] {
   if (typeof window === 'undefined') return []
   try {
-    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     return saved ? JSON.parse(saved) : []
   } catch {
     return []
   }
 }
 
-// Load saved analysis from localStorage
-function loadAnalysis(campaignId: string): AIAnalysis | null {
+// Load saved analysis from localStorage with user-specific key
+function loadAnalysis(campaignId: string, userId: string | null): AIAnalysis | null {
   if (typeof window === 'undefined') return null
   try {
-    const saved = localStorage.getItem(ANALYSIS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(ANALYSIS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     if (saved) {
       const allAnalysis = JSON.parse(saved)
       return allAnalysis[campaignId] || null
@@ -60,14 +63,15 @@ function loadAnalysis(campaignId: string): AIAnalysis | null {
   }
 }
 
-// Save analysis to localStorage
-function saveAnalysis(campaignId: string, analysis: AIAnalysis) {
+// Save analysis to localStorage with user-specific key
+function saveAnalysis(campaignId: string, analysis: AIAnalysis, userId: string | null) {
   if (typeof window === 'undefined') return
   try {
-    const saved = localStorage.getItem(ANALYSIS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(ANALYSIS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     const allAnalysis = saved ? JSON.parse(saved) : {}
     allAnalysis[campaignId] = analysis
-    localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(allAnalysis))
+    localStorage.setItem(storageKey, JSON.stringify(allAnalysis))
   } catch {
     // Ignore storage errors
   }
@@ -115,6 +119,7 @@ function calculateMetrics(campaign: CampaignData) {
 export default function CampaignAnalysisPage() {
   const params = useParams()
   const router = useRouter()
+  const { userId } = useUser()
   const campaignId = params.id as string
 
   const [campaign, setCampaign] = useState<CampaignData | null>(null)
@@ -131,17 +136,19 @@ export default function CampaignAnalysisPage() {
   const handleDelete = () => {
     if (!campaign) return
 
-    const allCampaigns = loadCampaigns()
+    const allCampaigns = loadCampaigns(userId)
     const updatedCampaigns = allCampaigns.filter(c => c.id !== campaignId)
-    localStorage.setItem(CAMPAIGNS_STORAGE_KEY, JSON.stringify(updatedCampaigns))
+    const campaignsKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    localStorage.setItem(campaignsKey, JSON.stringify(updatedCampaigns))
 
     // Also remove saved analysis
     try {
-      const saved = localStorage.getItem(ANALYSIS_STORAGE_KEY)
+      const analysisKey = getUserStorageKey(ANALYSIS_STORAGE_KEY, userId)
+      const saved = localStorage.getItem(analysisKey)
       if (saved) {
         const allAnalysis = JSON.parse(saved)
         delete allAnalysis[campaignId]
-        localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(allAnalysis))
+        localStorage.setItem(analysisKey, JSON.stringify(allAnalysis))
       }
     } catch {}
 
@@ -150,7 +157,7 @@ export default function CampaignAnalysisPage() {
 
   // Load campaign data and saved analysis
   useEffect(() => {
-    const allCampaigns = loadCampaigns()
+    const allCampaigns = loadCampaigns(userId)
     const campaigns = allCampaigns.length > 0 ? allCampaigns : DEFAULT_CAMPAIGNS
 
     const currentCampaign = campaigns.find(c => c.id === campaignId)
@@ -167,13 +174,13 @@ export default function CampaignAnalysisPage() {
     }
 
     // Load saved analysis
-    const savedAnalysis = loadAnalysis(campaignId)
+    const savedAnalysis = loadAnalysis(campaignId, userId)
     if (savedAnalysis) {
       setAnalysis(savedAnalysis)
     }
 
     setIsLoaded(true)
-  }, [campaignId])
+  }, [campaignId, userId])
 
   // Handle AI Analysis
   const handleAnalyze = async () => {
@@ -202,7 +209,7 @@ export default function CampaignAnalysisPage() {
       const data = await response.json()
       setAnalysis(data.analysis)
       // Save analysis to localStorage for persistence
-      saveAnalysis(campaignId, data.analysis)
+      saveAnalysis(campaignId, data.analysis, userId)
     } catch (error) {
       console.error('Analysis error:', error)
       setAnalysisError('Unable to analyze campaign. Please check your connection and try again.')

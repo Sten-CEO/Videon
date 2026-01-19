@@ -4,15 +4,17 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from '@/lib/actions/auth'
+import { useUser, getUserStorageKey } from '@/contexts/UserContext'
 
-// Storage key for campaigns
+// Base storage key for campaigns
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 
 // Load campaign stats from localStorage
-function loadCampaignStats(): { improving: number; declining: number } {
+function loadCampaignStats(userId: string | null): { improving: number; declining: number } {
   if (typeof window === 'undefined') return { improving: 0, declining: 0 }
   try {
-    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     if (saved) {
       const campaigns = JSON.parse(saved)
       let improving = 0
@@ -123,13 +125,14 @@ interface SidebarProps {
 
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
+  const { userId } = useUser()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [stats, setStats] = useState({ improving: 0, declining: 0 })
 
   // Load campaign stats on mount and when pathname changes (to refresh after adding campaigns)
   useEffect(() => {
-    setStats(loadCampaignStats())
-  }, [pathname])
+    setStats(loadCampaignStats(userId))
+  }, [pathname, userId])
 
   const handleSignOut = async () => {
     await signOut()

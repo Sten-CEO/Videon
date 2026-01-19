@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui'
 import type { PerformanceStatus, ChannelType } from '@/lib/types'
+import { useUser, getUserStorageKey } from '@/contexts/UserContext'
 
-// Storage keys
+// Base storage keys
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 const FOLDERS_STORAGE_KEY = 'claritymetrics_folders'
 
@@ -54,21 +55,23 @@ type DashboardStats = {
   declining_campaigns: number
 }
 
-// Load from localStorage
-function loadCampaigns(): Campaign[] {
+// Load from localStorage with user-specific keys
+function loadCampaigns(userId: string | null): Campaign[] {
   if (typeof window === 'undefined') return []
   try {
-    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     return saved ? JSON.parse(saved) : []
   } catch {
     return []
   }
 }
 
-function loadFolders(): Folder[] {
+function loadFolders(userId: string | null): Folder[] {
   if (typeof window === 'undefined') return []
   try {
-    const saved = localStorage.getItem(FOLDERS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(FOLDERS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     return saved ? JSON.parse(saved) : []
   } catch {
     return []
@@ -197,16 +200,17 @@ function StatCard({
 }
 
 export default function DashboardPage() {
+  const { userId } = useUser()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    const campaigns = loadCampaigns()
-    const folders = loadFolders()
+    const campaigns = loadCampaigns(userId)
+    const folders = loadFolders(userId)
     const calculatedStats = calculateStats(campaigns, folders)
     setStats(calculatedStats)
     setIsLoaded(true)
-  }, [])
+  }, [userId])
 
   // Format currency
   const formatCurrency = (value: number) => {

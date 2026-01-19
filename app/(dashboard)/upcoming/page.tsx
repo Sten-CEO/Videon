@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Button, Card, Input } from '@/components/ui'
 import { CHANNEL_LABELS, type ChannelType } from '@/lib/types'
+import { useUser, getUserStorageKey } from '@/contexts/UserContext'
 
-// Storage key
+// Base storage key
 const UPCOMING_STORAGE_KEY = 'claritymetrics_upcoming'
 
 // Upcoming campaign type
@@ -19,20 +20,22 @@ type UpcomingCampaign = {
   created_at: string
 }
 
-// Load upcoming campaigns from localStorage
-function loadUpcoming(): UpcomingCampaign[] {
+// Load upcoming campaigns from localStorage with user-specific key
+function loadUpcoming(userId: string | null): UpcomingCampaign[] {
   if (typeof window === 'undefined') return []
   try {
-    const saved = localStorage.getItem(UPCOMING_STORAGE_KEY)
+    const storageKey = getUserStorageKey(UPCOMING_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     return saved ? JSON.parse(saved) : []
   } catch {
     return []
   }
 }
 
-// Save upcoming campaigns to localStorage
-function saveUpcoming(campaigns: UpcomingCampaign[]) {
-  localStorage.setItem(UPCOMING_STORAGE_KEY, JSON.stringify(campaigns))
+// Save upcoming campaigns to localStorage with user-specific key
+function saveUpcoming(campaigns: UpcomingCampaign[], userId: string | null) {
+  const storageKey = getUserStorageKey(UPCOMING_STORAGE_KEY, userId)
+  localStorage.setItem(storageKey, JSON.stringify(campaigns))
 }
 
 // Channel icon component
@@ -93,6 +96,7 @@ function ChannelIcon({ type, className = '' }: { type: ChannelType; className?: 
 }
 
 export default function UpcomingPage() {
+  const { userId } = useUser()
   const [campaigns, setCampaigns] = useState<UpcomingCampaign[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -107,9 +111,9 @@ export default function UpcomingPage() {
 
   // Load campaigns on mount
   useEffect(() => {
-    setCampaigns(loadUpcoming())
+    setCampaigns(loadUpcoming(userId))
     setIsLoaded(true)
-  }, [])
+  }, [userId])
 
   // Reset form
   const resetForm = () => {
@@ -138,7 +142,7 @@ export default function UpcomingPage() {
 
     const updated = [...campaigns, newCampaign]
     setCampaigns(updated)
-    saveUpcoming(updated)
+    saveUpcoming(updated, userId)
     resetForm()
     setShowModal(false)
   }
@@ -147,7 +151,7 @@ export default function UpcomingPage() {
   const handleDelete = (id: string) => {
     const updated = campaigns.filter(c => c.id !== id)
     setCampaigns(updated)
-    saveUpcoming(updated)
+    saveUpcoming(updated, userId)
   }
 
   // Sort by start date (soonest first)

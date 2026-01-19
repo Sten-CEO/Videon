@@ -4,16 +4,18 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button, Card, Input } from '@/components/ui'
 import { CHANNEL_LABELS, type ChannelType, type Folder } from '@/lib/types'
+import { useUser, getUserStorageKey } from '@/contexts/UserContext'
 
-// Storage keys for localStorage
+// Base storage keys for localStorage
 const FOLDERS_STORAGE_KEY = 'claritymetrics_folders'
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 
-// Load campaigns from localStorage
-function loadCampaigns(): { id: string; folder_id: string }[] {
+// Load campaigns from localStorage with user-specific key
+function loadCampaigns(userId: string | null): { id: string; folder_id: string }[] {
   if (typeof window === 'undefined') return []
   try {
-    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     if (saved) {
       return JSON.parse(saved)
     }
@@ -23,12 +25,12 @@ function loadCampaigns(): { id: string; folder_id: string }[] {
   }
 }
 
-// Helper functions for localStorage
-function loadFolders(): (Folder & { campaignCount: number })[] {
+// Helper functions for localStorage with user-specific keys
+function loadFolders(userId: string | null): (Folder & { campaignCount: number })[] {
   if (typeof window === 'undefined') return []
   try {
     // Load campaigns to calculate counts
-    const campaigns = loadCampaigns()
+    const campaigns = loadCampaigns(userId)
 
     // Count campaigns per folder
     const countByFolder = new Map<string, number>()
@@ -37,7 +39,8 @@ function loadFolders(): (Folder & { campaignCount: number })[] {
       countByFolder.set(folderId, (countByFolder.get(folderId) || 0) + 1)
     })
 
-    const saved = localStorage.getItem(FOLDERS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(FOLDERS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     if (!saved) return []
 
     const folders: Folder[] = JSON.parse(saved)
@@ -52,24 +55,26 @@ function loadFolders(): (Folder & { campaignCount: number })[] {
   }
 }
 
-function saveFolders(folders: (Folder & { campaignCount: number })[]) {
+function saveFolders(folders: (Folder & { campaignCount: number })[], userId: string | null) {
   if (typeof window === 'undefined') return
   try {
     // Save folders without campaignCount (it's calculated dynamically)
     const foldersToSave = folders.map(({ campaignCount, ...folder }) => folder)
-    localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(foldersToSave))
+    const storageKey = getUserStorageKey(FOLDERS_STORAGE_KEY, userId)
+    localStorage.setItem(storageKey, JSON.stringify(foldersToSave))
   } catch {
     // Ignore storage errors
   }
 }
 
 // Delete campaigns for a folder
-function deleteCampaignsForFolder(folderId: string) {
+function deleteCampaignsForFolder(folderId: string, userId: string | null) {
   if (typeof window === 'undefined') return
   try {
-    const campaigns = loadCampaigns()
+    const campaigns = loadCampaigns(userId)
     const remainingCampaigns = campaigns.filter(c => c.folder_id !== folderId)
-    localStorage.setItem(CAMPAIGNS_STORAGE_KEY, JSON.stringify(remainingCampaigns))
+    const storageKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    localStorage.setItem(storageKey, JSON.stringify(remainingCampaigns))
   } catch {
     // Ignore storage errors
   }
@@ -201,6 +206,7 @@ function CreateFolderModal({
 }
 
 export default function FoldersPage() {
+  const { userId } = useUser()
   const [folders, setFolders] = useState<(Folder & { campaignCount: number })[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -209,16 +215,16 @@ export default function FoldersPage() {
 
   // Load folders from localStorage on mount
   useEffect(() => {
-    setFolders(loadFolders())
+    setFolders(loadFolders(userId))
     setIsLoaded(true)
-  }, [])
+  }, [userId])
 
   // Save folders to localStorage when they change
   useEffect(() => {
     if (isLoaded) {
-      saveFolders(folders)
+      saveFolders(folders, userId)
     }
-  }, [folders, isLoaded])
+  }, [folders, isLoaded, userId])
 
   const filteredFolders = folders.filter(folder =>
     folder.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -240,7 +246,7 @@ export default function FoldersPage() {
 
   const handleDeleteFolder = (folder: Folder & { campaignCount: number }) => {
     // Delete campaigns associated with this folder
-    deleteCampaignsForFolder(folder.id)
+    deleteCampaignsForFolder(folder.id, userId)
     // Remove folder from state
     setFolders(prev => prev.filter(f => f.id !== folder.id))
     setFolderToDelete(null)
