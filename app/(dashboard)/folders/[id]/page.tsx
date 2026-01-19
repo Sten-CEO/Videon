@@ -46,86 +46,32 @@ function loadFolder(folderId: string) {
   }
 }
 
-// Default campaigns for demo
-const DEFAULT_CAMPAIGNS = [
-  {
-    id: '1',
-    folder_id: '1',
-    user_id: '1',
-    name: 'January Campaign - Awareness',
-    status: 'completed' as CampaignStatus,
-    creative_urls: ['https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop'],
-    is_video_screenshots: false,
-    video_description: null,
-    budget: 5000,
-    impressions: 150000,
-    clicks: 4500,
-    total_cost: 4800,
-    leads: 120,
-    clients: 18,
-    revenue: 27000,
-    notes: 'Awareness campaign targeting new audience',
-    vision: 'Goal: Build brand awareness among 25-35 year old professionals interested in productivity tools. Testing carousel ads vs single image.',
-    start_date: '2025-01-01',
-    end_date: '2025-01-15',
-    created_at: '2025-01-01',
-    updated_at: '2025-01-15',
-    performance: 'improving' as PerformanceStatus,
-  },
-  {
-    id: '2',
-    folder_id: '1',
-    user_id: '1',
-    name: 'December Retargeting',
-    status: 'completed' as CampaignStatus,
-    creative_urls: ['https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop'],
-    is_video_screenshots: false,
-    video_description: null,
-    budget: 3000,
-    impressions: 80000,
-    clicks: 2000,
-    total_cost: 2900,
-    leads: 65,
-    clients: 12,
-    revenue: 15000,
-    notes: 'Cart abandonment retargeting',
-    vision: 'Retarget users who visited the pricing page but did not convert. Focus on urgency messaging.',
-    start_date: '2024-12-15',
-    end_date: '2024-12-31',
-    created_at: '2024-12-15',
-    updated_at: '2024-12-31',
-    performance: 'stable' as PerformanceStatus,
-  },
-  {
-    id: '3',
-    folder_id: '1',
-    user_id: '1',
-    name: 'Black Friday Promo',
-    status: 'completed' as CampaignStatus,
-    creative_urls: [],
-    is_video_screenshots: false,
-    video_description: null,
-    budget: 4000,
-    impressions: 120000,
-    clicks: 2400,
-    total_cost: 3800,
-    leads: 45,
-    clients: 5,
-    revenue: 6500,
-    notes: 'Black Friday promotion',
-    vision: 'Limited time offer for Black Friday. 30% discount on annual plans.',
-    start_date: '2024-11-20',
-    end_date: '2024-11-30',
-    created_at: '2024-11-20',
-    updated_at: '2024-11-30',
-    performance: 'declining' as PerformanceStatus,
-  },
-]
-
-const DEFAULT_FOLDER = {
-  id: '1',
-  name: 'Meta Ads Q1 2025',
-  channel_type: 'meta_ads' as ChannelType,
+// Campaign type for this page
+type CampaignItem = {
+  id: string
+  folder_id: string
+  user_id: string
+  name: string
+  status: CampaignStatus
+  creative_urls: string[]
+  is_video_screenshots: boolean
+  video_description: string | null
+  budget: number
+  impressions: number
+  clicks: number
+  total_cost: number
+  leads: number
+  clients: number
+  revenue: number
+  notes: string | null
+  vision: string | null
+  start_date: string
+  end_date: string
+  created_at: string
+  updated_at: string
+  performance: PerformanceStatus
+  folder_name?: string
+  channel_type?: ChannelType
 }
 
 // Performance badge component - smaller
@@ -189,6 +135,8 @@ function AddCampaignModal({
   onSubmit: (data: any) => void
 }) {
   const [name, setName] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [budget, setBudget] = useState('')
   const [impressions, setImpressions] = useState('')
   const [clicks, setClicks] = useState('')
@@ -228,6 +176,8 @@ function AddCampaignModal({
     if (name.trim()) {
       onSubmit({
         name,
+        start_date: startDate || new Date().toISOString().split('T')[0],
+        end_date: endDate || new Date().toISOString().split('T')[0],
         budget: parseFloat(budget) || 0,
         impressions: parseInt(impressions) || 0,
         clicks: parseInt(clicks) || 0,
@@ -243,6 +193,8 @@ function AddCampaignModal({
       })
       // Reset form
       setName('')
+      setStartDate('')
+      setEndDate('')
       setBudget('')
       setImpressions('')
       setClicks('')
@@ -277,6 +229,28 @@ function AddCampaignModal({
                 placeholder="e.g. Facebook Campaign February"
                 autoFocus
               />
+            </div>
+
+            {/* Campaign Dates */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[#52525B] mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#E4E4E7] bg-white text-[#18181B] focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#52525B] mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#E4E4E7] bg-white text-[#18181B] focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 outline-none transition-all"
+                />
+              </div>
             </div>
 
             {/* Campaign Vision/Context - NEW FIELD */}
@@ -509,8 +483,8 @@ function AddCampaignModal({
 export default function FolderDetailPage() {
   const params = useParams()
   const folderId = params.id as string
-  const [campaigns, setCampaigns] = useState<typeof DEFAULT_CAMPAIGNS>([])
-  const [folder, setFolder] = useState<typeof DEFAULT_FOLDER | null>(null)
+  const [campaigns, setCampaigns] = useState<CampaignItem[]>([])
+  const [folder, setFolder] = useState<{ id: string; name: string; channel_type: ChannelType } | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
   const [hasUserChanges, setHasUserChanges] = useState(false)
@@ -521,9 +495,6 @@ export default function FolderDetailPage() {
     const savedFolder = loadFolder(folderId)
     if (savedFolder) {
       setFolder(savedFolder)
-    } else if (folderId === '1') {
-      // Default folder for demo
-      setFolder(DEFAULT_FOLDER)
     } else {
       setFolder({ id: folderId, name: 'Unknown Folder', channel_type: 'other' as ChannelType })
     }
@@ -531,16 +502,7 @@ export default function FolderDetailPage() {
     // Load campaigns for this folder
     const allCampaigns = loadCampaigns()
     const folderCampaigns = allCampaigns.filter((c: any) => c.folder_id === folderId)
-
-    if (folderCampaigns.length > 0) {
-      setCampaigns(folderCampaigns)
-    } else if (folderId === '1') {
-      // Default campaigns for demo folder
-      setCampaigns(DEFAULT_CAMPAIGNS)
-      // Save default campaigns to localStorage
-      const existing = loadCampaigns()
-      saveCampaigns([...existing, ...DEFAULT_CAMPAIGNS])
-    }
+    setCampaigns(folderCampaigns)
 
     setIsLoaded(true)
   }, [folderId])
@@ -556,7 +518,7 @@ export default function FolderDetailPage() {
   }, [campaigns, isLoaded, folderId, hasUserChanges])
 
   const handleAddCampaign = (data: any) => {
-    const newCampaign = {
+    const newCampaign: CampaignItem = {
       id: Date.now().toString(),
       folder_id: folderId,
       user_id: '1',
@@ -580,9 +542,9 @@ export default function FolderDetailPage() {
       // Folder info for analysis page
       folder_name: folder?.name || 'Unknown Folder',
       channel_type: folder?.channel_type || 'other',
-      // Timestamps
-      start_date: new Date().toISOString(),
-      end_date: new Date().toISOString(),
+      // Timestamps - use provided dates or default to today
+      start_date: data.start_date || new Date().toISOString().split('T')[0],
+      end_date: data.end_date || new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       // Performance will be calculated based on metrics

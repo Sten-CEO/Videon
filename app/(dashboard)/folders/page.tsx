@@ -9,34 +9,6 @@ import { CHANNEL_LABELS, type ChannelType, type Folder } from '@/lib/types'
 const FOLDERS_STORAGE_KEY = 'claritymetrics_folders'
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 
-// Default folders for first-time users (campaignCount will be calculated dynamically)
-const DEFAULT_FOLDERS: Folder[] = [
-  {
-    id: '1',
-    user_id: '1',
-    name: 'Meta Ads Q1 2025',
-    channel_type: 'meta_ads',
-    created_at: '2025-01-01',
-    updated_at: '2025-01-15',
-  },
-  {
-    id: '2',
-    user_id: '1',
-    name: 'Google Ads - Brand',
-    channel_type: 'google_ads',
-    created_at: '2024-12-01',
-    updated_at: '2025-01-10',
-  },
-  {
-    id: '3',
-    user_id: '1',
-    name: 'Cold Email Outreach',
-    channel_type: 'cold_email',
-    created_at: '2024-11-15',
-    updated_at: '2025-01-05',
-  },
-]
-
 // Load campaigns from localStorage
 function loadCampaigns(): { id: string; folder_id: string }[] {
   if (typeof window === 'undefined') return []
@@ -53,7 +25,7 @@ function loadCampaigns(): { id: string; folder_id: string }[] {
 
 // Helper functions for localStorage
 function loadFolders(): (Folder & { campaignCount: number })[] {
-  if (typeof window === 'undefined') return DEFAULT_FOLDERS.map(f => ({ ...f, campaignCount: 0 }))
+  if (typeof window === 'undefined') return []
   try {
     // Load campaigns to calculate counts
     const campaigns = loadCampaigns()
@@ -66,15 +38,9 @@ function loadFolders(): (Folder & { campaignCount: number })[] {
     })
 
     const saved = localStorage.getItem(FOLDERS_STORAGE_KEY)
-    let folders: Folder[]
+    if (!saved) return []
 
-    if (saved) {
-      folders = JSON.parse(saved)
-    } else {
-      // First time - save default folders
-      folders = DEFAULT_FOLDERS
-      localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders))
-    }
+    const folders: Folder[] = JSON.parse(saved)
 
     // Add campaign counts to folders
     return folders.map(f => ({
@@ -82,7 +48,7 @@ function loadFolders(): (Folder & { campaignCount: number })[] {
       campaignCount: countByFolder.get(f.id) || 0
     }))
   } catch {
-    return DEFAULT_FOLDERS.map(f => ({ ...f, campaignCount: 0 }))
+    return []
   }
 }
 
@@ -92,6 +58,18 @@ function saveFolders(folders: (Folder & { campaignCount: number })[]) {
     // Save folders without campaignCount (it's calculated dynamically)
     const foldersToSave = folders.map(({ campaignCount, ...folder }) => folder)
     localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(foldersToSave))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+// Delete campaigns for a folder
+function deleteCampaignsForFolder(folderId: string) {
+  if (typeof window === 'undefined') return
+  try {
+    const campaigns = loadCampaigns()
+    const remainingCampaigns = campaigns.filter(c => c.folder_id !== folderId)
+    localStorage.setItem(CAMPAIGNS_STORAGE_KEY, JSON.stringify(remainingCampaigns))
   } catch {
     // Ignore storage errors
   }
@@ -227,6 +205,7 @@ export default function FoldersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isLoaded, setIsLoaded] = useState(false)
+  const [folderToDelete, setFolderToDelete] = useState<(Folder & { campaignCount: number }) | null>(null)
 
   // Load folders from localStorage on mount
   useEffect(() => {
@@ -257,6 +236,14 @@ export default function FoldersPage() {
       campaignCount: 0,
     }
     setFolders(prev => [newFolder, ...prev])
+  }
+
+  const handleDeleteFolder = (folder: Folder & { campaignCount: number }) => {
+    // Delete campaigns associated with this folder
+    deleteCampaignsForFolder(folder.id)
+    // Remove folder from state
+    setFolders(prev => prev.filter(f => f.id !== folder.id))
+    setFolderToDelete(null)
   }
 
   return (
@@ -298,26 +285,42 @@ export default function FoldersPage() {
       {filteredFolders.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredFolders.map(folder => (
-            <Link key={folder.id} href={`/folders/${folder.id}`}>
-              <Card variant="elevated" padding="lg" hover className="h-full">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#F0FDFA] flex items-center justify-center text-[#0D9488]">
-                    <ChannelIcon type={folder.channel_type} className="w-6 h-6" />
+            <div key={folder.id} className="relative group">
+              <Link href={`/folders/${folder.id}`}>
+                <Card variant="elevated" padding="lg" hover className="h-full">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#F0FDFA] flex items-center justify-center text-[#0D9488]">
+                      <ChannelIcon type={folder.channel_type} className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-[#18181B] truncate mb-1">
+                        {folder.name}
+                      </h3>
+                      <p className="text-sm text-[#52525B]">
+                        {CHANNEL_LABELS[folder.channel_type]}
+                      </p>
+                      <p className="text-xs text-[#A1A1AA] mt-2">
+                        {folder.campaignCount} campaign{folder.campaignCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-[#18181B] truncate mb-1">
-                      {folder.name}
-                    </h3>
-                    <p className="text-sm text-[#52525B]">
-                      {CHANNEL_LABELS[folder.channel_type]}
-                    </p>
-                    <p className="text-xs text-[#A1A1AA] mt-2">
-                      {folder.campaignCount} campaign{folder.campaignCount !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </Link>
+                </Card>
+              </Link>
+              {/* Delete button - appears on hover */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setFolderToDelete(folder)
+                }}
+                className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/80 text-[#A1A1AA] hover:bg-[#FEE2E2] hover:text-[#DC2626] opacity-0 group-hover:opacity-100 transition-all shadow-sm"
+                title="Delete folder"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
           ))}
         </div>
       ) : (
@@ -354,6 +357,42 @@ export default function FoldersPage() {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateFolder}
       />
+
+      {/* Delete Confirmation Modal */}
+      {folderToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setFolderToDelete(null)} />
+          <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <div className="w-12 h-12 rounded-xl bg-[#FEE2E2] flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-[#DC2626]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-[#18181B] text-center mb-2">
+              Delete Folder
+            </h3>
+            <p className="text-sm text-[#52525B] text-center mb-2">
+              Are you sure you want to delete <strong>{folderToDelete.name}</strong>?
+            </p>
+            {folderToDelete.campaignCount > 0 && (
+              <p className="text-xs text-[#DC2626] text-center mb-4 p-2 bg-[#FEE2E2] rounded-lg">
+                This will also delete {folderToDelete.campaignCount} campaign{folderToDelete.campaignCount !== 1 ? 's' : ''} inside this folder.
+              </p>
+            )}
+            <div className="flex gap-3 mt-4">
+              <Button variant="outline" onClick={() => setFolderToDelete(null)} className="flex-1">
+                Cancel
+              </Button>
+              <button
+                onClick={() => handleDeleteFolder(folderToDelete)}
+                className="flex-1 px-4 py-2.5 bg-[#DC2626] text-white rounded-xl font-medium hover:bg-[#B91C1C] transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

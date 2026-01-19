@@ -22,39 +22,9 @@ type CampaignListItem = {
   updated_at?: string
 }
 
-// Default campaigns for demo
-const DEFAULT_CAMPAIGNS: CampaignListItem[] = [
-  {
-    id: '1',
-    name: 'January Brand Awareness',
-    folder_name: 'Meta Ads Q1 2025',
-    performance: 'improving',
-    leads: 120,
-    clients: 18,
-    revenue: 27000,
-    total_cost: 4800,
-    impressions: 150000,
-    clicks: 4500,
-    updated_at: '2025-01-15',
-  },
-  {
-    id: '2',
-    name: 'December Retargeting',
-    folder_name: 'Meta Ads Q1 2025',
-    performance: 'stable',
-    leads: 65,
-    clients: 12,
-    revenue: 15000,
-    total_cost: 2900,
-    impressions: 80000,
-    clicks: 2000,
-    updated_at: '2024-12-31',
-  },
-]
-
 // Load campaigns from localStorage
 function loadCampaigns(): CampaignListItem[] {
-  if (typeof window === 'undefined') return DEFAULT_CAMPAIGNS
+  if (typeof window === 'undefined') return []
   try {
     const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
     if (saved) {
@@ -73,9 +43,9 @@ function loadCampaigns(): CampaignListItem[] {
         updated_at: c.updated_at || c.end_date,
       }))
     }
-    return DEFAULT_CAMPAIGNS
+    return []
   } catch {
-    return DEFAULT_CAMPAIGNS
+    return []
   }
 }
 
@@ -140,8 +110,7 @@ export default function AnalysisPage() {
 
   // Load campaigns on mount
   useEffect(() => {
-    const loaded = loadCampaigns()
-    setCampaigns(loaded.length > 0 ? loaded : DEFAULT_CAMPAIGNS)
+    setCampaigns(loadCampaigns())
     setIsLoaded(true)
   }, [])
 
