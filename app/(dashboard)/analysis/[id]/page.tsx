@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Button, Card } from '@/components/ui'
 import { type PerformanceStatus, type AIAnalysis, type ChannelType } from '@/lib/types'
 
@@ -147,6 +147,7 @@ function MetricCard({
 
 export default function CampaignAnalysisPage() {
   const params = useParams()
+  const router = useRouter()
   const campaignId = params.id as string
 
   const [campaign, setCampaign] = useState<CampaignData | null>(null)
@@ -155,6 +156,19 @@ export default function CampaignAnalysisPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  // Handle delete campaign
+  const handleDelete = () => {
+    if (!campaign) return
+
+    const allCampaigns = loadCampaigns()
+    const updatedCampaigns = allCampaigns.filter(c => c.id !== campaignId)
+    localStorage.setItem(CAMPAIGNS_STORAGE_KEY, JSON.stringify(updatedCampaigns))
+
+    // Navigate back to folders
+    router.push('/folders')
+  }
 
   // Load campaign data
   useEffect(() => {
@@ -246,28 +260,61 @@ export default function CampaignAnalysisPage() {
       </div>
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-1">
-          <h1 className="text-2xl font-bold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
-            {campaign.name}
-          </h1>
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-            campaign.performance === 'improving' ? 'bg-[#D1FAE5] text-[#059669]' :
-            campaign.performance === 'stable' ? 'bg-[#FEF3C7] text-[#D97706]' :
-            'bg-[#FEE2E2] text-[#DC2626]'
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
-              campaign.performance === 'improving' ? 'bg-[#10B981]' :
-              campaign.performance === 'stable' ? 'bg-[#F59E0B]' :
-              'bg-[#EF4444]'
-            }`} />
-            {campaign.performance === 'improving' ? 'Improving' :
-             campaign.performance === 'stable' ? 'Stable' : 'Declining'}
-          </span>
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl font-bold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
+              {campaign.name}
+            </h1>
+            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
+              campaign.performance === 'improving' ? 'bg-[#D1FAE5] text-[#059669]' :
+              campaign.performance === 'stable' ? 'bg-[#FEF3C7] text-[#D97706]' :
+              'bg-[#FEE2E2] text-[#DC2626]'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                campaign.performance === 'improving' ? 'bg-[#10B981]' :
+                campaign.performance === 'stable' ? 'bg-[#F59E0B]' :
+                'bg-[#EF4444]'
+              }`} />
+              {campaign.performance === 'improving' ? 'Improving' :
+               campaign.performance === 'stable' ? 'Stable' : 'Declining'}
+            </span>
+          </div>
+          <p className="text-[#71717A]">
+            {campaign.folder_name || 'Folder'} &bull; {new Date(campaign.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(campaign.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </p>
         </div>
-        <p className="text-[#71717A]">
-          {campaign.folder_name || 'Folder'} &bull; {new Date(campaign.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(campaign.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-        </p>
+
+        {/* Delete Button */}
+        <div className="relative">
+          {showDeleteConfirm ? (
+            <div className="flex items-center gap-2 bg-white border border-[#E4E4E7] rounded-lg p-2 shadow-lg">
+              <span className="text-sm text-[#52525B]">Delete?</span>
+              <button
+                onClick={handleDelete}
+                className="px-2 py-1 text-xs font-medium text-white bg-[#EF4444] hover:bg-[#DC2626] rounded transition-colors"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-2 py-1 text-xs font-medium text-[#52525B] hover:bg-[#F4F4F5] rounded transition-colors"
+              >
+                No
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="p-2 text-[#A1A1AA] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
+              title="Delete campaign"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Performance vs Previous Campaign */}
