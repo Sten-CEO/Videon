@@ -52,7 +52,7 @@ const DEFAULT_CAMPAIGNS = [
     id: '1',
     folder_id: '1',
     user_id: '1',
-    name: 'Campagne Janvier - Notoriété',
+    name: 'January Campaign - Awareness',
     status: 'completed' as CampaignStatus,
     creative_urls: ['https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop'],
     is_video_screenshots: false,
@@ -64,7 +64,8 @@ const DEFAULT_CAMPAIGNS = [
     leads: 120,
     clients: 18,
     revenue: 27000,
-    notes: 'Campagne de notoriété ciblant une nouvelle audience',
+    notes: 'Awareness campaign targeting new audience',
+    vision: 'Goal: Build brand awareness among 25-35 year old professionals interested in productivity tools. Testing carousel ads vs single image.',
     start_date: '2025-01-01',
     end_date: '2025-01-15',
     created_at: '2025-01-01',
@@ -75,7 +76,7 @@ const DEFAULT_CAMPAIGNS = [
     id: '2',
     folder_id: '1',
     user_id: '1',
-    name: 'Retargeting Décembre',
+    name: 'December Retargeting',
     status: 'completed' as CampaignStatus,
     creative_urls: ['https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop'],
     is_video_screenshots: false,
@@ -87,7 +88,8 @@ const DEFAULT_CAMPAIGNS = [
     leads: 65,
     clients: 12,
     revenue: 15000,
-    notes: 'Retargeting des abandons de panier',
+    notes: 'Cart abandonment retargeting',
+    vision: 'Retarget users who visited the pricing page but did not convert. Focus on urgency messaging.',
     start_date: '2024-12-15',
     end_date: '2024-12-31',
     created_at: '2024-12-15',
@@ -98,7 +100,7 @@ const DEFAULT_CAMPAIGNS = [
     id: '3',
     folder_id: '1',
     user_id: '1',
-    name: 'Promo Black Friday',
+    name: 'Black Friday Promo',
     status: 'completed' as CampaignStatus,
     creative_urls: [],
     is_video_screenshots: false,
@@ -110,7 +112,8 @@ const DEFAULT_CAMPAIGNS = [
     leads: 45,
     clients: 5,
     revenue: 6500,
-    notes: 'Promotion Black Friday',
+    notes: 'Black Friday promotion',
+    vision: 'Limited time offer for Black Friday. 30% discount on annual plans.',
     start_date: '2024-11-20',
     end_date: '2024-11-30',
     created_at: '2024-11-20',
@@ -161,6 +164,7 @@ function AddCampaignModal({
   const [clients, setClients] = useState('')
   const [revenue, setRevenue] = useState('')
   const [notes, setNotes] = useState('')
+  const [vision, setVision] = useState('')
 
   // Creative fields (up to 6 images)
   const [creativeUrls, setCreativeUrls] = useState<string[]>([''])
@@ -199,6 +203,7 @@ function AddCampaignModal({
         clients: parseInt(clients) || 0,
         revenue: parseFloat(revenue) || 0,
         notes: notes || null,
+        vision: vision || null,
         creative_urls: creativeUrls.filter(url => url.trim() !== ''),
         is_video_screenshots: isVideoScreenshots,
         video_description: isVideoScreenshots ? videoDescription : null,
@@ -213,6 +218,7 @@ function AddCampaignModal({
       setClients('')
       setRevenue('')
       setNotes('')
+      setVision('')
       setCreativeUrls([''])
       setIsVideoScreenshots(false)
       setVideoDescription('')
@@ -225,18 +231,35 @@ function AddCampaignModal({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold text-[#18181B] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-          Ajouter une campagne
+          Add Campaign
         </h2>
         <form onSubmit={handleSubmit}>
           <div className="space-y-5">
             {/* Campaign Name */}
             <div>
-              <label className="block text-sm font-medium text-[#52525B] mb-1">Nom de la campagne</label>
+              <label className="block text-sm font-medium text-[#52525B] mb-1">Campaign Name</label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="ex: Campagne Facebook Février"
+                placeholder="e.g. Facebook Campaign February"
                 autoFocus
+              />
+            </div>
+
+            {/* Campaign Vision/Context - NEW FIELD */}
+            <div className="p-4 bg-[#F0FDFA] rounded-xl border border-[#99F6E4]">
+              <label className="block text-sm font-medium text-[#0D9488] mb-2">
+                Campaign Vision & Context
+              </label>
+              <p className="text-xs text-[#52525B] mb-2">
+                Describe your campaign goals, target audience, and strategy. This helps AI provide better analysis.
+              </p>
+              <textarea
+                value={vision}
+                onChange={(e) => setVision(e.target.value)}
+                placeholder="e.g. Goal: Acquire new customers aged 25-40 interested in fitness. Testing video ads vs carousel. Focus on pain points around time management..."
+                className="w-full px-4 py-3 border border-[#E4E4E7] rounded-xl focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 outline-none resize-none text-sm bg-white"
+                rows={3}
               />
             </div>
 
@@ -244,7 +267,7 @@ function AddCampaignModal({
             <div className="p-4 bg-[#F5F5F4] rounded-xl space-y-4">
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-[#18181B]">
-                  Visuels de la campagne (max 6 images)
+                  Campaign Visuals (max 6 images)
                 </label>
                 {creativeUrls.length < 6 && (
                   <button
@@ -255,7 +278,7 @@ function AddCampaignModal({
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    Ajouter une image
+                    Add Image
                   </button>
                 )}
               </div>
@@ -271,7 +294,7 @@ function AddCampaignModal({
                       : 'bg-[#F5F5F4] text-[#52525B] hover:bg-[#E4E4E7]'
                   }`}
                 >
-                  Images publicitaires
+                  Ad Images
                 </button>
                 <button
                   type="button"
@@ -282,19 +305,19 @@ function AddCampaignModal({
                       : 'bg-[#F5F5F4] text-[#52525B] hover:bg-[#E4E4E7]'
                   }`}
                 >
-                  Screenshots de vidéo
+                  Video Screenshots
                 </button>
               </div>
 
               {isVideoScreenshots && (
                 <div className="p-3 bg-[#FFF7ED] border border-[#FDBA74] rounded-lg">
                   <p className="text-xs text-[#9A3412] mb-2">
-                    <strong>Conseil :</strong> Ajoutez les screenshots les plus représentatifs de votre vidéo (intro, moments clés, CTA, etc.)
+                    <strong>Tip:</strong> Add the most representative screenshots from your video (intro, key moments, CTA, etc.)
                   </p>
                   <textarea
                     value={videoDescription}
                     onChange={(e) => setVideoDescription(e.target.value)}
-                    placeholder="Décrivez brièvement votre vidéo (durée, message principal, style...)"
+                    placeholder="Briefly describe your video (duration, main message, style...)"
                     className="w-full px-3 py-2 text-sm border border-[#E4E4E7] rounded-lg focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 outline-none resize-none"
                     rows={2}
                   />
@@ -308,7 +331,7 @@ function AddCampaignModal({
                     <Input
                       value={url}
                       onChange={(e) => updateImageUrl(index, e.target.value)}
-                      placeholder={`URL image ${index + 1}`}
+                      placeholder={`Image URL ${index + 1}`}
                       className="flex-1"
                     />
                     {creativeUrls.length > 1 && (
@@ -326,7 +349,7 @@ function AddCampaignModal({
                 ))}
               </div>
               <p className="text-xs text-[#A1A1AA]">
-                L'IA analysera vos visuels pour des insights personnalisés.
+                AI will analyze your visuals for personalized insights.
               </p>
             </div>
 
@@ -334,7 +357,7 @@ function AddCampaignModal({
             <div>
               <h3 className="text-sm font-semibold text-[#18181B] mb-3 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-[#F0FDFA] flex items-center justify-center text-xs text-[#0D9488]">1</span>
-                Données de trafic
+                Traffic Data
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -347,7 +370,7 @@ function AddCampaignModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#52525B] mb-1">Clics</label>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Clicks</label>
                   <Input
                     type="number"
                     value={clicks}
@@ -362,11 +385,11 @@ function AddCampaignModal({
             <div>
               <h3 className="text-sm font-semibold text-[#18181B] mb-3 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-[#F0FDFA] flex items-center justify-center text-xs text-[#0D9488]">2</span>
-                Budget & Dépenses
+                Budget & Spend
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#52525B] mb-1">Budget prévu (€)</label>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Planned Budget ($)</label>
                   <Input
                     type="number"
                     value={budget}
@@ -375,7 +398,7 @@ function AddCampaignModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#52525B] mb-1">Dépense totale (€)</label>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Total Spend ($)</label>
                   <Input
                     type="number"
                     value={totalCost}
@@ -390,7 +413,7 @@ function AddCampaignModal({
             <div>
               <h3 className="text-sm font-semibold text-[#18181B] mb-3 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-[#F0FDFA] flex items-center justify-center text-xs text-[#0D9488]">3</span>
-                Résultats business
+                Business Results
               </h3>
               <div className="grid grid-cols-3 gap-4">
                 <div>
@@ -412,7 +435,7 @@ function AddCampaignModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#52525B] mb-1">CA généré (€)</label>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1">Revenue ($)</label>
                   <Input
                     type="number"
                     value={revenue}
@@ -425,11 +448,11 @@ function AddCampaignModal({
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-[#52525B] mb-1">Notes personnelles</label>
+              <label className="block text-sm font-medium text-[#52525B] mb-1">Personal Notes</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Contexte, observations, détails importants sur la campagne..."
+                placeholder="Context, observations, important details about the campaign..."
                 className="w-full px-4 py-3 border border-[#E4E4E7] rounded-xl focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 outline-none resize-none text-sm"
                 rows={3}
               />
@@ -438,10 +461,10 @@ function AddCampaignModal({
 
           <div className="flex gap-3 mt-6">
             <Button variant="outline" onClick={onClose} className="flex-1">
-              Annuler
+              Cancel
             </Button>
             <Button variant="primary" type="submit" className="flex-1">
-              Ajouter la campagne
+              Add Campaign
             </Button>
           </div>
         </form>
@@ -520,6 +543,7 @@ export default function FolderDetailPage() {
       clients: data.clients || 0,
       revenue: data.revenue || 0,
       notes: data.notes || null,
+      vision: data.vision || null,
       // Folder info for analysis page
       folder_name: folder?.name || 'Unknown Folder',
       channel_type: folder?.channel_type || 'other',
@@ -590,11 +614,11 @@ export default function FolderDetailPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#E4E4E7]">
-                  <th className="text-left px-6 py-4 text-sm font-medium text-[#52525B]">Campagne</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Dépense</th>
+                  <th className="text-left px-6 py-4 text-sm font-medium text-[#52525B]">Campaign</th>
+                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Spend</th>
                   <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Leads</th>
                   <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Clients</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">CA</th>
+                  <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">Revenue</th>
                   <th className="text-right px-6 py-4 text-sm font-medium text-[#52525B]">ROAS</th>
                   <th className="text-center px-6 py-4 text-sm font-medium text-[#52525B]">Status</th>
                 </tr>
@@ -612,7 +636,7 @@ export default function FolderDetailPage() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-[#18181B]">{campaign.name}</span>
                             {campaign.creative_urls && campaign.creative_urls.length > 0 && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#F0FDFA] text-[#0D9488]" title={`${campaign.creative_urls.length} visuel(s)`}>
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#F0FDFA] text-[#0D9488]" title={`${campaign.creative_urls.length} visual(s)`}>
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -623,7 +647,7 @@ export default function FolderDetailPage() {
                             )}
                           </div>
                           <div className="text-xs text-[#A1A1AA]">
-                            {new Date(campaign.start_date || campaign.created_at).toLocaleDateString('fr-FR', {
+                            {new Date(campaign.start_date || campaign.created_at).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                             })}
@@ -631,7 +655,7 @@ export default function FolderDetailPage() {
                         </Link>
                       </td>
                       <td className="px-6 py-4 text-right text-[#18181B]">
-                        {formatCurrency(campaign.total_cost || 0).replace('$', '')}€
+                        ${formatNumber(campaign.total_cost || 0)}
                       </td>
                       <td className="px-6 py-4 text-right text-[#18181B]">
                         {formatNumber(campaign.leads || 0)}
@@ -640,7 +664,7 @@ export default function FolderDetailPage() {
                         {formatNumber(campaign.clients || 0)}
                       </td>
                       <td className="px-6 py-4 text-right text-[#18181B] font-medium">
-                        {formatCurrency(campaign.revenue || 0).replace('$', '')}€
+                        ${formatNumber(campaign.revenue || 0)}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <span className={`font-medium ${roas >= 2 ? 'text-[#10B981]' : roas >= 1 ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>

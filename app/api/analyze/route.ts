@@ -91,6 +91,14 @@ export async function POST(request: NextRequest) {
 - Clients Acquired: ${campaign.clients || 0}
 - Revenue Generated: $${campaign.revenue || 0}`
 
+    // Add campaign vision/context if provided
+    if (campaign.vision) {
+      userPrompt += `
+
+**Campaign Vision & Context (provided by user):**
+${campaign.vision}`
+    }
+
     // Add notes if provided
     if (campaign.notes) {
       userPrompt += `
