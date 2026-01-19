@@ -6,8 +6,9 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button, Card } from '@/components/ui'
 import { type PerformanceStatus, type AIAnalysis, type ChannelType } from '@/lib/types'
 
-// Storage key
+// Storage keys
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
+const ANALYSIS_STORAGE_KEY = 'claritymetrics_analysis'
 
 // Campaign type for this page
 type CampaignData = {
@@ -25,6 +26,7 @@ type CampaignData = {
   clients: number
   revenue: number
   notes: string | null
+  vision: string | null
   creative_urls: string[]
   is_video_screenshots: boolean
   video_description: string | null
@@ -40,6 +42,34 @@ function loadCampaigns(): CampaignData[] {
     return saved ? JSON.parse(saved) : []
   } catch {
     return []
+  }
+}
+
+// Load saved analysis from localStorage
+function loadAnalysis(campaignId: string): AIAnalysis | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const saved = localStorage.getItem(ANALYSIS_STORAGE_KEY)
+    if (saved) {
+      const allAnalysis = JSON.parse(saved)
+      return allAnalysis[campaignId] || null
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+// Save analysis to localStorage
+function saveAnalysis(campaignId: string, analysis: AIAnalysis) {
+  if (typeof window === 'undefined') return
+  try {
+    const saved = localStorage.getItem(ANALYSIS_STORAGE_KEY)
+    const allAnalysis = saved ? JSON.parse(saved) : {}
+    allAnalysis[campaignId] = analysis
+    localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(allAnalysis))
+  } catch {
+    // Ignore storage errors
   }
 }
 
@@ -60,32 +90,12 @@ const DEFAULT_CAMPAIGNS: CampaignData[] = [
     clients: 18,
     revenue: 27000,
     notes: 'Awareness campaign targeting new audience',
+    vision: 'Goal: Build brand awareness among 25-35 year old professionals interested in productivity tools.',
     creative_urls: ['https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop'],
     is_video_screenshots: false,
     video_description: null,
     start_date: '2025-01-01',
     end_date: '2025-01-15',
-  },
-  {
-    id: '2',
-    name: 'December Retargeting',
-    folder_id: '1',
-    folder_name: 'Meta Ads Q1 2025',
-    channel_type: 'meta_ads',
-    performance: 'stable',
-    impressions: 80000,
-    clicks: 2000,
-    budget: 3000,
-    total_cost: 2900,
-    leads: 65,
-    clients: 12,
-    revenue: 15000,
-    notes: 'Cart abandonment retargeting',
-    creative_urls: ['https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop'],
-    is_video_screenshots: false,
-    video_description: null,
-    start_date: '2024-12-15',
-    end_date: '2024-12-31',
   },
 ]
 
@@ -97,52 +107,9 @@ function calculateMetrics(campaign: CampaignData) {
   const cac = campaign.clients > 0 ? campaign.total_cost / campaign.clients : 0
   const lead_to_client = campaign.leads > 0 ? (campaign.clients / campaign.leads) * 100 : 0
   const roas = campaign.total_cost > 0 ? campaign.revenue / campaign.total_cost : 0
+  const roi = campaign.total_cost > 0 ? ((campaign.revenue - campaign.total_cost) / campaign.total_cost) * 100 : 0
 
-  return { ctr, cpc, cpl, cac, lead_to_client, roas }
-}
-
-// Metric card component - minimalist style
-function MetricCard({
-  label,
-  value,
-  change,
-  previousValue,
-}: {
-  label: string
-  value: string
-  change?: number
-  previousValue?: string
-}) {
-  const isPositive = change && change > 0
-  const isNegative = change && change < 0
-
-  return (
-    <div>
-      <div className="text-sm text-[#71717A] mb-1">{label}</div>
-      <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-[#18181B]">{value}</span>
-        {change !== undefined && (
-          <span className={`text-sm font-medium flex items-center ${
-            isPositive ? 'text-[#10B981]' : isNegative ? 'text-[#EF4444]' : 'text-[#71717A]'
-          }`}>
-            {isPositive ? (
-              <svg className="w-4 h-4 mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-            ) : isNegative ? (
-              <svg className="w-4 h-4 mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            ) : null}
-            {Math.abs(change).toFixed(1)}%
-          </span>
-        )}
-      </div>
-      {previousValue && (
-        <div className="text-xs text-[#A1A1AA] mt-1">vs {previousValue} previous</div>
-      )}
-    </div>
-  )
+  return { ctr, cpc, cpl, cac, lead_to_client, roas, roi }
 }
 
 export default function CampaignAnalysisPage() {
@@ -157,6 +124,8 @@ export default function CampaignAnalysisPage() {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showNotes, setShowNotes] = useState(false)
+  const [showImages, setShowImages] = useState(false)
 
   // Handle delete campaign
   const handleDelete = () => {
@@ -166,11 +135,20 @@ export default function CampaignAnalysisPage() {
     const updatedCampaigns = allCampaigns.filter(c => c.id !== campaignId)
     localStorage.setItem(CAMPAIGNS_STORAGE_KEY, JSON.stringify(updatedCampaigns))
 
-    // Navigate back to folders
+    // Also remove saved analysis
+    try {
+      const saved = localStorage.getItem(ANALYSIS_STORAGE_KEY)
+      if (saved) {
+        const allAnalysis = JSON.parse(saved)
+        delete allAnalysis[campaignId]
+        localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(allAnalysis))
+      }
+    } catch {}
+
     router.push('/folders')
   }
 
-  // Load campaign data
+  // Load campaign data and saved analysis
   useEffect(() => {
     const allCampaigns = loadCampaigns()
     const campaigns = allCampaigns.length > 0 ? allCampaigns : DEFAULT_CAMPAIGNS
@@ -186,9 +164,12 @@ export default function CampaignAnalysisPage() {
       }
     } else {
       setCampaign(DEFAULT_CAMPAIGNS[0])
-      if (DEFAULT_CAMPAIGNS.length > 1) {
-        setPreviousCampaign(DEFAULT_CAMPAIGNS[1])
-      }
+    }
+
+    // Load saved analysis
+    const savedAnalysis = loadAnalysis(campaignId)
+    if (savedAnalysis) {
+      setAnalysis(savedAnalysis)
     }
 
     setIsLoaded(true)
@@ -220,6 +201,8 @@ export default function CampaignAnalysisPage() {
 
       const data = await response.json()
       setAnalysis(data.analysis)
+      // Save analysis to localStorage for persistence
+      saveAnalysis(campaignId, data.analysis)
     } catch (error) {
       console.error('Analysis error:', error)
       setAnalysisError('Unable to analyze campaign. Please check your connection and try again.')
@@ -256,17 +239,15 @@ export default function CampaignAnalysisPage() {
         <svg className="w-4 h-4 text-[#A1A1AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        <span className="text-[#18181B] font-medium">{campaign.name}</span>
+        <span className="text-[#18181B]">{campaign.name}</span>
       </div>
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      {/* Header - Minimalist */}
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
-              {campaign.name}
-            </h1>
-            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-xl text-[#18181B]">{campaign.name}</h1>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
               campaign.performance === 'improving' ? 'bg-[#D1FAE5] text-[#059669]' :
               campaign.performance === 'stable' ? 'bg-[#FEF3C7] text-[#D97706]' :
               'bg-[#FEE2E2] text-[#DC2626]'
@@ -280,8 +261,8 @@ export default function CampaignAnalysisPage() {
                campaign.performance === 'stable' ? 'Stable' : 'Declining'}
             </span>
           </div>
-          <p className="text-[#71717A]">
-            {campaign.folder_name || 'Folder'} &bull; {new Date(campaign.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(campaign.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          <p className="text-sm text-[#71717A]">
+            {campaign.folder_name || 'Folder'} • {new Date(campaign.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(campaign.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
 
@@ -290,25 +271,11 @@ export default function CampaignAnalysisPage() {
           {showDeleteConfirm ? (
             <div className="flex items-center gap-2 bg-white border border-[#E4E4E7] rounded-lg p-2 shadow-lg">
               <span className="text-sm text-[#52525B]">Delete?</span>
-              <button
-                onClick={handleDelete}
-                className="px-2 py-1 text-xs font-medium text-white bg-[#EF4444] hover:bg-[#DC2626] rounded transition-colors"
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-2 py-1 text-xs font-medium text-[#52525B] hover:bg-[#F4F4F5] rounded transition-colors"
-              >
-                No
-              </button>
+              <button onClick={handleDelete} className="px-2 py-1 text-xs text-white bg-[#EF4444] hover:bg-[#DC2626] rounded transition-colors">Yes</button>
+              <button onClick={() => setShowDeleteConfirm(false)} className="px-2 py-1 text-xs text-[#52525B] hover:bg-[#F4F4F5] rounded transition-colors">No</button>
             </div>
           ) : (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 text-[#A1A1AA] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
-              title="Delete campaign"
-            >
+            <button onClick={() => setShowDeleteConfirm(true)} className="p-2 text-[#A1A1AA] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors" title="Delete campaign">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
@@ -317,131 +284,159 @@ export default function CampaignAnalysisPage() {
         </div>
       </div>
 
-      {/* Performance vs Previous Campaign */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[#18181B] mb-4">
-          Performance vs Previous Campaign
-        </h2>
-        <Card variant="elevated" padding="lg">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <MetricCard
-              label="Impressions"
-              value={campaign.impressions.toLocaleString()}
-              change={getChange(campaign.impressions, previousCampaign?.impressions)}
-              previousValue={previousCampaign?.impressions.toLocaleString()}
-            />
-            <MetricCard
-              label="Click-through Rate"
-              value={`${metrics.ctr.toFixed(1)}%`}
-              change={getChange(metrics.ctr, prevMetrics?.ctr)}
-              previousValue={prevMetrics ? `${prevMetrics.ctr.toFixed(1)}%` : undefined}
-            />
-            <MetricCard
-              label="Leads"
-              value={campaign.leads.toLocaleString()}
-              change={getChange(campaign.leads, previousCampaign?.leads)}
-              previousValue={previousCampaign?.leads.toLocaleString()}
-            />
-            <MetricCard
-              label="Cost per Lead"
-              value={`$${metrics.cpl.toFixed(0)}`}
-              change={getChange(metrics.cpl, prevMetrics?.cpl) ? -getChange(metrics.cpl, prevMetrics?.cpl)! : undefined}
-              previousValue={prevMetrics ? `$${prevMetrics.cpl.toFixed(0)}` : undefined}
-            />
-          </div>
-        </Card>
-      </div>
-
-      {/* Business Metrics */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[#18181B] mb-4">
-          Business Results
-        </h2>
-        <Card variant="elevated" padding="lg">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <MetricCard
-              label="Clients Acquired"
-              value={campaign.clients.toLocaleString()}
-              change={getChange(campaign.clients, previousCampaign?.clients)}
-              previousValue={previousCampaign?.clients.toLocaleString()}
-            />
-            <MetricCard
-              label="Revenue"
-              value={`$${campaign.revenue.toLocaleString()}`}
-              change={getChange(campaign.revenue, previousCampaign?.revenue)}
-              previousValue={previousCampaign ? `$${previousCampaign.revenue.toLocaleString()}` : undefined}
-            />
-            <MetricCard
-              label="ROAS"
-              value={`${metrics.roas.toFixed(2)}x`}
-              change={getChange(metrics.roas, prevMetrics?.roas)}
-              previousValue={prevMetrics ? `${prevMetrics.roas.toFixed(2)}x` : undefined}
-            />
-            <MetricCard
-              label="Lead to Client"
-              value={`${metrics.lead_to_client.toFixed(1)}%`}
-              change={getChange(metrics.lead_to_client, prevMetrics?.lead_to_client)}
-              previousValue={prevMetrics ? `${prevMetrics.lead_to_client.toFixed(1)}%` : undefined}
-            />
-          </div>
-        </Card>
-      </div>
-
-      {/* Spend Summary */}
-      <div className="mb-8">
-        <Card variant="elevated" padding="lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-[#71717A] mb-1">Total Spend</div>
-              <div className="text-2xl font-bold text-[#18181B]">${campaign.total_cost.toLocaleString()}</div>
-              <div className="text-xs text-[#A1A1AA]">of ${campaign.budget.toLocaleString()} budget</div>
-            </div>
-            <div className="w-32 h-2 bg-[#E4E4E7] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#0D9488] rounded-full"
-                style={{ width: `${Math.min((campaign.total_cost / campaign.budget) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Creatives Preview */}
-      {campaign.creative_urls && campaign.creative_urls.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-[#18181B] mb-4">
-            {campaign.is_video_screenshots ? 'Video Screenshots' : 'Campaign Creatives'}
-          </h2>
-          <Card variant="elevated" padding="md">
-            {campaign.is_video_screenshots && campaign.video_description && (
-              <p className="text-sm text-[#71717A] mb-3">
-                <span className="font-medium">Video description:</span> {campaign.video_description}
-              </p>
+      {/* Section 1: User Data - Performance vs Previous Campaign */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm text-[#71717A]">Performance vs Previous Campaign</h2>
+          <div className="flex items-center gap-2">
+            {/* Notes Button */}
+            {campaign.notes && (
+              <button
+                onClick={() => setShowNotes(!showNotes)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                  showNotes ? 'bg-[#F0FDFA] border-[#0D9488] text-[#0D9488]' : 'border-[#E4E4E7] text-[#71717A] hover:border-[#A1A1AA]'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Notes
+                <svg className={`w-3 h-3 transition-transform ${showNotes ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             )}
-            <div className="flex gap-3 overflow-x-auto">
+            {/* Images Button */}
+            {campaign.creative_urls && campaign.creative_urls.length > 0 && (
+              <button
+                onClick={() => setShowImages(!showImages)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                  showImages ? 'bg-[#F0FDFA] border-[#0D9488] text-[#0D9488]' : 'border-[#E4E4E7] text-[#71717A] hover:border-[#A1A1AA]'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Images ({campaign.creative_urls.length})
+                <svg className={`w-3 h-3 transition-transform ${showImages ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Notes Dropdown */}
+        {showNotes && campaign.notes && (
+          <div className="mb-3 p-3 bg-[#FAFAFA] rounded-lg border border-[#E4E4E7]">
+            <p className="text-sm text-[#52525B]">{campaign.notes}</p>
+            {campaign.vision && (
+              <div className="mt-2 pt-2 border-t border-[#E4E4E7]">
+                <span className="text-xs text-[#0D9488] font-medium">Vision: </span>
+                <span className="text-sm text-[#52525B]">{campaign.vision}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Images Dropdown */}
+        {showImages && campaign.creative_urls && campaign.creative_urls.length > 0 && (
+          <div className="mb-3 p-3 bg-[#FAFAFA] rounded-lg border border-[#E4E4E7]">
+            {campaign.is_video_screenshots && campaign.video_description && (
+              <p className="text-xs text-[#71717A] mb-2">Video: {campaign.video_description}</p>
+            )}
+            <div className="flex gap-2 overflow-x-auto">
               {campaign.creative_urls.map((url, index) => (
-                <div key={index} className="w-40 h-24 rounded-lg overflow-hidden bg-[#F4F4F5] flex-shrink-0">
+                <div key={index} className="w-32 h-20 rounded-lg overflow-hidden bg-[#E4E4E7] flex-shrink-0">
                   <img src={url} alt={`Creative ${index + 1}`} className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
-          </Card>
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Notes */}
-      {campaign.notes && (
-        <div className="mb-8">
-          <Card variant="elevated" padding="md">
-            <div className="text-sm">
-              <span className="font-medium text-[#18181B]">Notes: </span>
-              <span className="text-[#71717A]">{campaign.notes}</span>
+        {/* Metrics Grid - Minimalist */}
+        <div className="grid grid-cols-4 gap-6 py-4 border-b border-[#E4E4E7]">
+          <div>
+            <div className="text-xs text-[#71717A] mb-1">Impressions</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl text-[#18181B]">{campaign.impressions.toLocaleString()}</span>
+              {previousCampaign && (
+                <ChangeIndicator value={getChange(campaign.impressions, previousCampaign.impressions)} />
+              )}
             </div>
-          </Card>
+            {previousCampaign && <div className="text-xs text-[#A1A1AA]">vs {previousCampaign.impressions.toLocaleString()} previous</div>}
+          </div>
+          <div>
+            <div className="text-xs text-[#71717A] mb-1">Click-through Rate</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl text-[#18181B]">{metrics.ctr.toFixed(1)}%</span>
+              {prevMetrics && (
+                <ChangeIndicator value={getChange(metrics.ctr, prevMetrics.ctr)} />
+              )}
+            </div>
+            {prevMetrics && <div className="text-xs text-[#A1A1AA]">vs {prevMetrics.ctr.toFixed(1)}% previous</div>}
+          </div>
+          <div>
+            <div className="text-xs text-[#71717A] mb-1">Conversions</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl text-[#18181B]">{campaign.leads}</span>
+              {previousCampaign && (
+                <ChangeIndicator value={getChange(campaign.leads, previousCampaign.leads)} />
+              )}
+            </div>
+            {previousCampaign && <div className="text-xs text-[#A1A1AA]">vs {previousCampaign.leads} previous</div>}
+          </div>
+          <div>
+            <div className="text-xs text-[#71717A] mb-1">Cost per Acquisition</div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl text-[#18181B]">${metrics.cpl.toFixed(0)}</span>
+              {prevMetrics && (
+                <ChangeIndicator value={getChange(metrics.cpl, prevMetrics.cpl)} inverted />
+              )}
+            </div>
+            {prevMetrics && <div className="text-xs text-[#A1A1AA]">vs ${prevMetrics.cpl.toFixed(0)} previous</div>}
+          </div>
         </div>
-      )}
+      </div>
 
-      {/* AI Analysis */}
+      {/* Section 2: Calculated Metrics */}
+      <div className="mb-6">
+        <h2 className="text-sm text-[#71717A] mb-3">Calculated Metrics</h2>
+        <div className="grid grid-cols-5 gap-4 py-4 border-b border-[#E4E4E7]">
+          <div>
+            <div className="text-xs text-[#71717A] mb-1">CPL</div>
+            <div className="text-xl text-[#18181B]">${metrics.cpl.toFixed(2)}</div>
+            <div className="text-xs text-[#A1A1AA]">Cost per Lead</div>
+          </div>
+          <div>
+            <div className="text-xs text-[#71717A] mb-1">CAC</div>
+            <div className="text-xl text-[#18181B]">${metrics.cac.toFixed(2)}</div>
+            <div className="text-xs text-[#A1A1AA]">Customer Acquisition Cost</div>
+          </div>
+          <div>
+            <div className="text-xs text-[#71717A] mb-1">ROAS</div>
+            <div className={`text-xl ${metrics.roas >= 2 ? 'text-[#10B981]' : metrics.roas >= 1 ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>
+              {metrics.roas.toFixed(2)}x
+            </div>
+            <div className="text-xs text-[#A1A1AA]">Return on Ad Spend</div>
+          </div>
+          <div>
+            <div className="text-xs text-[#71717A] mb-1">Conv Lead→Client</div>
+            <div className="text-xl text-[#18181B]">{metrics.lead_to_client.toFixed(1)}%</div>
+            <div className="text-xs text-[#A1A1AA]">Conversion Rate</div>
+          </div>
+          <div>
+            <div className="text-xs text-[#71717A] mb-1">ROI</div>
+            <div className={`text-xl ${metrics.roi >= 100 ? 'text-[#10B981]' : metrics.roi >= 0 ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>
+              {metrics.roi.toFixed(0)}%
+            </div>
+            <div className="text-xs text-[#A1A1AA]">Return on Investment</div>
+          </div>
+        </div>
+      </div>
+
+      {/* AI Analysis Section */}
       <Card variant="elevated" padding="lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -451,8 +446,8 @@ export default function CampaignAnalysisPage() {
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[#18181B]">AI Analysis</h2>
-              <p className="text-sm text-[#71717A]">Automated insights based on your data</p>
+              <h2 className="text-base text-[#18181B]">AI Analysis</h2>
+              <p className="text-xs text-[#71717A]">Automated insights based on your data</p>
             </div>
           </div>
 
@@ -474,8 +469,8 @@ export default function CampaignAnalysisPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
             </div>
-            <h3 className="font-semibold text-[#18181B] mb-1">Ready for analysis</h3>
-            <p className="text-sm text-[#71717A] max-w-sm mx-auto">
+            <h3 className="text-sm text-[#18181B] mb-1">Ready for analysis</h3>
+            <p className="text-xs text-[#71717A] max-w-sm mx-auto">
               Click "Analyze" to get AI insights on this campaign: what worked, what didn&apos;t, and priority actions.
             </p>
           </div>
@@ -488,7 +483,7 @@ export default function CampaignAnalysisPage() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            <p className="text-[#71717A]">Analyzing...</p>
+            <p className="text-sm text-[#71717A]">Analyzing...</p>
           </div>
         )}
 
@@ -504,42 +499,42 @@ export default function CampaignAnalysisPage() {
 
         {/* Analysis Results */}
         {analysis && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* What Worked */}
             <div>
-              <h3 className="font-medium text-[#18181B] mb-2 flex items-center gap-2">
+              <h3 className="text-sm text-[#18181B] mb-2 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#10B981]" />
                 What Worked
               </h3>
-              <ul className="space-y-1.5">
+              <ul className="space-y-1">
                 {analysis.what_worked.map((item, index) => (
-                  <li key={index} className="text-sm text-[#52525B] pl-4">{item}</li>
+                  <li key={index} className="text-sm text-[#52525B] pl-4">• {item}</li>
                 ))}
               </ul>
             </div>
 
             {/* What Didn't Work */}
             <div>
-              <h3 className="font-medium text-[#18181B] mb-2 flex items-center gap-2">
+              <h3 className="text-sm text-[#18181B] mb-2 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#EF4444]" />
                 Areas for Improvement
               </h3>
-              <ul className="space-y-1.5">
+              <ul className="space-y-1">
                 {analysis.what_didnt_work.map((item, index) => (
-                  <li key={index} className="text-sm text-[#52525B] pl-4">{item}</li>
+                  <li key={index} className="text-sm text-[#52525B] pl-4">• {item}</li>
                 ))}
               </ul>
             </div>
 
             {/* Likely Reasons */}
             <div>
-              <h3 className="font-medium text-[#18181B] mb-2 flex items-center gap-2">
+              <h3 className="text-sm text-[#18181B] mb-2 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#6366F1]" />
                 Likely Reasons
               </h3>
-              <ul className="space-y-1.5">
+              <ul className="space-y-1">
                 {analysis.likely_reasons.map((item, index) => (
-                  <li key={index} className="text-sm text-[#52525B] pl-4">{item}</li>
+                  <li key={index} className="text-sm text-[#52525B] pl-4">• {item}</li>
                 ))}
               </ul>
             </div>
@@ -547,29 +542,29 @@ export default function CampaignAnalysisPage() {
             {/* Creative Analysis */}
             {analysis.creative_analysis && (
               <div className="pt-4 border-t border-[#E4E4E7]">
-                <h3 className="font-medium text-[#18181B] mb-3">Creative Analysis</h3>
+                <h3 className="text-sm text-[#18181B] mb-3">Creative Analysis</h3>
                 <div className="grid md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <div className="text-[#10B981] font-medium mb-1">Strengths</div>
+                    <div className="text-xs text-[#10B981] mb-1">Strengths</div>
                     <ul className="space-y-1 text-[#52525B]">
                       {analysis.creative_analysis.visual_strengths?.map((item: string, index: number) => (
-                        <li key={index}>{item}</li>
+                        <li key={index} className="text-xs">• {item}</li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <div className="text-[#EF4444] font-medium mb-1">Weaknesses</div>
+                    <div className="text-xs text-[#EF4444] mb-1">Weaknesses</div>
                     <ul className="space-y-1 text-[#52525B]">
                       {analysis.creative_analysis.visual_weaknesses?.map((item: string, index: number) => (
-                        <li key={index}>{item}</li>
+                        <li key={index} className="text-xs">• {item}</li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <div className="text-[#0D9488] font-medium mb-1">Recommendations</div>
+                    <div className="text-xs text-[#0D9488] mb-1">Recommendations</div>
                     <ul className="space-y-1 text-[#52525B]">
                       {analysis.creative_analysis.recommendations?.map((item: string, index: number) => (
-                        <li key={index}>{item}</li>
+                        <li key={index} className="text-xs">• {item}</li>
                       ))}
                     </ul>
                   </div>
@@ -578,18 +573,53 @@ export default function CampaignAnalysisPage() {
             )}
 
             {/* Priority Action */}
-            <div className="p-4 bg-[#F0FDFA] rounded-lg border border-[#99F6E4]">
+            <div className="p-3 bg-[#F0FDFA] rounded-lg border border-[#99F6E4]">
               <div className="flex items-center gap-2 mb-1">
                 <svg className="w-4 h-4 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span className="font-medium text-[#0D9488]">Priority Action</span>
+                <span className="text-xs text-[#0D9488] font-medium">Priority Action</span>
               </div>
               <p className="text-sm text-[#18181B]">{analysis.priority_improvement}</p>
+            </div>
+
+            {/* Re-analyze button */}
+            <div className="text-center pt-2">
+              <button
+                onClick={handleAnalyze}
+                className="text-xs text-[#71717A] hover:text-[#0D9488] transition-colors"
+              >
+                Re-analyze campaign
+              </button>
             </div>
           </div>
         )}
       </Card>
     </div>
+  )
+}
+
+// Change indicator component
+function ChangeIndicator({ value, inverted = false }: { value?: number, inverted?: boolean }) {
+  if (value === undefined) return null
+
+  const isPositive = inverted ? value < 0 : value > 0
+  const isNegative = inverted ? value > 0 : value < 0
+
+  return (
+    <span className={`text-xs flex items-center ${
+      isPositive ? 'text-[#10B981]' : isNegative ? 'text-[#EF4444]' : 'text-[#71717A]'
+    }`}>
+      {isPositive ? (
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      ) : isNegative ? (
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+      ) : null}
+      {Math.abs(value).toFixed(1)}%
+    </span>
   )
 }
