@@ -100,7 +100,7 @@ export default function SupportPage() {
       </Card>
 
       {/* Contact Section */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="max-w-xl">
         {/* Contact Form */}
         <Card variant="elevated" padding="lg">
           <h2 className="text-lg font-semibold text-[#18181B] mb-4">Contact Us</h2>
@@ -167,81 +167,6 @@ export default function SupportPage() {
             </form>
           )}
         </Card>
-
-        {/* Quick Links */}
-        <div className="space-y-6">
-          {/* Live Chat */}
-          <Card variant="elevated" padding="lg" className="bg-gradient-to-br from-[#F0FDFA] to-white border-[#0D9488]/20">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#0D9488] flex items-center justify-center text-white">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-[#18181B] mb-1">Live Chat</h3>
-                <p className="text-sm text-[#52525B] mb-3">Chat with our support team in real-time.</p>
-                <Button variant="primary" size="sm">
-                  Start Chat
-                </Button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Email Support */}
-          <Card variant="elevated" padding="lg">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#F0FDFA] flex items-center justify-center text-[#0D9488]">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-[#18181B] mb-1">Email Support</h3>
-                <p className="text-sm text-[#52525B] mb-1">Get help via email within 24 hours.</p>
-                <a href="mailto:support@claritymetrics.com" className="text-sm text-[#0D9488] hover:text-[#0F766E] font-medium">
-                  support@claritymetrics.com
-                </a>
-              </div>
-            </div>
-          </Card>
-
-          {/* Documentation */}
-          <Card variant="elevated" padding="lg">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#F0FDFA] flex items-center justify-center text-[#0D9488]">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-[#18181B] mb-1">Documentation</h3>
-                <p className="text-sm text-[#52525B] mb-1">Browse our complete guides and tutorials.</p>
-                <button className="text-sm text-[#0D9488] hover:text-[#0F766E] font-medium">
-                  View Documentation
-                </button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Community */}
-          <Card variant="elevated" padding="lg">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#F0FDFA] flex items-center justify-center text-[#0D9488]">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-[#18181B] mb-1">Community</h3>
-                <p className="text-sm text-[#52525B] mb-1">Join marketers and share insights.</p>
-                <button className="text-sm text-[#0D9488] hover:text-[#0F766E] font-medium">
-                  Join Community
-                </button>
-              </div>
-            </div>
-          </Card>
-        </div>
       </div>
     </div>
   )
