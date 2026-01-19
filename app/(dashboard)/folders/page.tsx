@@ -5,11 +5,12 @@ import Link from 'next/link'
 import { Button, Card, Input } from '@/components/ui'
 import { CHANNEL_LABELS, type ChannelType, type Folder } from '@/lib/types'
 
-// Storage key for localStorage
+// Storage keys for localStorage
 const FOLDERS_STORAGE_KEY = 'claritymetrics_folders'
+const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 
-// Default folders for first-time users
-const DEFAULT_FOLDERS: (Folder & { campaignCount: number })[] = [
+// Default folders for first-time users (campaignCount will be calculated dynamically)
+const DEFAULT_FOLDERS: Folder[] = [
   {
     id: '1',
     user_id: '1',
@@ -17,7 +18,6 @@ const DEFAULT_FOLDERS: (Folder & { campaignCount: number })[] = [
     channel_type: 'meta_ads',
     created_at: '2025-01-01',
     updated_at: '2025-01-15',
-    campaignCount: 5,
   },
   {
     id: '2',
@@ -26,7 +26,6 @@ const DEFAULT_FOLDERS: (Folder & { campaignCount: number })[] = [
     channel_type: 'google_ads',
     created_at: '2024-12-01',
     updated_at: '2025-01-10',
-    campaignCount: 3,
   },
   {
     id: '3',
@@ -35,30 +34,64 @@ const DEFAULT_FOLDERS: (Folder & { campaignCount: number })[] = [
     channel_type: 'cold_email',
     created_at: '2024-11-15',
     updated_at: '2025-01-05',
-    campaignCount: 8,
   },
 ]
 
-// Helper functions for localStorage
-function loadFolders(): (Folder & { campaignCount: number })[] {
-  if (typeof window === 'undefined') return DEFAULT_FOLDERS
+// Load campaigns from localStorage
+function loadCampaigns(): { id: string; folder_id: string }[] {
+  if (typeof window === 'undefined') return []
   try {
-    const saved = localStorage.getItem(FOLDERS_STORAGE_KEY)
+    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
     if (saved) {
       return JSON.parse(saved)
     }
-    // First time - save and return default folders
-    localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(DEFAULT_FOLDERS))
-    return DEFAULT_FOLDERS
+    return []
   } catch {
-    return DEFAULT_FOLDERS
+    return []
+  }
+}
+
+// Helper functions for localStorage
+function loadFolders(): (Folder & { campaignCount: number })[] {
+  if (typeof window === 'undefined') return DEFAULT_FOLDERS.map(f => ({ ...f, campaignCount: 0 }))
+  try {
+    // Load campaigns to calculate counts
+    const campaigns = loadCampaigns()
+
+    // Count campaigns per folder
+    const countByFolder = new Map<string, number>()
+    campaigns.forEach(c => {
+      const folderId = c.folder_id
+      countByFolder.set(folderId, (countByFolder.get(folderId) || 0) + 1)
+    })
+
+    const saved = localStorage.getItem(FOLDERS_STORAGE_KEY)
+    let folders: Folder[]
+
+    if (saved) {
+      folders = JSON.parse(saved)
+    } else {
+      // First time - save default folders
+      folders = DEFAULT_FOLDERS
+      localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders))
+    }
+
+    // Add campaign counts to folders
+    return folders.map(f => ({
+      ...f,
+      campaignCount: countByFolder.get(f.id) || 0
+    }))
+  } catch {
+    return DEFAULT_FOLDERS.map(f => ({ ...f, campaignCount: 0 }))
   }
 }
 
 function saveFolders(folders: (Folder & { campaignCount: number })[]) {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders))
+    // Save folders without campaignCount (it's calculated dynamically)
+    const foldersToSave = folders.map(({ campaignCount, ...folder }) => folder)
+    localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(foldersToSave))
   } catch {
     // Ignore storage errors
   }
