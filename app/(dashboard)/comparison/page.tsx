@@ -1,20 +1,35 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button, Card } from '@/components/ui'
-import { CHANNEL_LABELS, type ChannelType, type Campaign, type PerformanceStatus, type CreativeType } from '@/lib/types'
+import { Card } from '@/components/ui'
+import { CHANNEL_LABELS, type ChannelType, type PerformanceStatus } from '@/lib/types'
 
 // Storage key for campaigns
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 
 // Type for comparison campaigns
-type ComparisonCampaign = Campaign & {
+type ComparisonCampaign = {
+  id: string
+  folder_id: string
+  name: string
   folder_name: string
   channel_type: ChannelType
   performance: PerformanceStatus
+  impressions: number
+  clicks: number
+  leads: number
+  clients: number
+  revenue: number
+  budget: number
+  total_cost: number
+  creative_urls: string[]
+  start_date: string | null
+  end_date: string | null
+  // Calculated
   ctr: number
-  cpa: number
-  roi: number
+  cpl: number
+  cac: number
+  roas: number
 }
 
 // Default campaigns for demo
@@ -22,102 +37,46 @@ const DEFAULT_CAMPAIGNS: ComparisonCampaign[] = [
   {
     id: '1',
     folder_id: '1',
-    user_id: '1',
     name: 'January Brand Awareness',
-    status: 'completed',
-    creative_url: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop',
-    creative_type: 'image',
-    budget: 5000,
-    impressions: 150000,
-    clicks: 4500,
-    conversions: 120,
-    total_cost: 4800,
-    description: null,
-    start_date: '2025-01-01',
-    end_date: '2025-01-15',
-    created_at: '2025-01-01',
-    updated_at: '2025-01-15',
     folder_name: 'Meta Ads Q1 2025',
     channel_type: 'meta_ads',
     performance: 'improving',
+    impressions: 150000,
+    clicks: 4500,
+    leads: 120,
+    clients: 18,
+    revenue: 27000,
+    budget: 5000,
+    total_cost: 4800,
+    creative_urls: ['https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop'],
+    start_date: '2025-01-01',
+    end_date: '2025-01-15',
     ctr: 3.0,
-    cpa: 40,
-    roi: 125,
+    cpl: 40,
+    cac: 266.67,
+    roas: 5.63,
   },
   {
     id: '2',
     folder_id: '1',
-    user_id: '1',
     name: 'December Retargeting',
-    status: 'completed',
-    creative_url: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop',
-    creative_type: 'image',
-    budget: 3000,
-    impressions: 80000,
-    clicks: 2000,
-    conversions: 45,
-    total_cost: 2900,
-    description: null,
-    start_date: '2024-12-01',
-    end_date: '2024-12-31',
-    created_at: '2024-12-01',
-    updated_at: '2024-12-31',
     folder_name: 'Meta Ads Q1 2025',
     channel_type: 'meta_ads',
     performance: 'stable',
-    ctr: 2.5,
-    cpa: 64,
-    roi: 80,
-  },
-  {
-    id: '3',
-    folder_id: '2',
-    user_id: '1',
-    name: 'Holiday Search Ads',
-    status: 'completed',
-    creative_url: null,
-    creative_type: null,
-    budget: 8000,
-    impressions: 250000,
-    clicks: 5000,
-    conversions: 200,
-    total_cost: 7500,
-    description: null,
-    start_date: '2024-12-15',
+    impressions: 80000,
+    clicks: 2000,
+    leads: 65,
+    clients: 12,
+    revenue: 15000,
+    budget: 3000,
+    total_cost: 2900,
+    creative_urls: ['https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=300&fit=crop'],
+    start_date: '2024-12-01',
     end_date: '2024-12-31',
-    created_at: '2024-12-15',
-    updated_at: '2024-12-31',
-    folder_name: 'Google Ads - Brand',
-    channel_type: 'google_ads',
-    performance: 'improving',
-    ctr: 2.0,
-    cpa: 37.5,
-    roi: 160,
-  },
-  {
-    id: '4',
-    folder_id: '3',
-    user_id: '1',
-    name: 'Cold Outreach Q4',
-    status: 'completed',
-    creative_url: null,
-    creative_type: null,
-    budget: 200,
-    impressions: 1000,
-    clicks: 80,
-    conversions: 8,
-    total_cost: 180,
-    description: null,
-    start_date: '2024-11-01',
-    end_date: '2024-11-30',
-    created_at: '2024-11-01',
-    updated_at: '2024-11-30',
-    folder_name: 'Cold Email Outreach',
-    channel_type: 'cold_email',
-    performance: 'declining',
-    ctr: 8.0,
-    cpa: 22.5,
-    roi: 220,
+    ctr: 2.5,
+    cpl: 44.62,
+    cac: 241.67,
+    roas: 5.17,
   },
 ]
 
@@ -128,16 +87,37 @@ function loadCampaigns(): ComparisonCampaign[] {
     const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
     if (saved) {
       const campaigns = JSON.parse(saved)
-      // Merge with folder info for display
-      return campaigns.map((c: any) => ({
-        ...c,
-        folder_name: c.folder_name || 'Unknown Folder',
-        channel_type: c.channel_type || 'other',
-        performance: c.performance || 'stable',
-        ctr: c.ctr || (c.impressions ? (c.clicks / c.impressions) * 100 : 0),
-        cpa: c.cpa || (c.conversions ? c.total_cost / c.conversions : 0),
-        roi: c.roi || 0,
-      }))
+      return campaigns.map((c: any) => {
+        const impressions = c.impressions || 0
+        const clicks = c.clicks || 0
+        const leads = c.leads || 0
+        const clients = c.clients || 0
+        const revenue = c.revenue || 0
+        const total_cost = c.total_cost || 0
+
+        return {
+          id: c.id,
+          folder_id: c.folder_id,
+          name: c.name,
+          folder_name: c.folder_name || 'Unknown Folder',
+          channel_type: c.channel_type || 'other',
+          performance: c.performance || 'stable',
+          impressions,
+          clicks,
+          leads,
+          clients,
+          revenue,
+          budget: c.budget || 0,
+          total_cost,
+          creative_urls: c.creative_urls || [],
+          start_date: c.start_date,
+          end_date: c.end_date,
+          ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
+          cpl: leads > 0 ? total_cost / leads : 0,
+          cac: clients > 0 ? total_cost / clients : 0,
+          roas: total_cost > 0 ? revenue / total_cost : 0,
+        }
+      })
     }
     return DEFAULT_CAMPAIGNS
   } catch {
@@ -211,20 +191,21 @@ function MetricRow({
   inverse = false,
 }: {
   label: string
-  valueA: number | null
-  valueB: number | null
-  format?: 'number' | 'currency' | 'percent'
+  valueA: number | null | undefined
+  valueB: number | null | undefined
+  format?: 'number' | 'currency' | 'percent' | 'multiplier'
   inverse?: boolean
 }) {
-  const formatValue = (val: number | null) => {
-    if (val === null) return '—'
+  const formatValue = (val: number | null | undefined) => {
+    if (val === null || val === undefined) return '—'
     if (format === 'currency') return `$${val.toLocaleString()}`
     if (format === 'percent') return `${val.toFixed(1)}%`
+    if (format === 'multiplier') return `${val.toFixed(2)}x`
     return val.toLocaleString()
   }
 
   const getWinner = () => {
-    if (valueA === null || valueB === null) return null
+    if (valueA == null || valueB == null) return null
     if (inverse) {
       return valueA < valueB ? 'A' : valueB < valueA ? 'B' : null
     }
@@ -254,7 +235,9 @@ function MetricRow({
 
 // Creative display component
 function CreativePreview({ campaign }: { campaign: ComparisonCampaign }) {
-  if (!campaign.creative_url) {
+  const hasCreatives = campaign.creative_urls && campaign.creative_urls.length > 0
+
+  if (!hasCreatives) {
     return (
       <div className="aspect-video bg-[#F5F5F4] rounded-xl flex items-center justify-center">
         <div className="text-center p-4">
@@ -267,23 +250,10 @@ function CreativePreview({ campaign }: { campaign: ComparisonCampaign }) {
     )
   }
 
-  if (campaign.creative_type === 'video') {
-    return (
-      <div className="aspect-video bg-[#18181B] rounded-xl overflow-hidden relative">
-        <video
-          src={campaign.creative_url}
-          className="w-full h-full object-cover"
-          controls
-          muted
-        />
-      </div>
-    )
-  }
-
   return (
     <div className="aspect-video bg-[#F5F5F4] rounded-xl overflow-hidden">
       <img
-        src={campaign.creative_url}
+        src={campaign.creative_urls[0]}
         alt={`${campaign.name} creative`}
         className="w-full h-full object-cover"
       />
@@ -343,7 +313,9 @@ export default function ComparisonPage() {
   const campaignB = campaigns.find(c => c.id === campaignBId)
 
   const hasComparison = campaignA && campaignB
-  const hasAnyCreative = hasComparison && (campaignA.creative_url || campaignB.creative_url)
+  const hasAnyCreative = hasComparison && (
+    (campaignA.creative_urls?.length > 0) || (campaignB.creative_urls?.length > 0)
+  )
 
   return (
     <div className="max-w-5xl">
@@ -394,14 +366,14 @@ export default function ComparisonPage() {
                   <p className="text-xs text-[#A1A1AA] mt-0.5">
                     {campaignA.start_date && campaignA.end_date ? (
                       <>
-                        {new Date(campaignA.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        {new Date(campaignA.start_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                         {' → '}
-                        {new Date(campaignA.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(campaignA.end_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </>
                     ) : campaignA.start_date ? (
-                      new Date(campaignA.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                      new Date(campaignA.start_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
                     ) : (
-                      'Date non définie'
+                      'Date not set'
                     )}
                   </p>
                 </div>
@@ -418,14 +390,14 @@ export default function ComparisonPage() {
                   <p className="text-xs text-[#A1A1AA] mt-0.5">
                     {campaignB.start_date && campaignB.end_date ? (
                       <>
-                        {new Date(campaignB.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        {new Date(campaignB.start_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                         {' → '}
-                        {new Date(campaignB.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(campaignB.end_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </>
                     ) : campaignB.start_date ? (
-                      new Date(campaignB.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                      new Date(campaignB.start_date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
                     ) : (
-                      'Date non définie'
+                      'Date not set'
                     )}
                   </p>
                 </div>
@@ -465,38 +437,10 @@ export default function ComparisonPage() {
                 <div>
                   <p className="text-sm font-medium text-[#52525B] mb-3">{campaignA.name}</p>
                   <CreativePreview campaign={campaignA} />
-                  {campaignA.creative_type && (
-                    <p className="text-xs text-[#A1A1AA] mt-2 flex items-center gap-1.5">
-                      {campaignA.creative_type === 'image' ? (
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                      {campaignA.creative_type.charAt(0).toUpperCase() + campaignA.creative_type.slice(1)}
-                    </p>
-                  )}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[#52525B] mb-3">{campaignB.name}</p>
                   <CreativePreview campaign={campaignB} />
-                  {campaignB.creative_type && (
-                    <p className="text-xs text-[#A1A1AA] mt-2 flex items-center gap-1.5">
-                      {campaignB.creative_type === 'image' ? (
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                      {campaignB.creative_type.charAt(0).toUpperCase() + campaignB.creative_type.slice(1)}
-                    </p>
-                  )}
                 </div>
               </div>
             </Card>
@@ -539,22 +483,40 @@ export default function ComparisonPage() {
                 format="percent"
               />
               <MetricRow
-                label="Conversions"
-                valueA={campaignA.conversions}
-                valueB={campaignB.conversions}
+                label="Leads"
+                valueA={campaignA.leads}
+                valueB={campaignB.leads}
               />
               <MetricRow
-                label="Cost per Acquisition"
-                valueA={campaignA.cpa}
-                valueB={campaignB.cpa}
+                label="Cost per Lead"
+                valueA={campaignA.cpl}
+                valueB={campaignB.cpl}
                 format="currency"
                 inverse
               />
               <MetricRow
-                label="ROI"
-                valueA={campaignA.roi}
-                valueB={campaignB.roi}
-                format="percent"
+                label="Clients"
+                valueA={campaignA.clients}
+                valueB={campaignB.clients}
+              />
+              <MetricRow
+                label="Customer Acquisition Cost"
+                valueA={campaignA.cac}
+                valueB={campaignB.cac}
+                format="currency"
+                inverse
+              />
+              <MetricRow
+                label="Revenue"
+                valueA={campaignA.revenue}
+                valueB={campaignB.revenue}
+                format="currency"
+              />
+              <MetricRow
+                label="ROAS"
+                valueA={campaignA.roas}
+                valueB={campaignB.roas}
+                format="multiplier"
               />
             </div>
           </Card>
@@ -572,10 +534,10 @@ export default function ComparisonPage() {
                   Quick Insight
                 </h3>
                 <p className="text-sm text-[#52525B]">
-                  {campaignA.roi > campaignB.roi
-                    ? `${campaignA.name} outperformed with ${(campaignA.roi - campaignB.roi).toFixed(0)}% higher ROI. Consider applying similar strategies to future campaigns.`
-                    : campaignB.roi > campaignA.roi
-                      ? `${campaignB.name} outperformed with ${(campaignB.roi - campaignA.roi).toFixed(0)}% higher ROI. Consider applying similar strategies to future campaigns.`
+                  {campaignA.roas > campaignB.roas
+                    ? `${campaignA.name} outperformed with ${((campaignA.roas - campaignB.roas) * 100 / campaignB.roas).toFixed(0)}% higher ROAS. Consider applying similar strategies to future campaigns.`
+                    : campaignB.roas > campaignA.roas
+                      ? `${campaignB.name} outperformed with ${((campaignB.roas - campaignA.roas) * 100 / campaignA.roas).toFixed(0)}% higher ROAS. Consider applying similar strategies to future campaigns.`
                       : 'Both campaigns performed similarly. Review other factors like audience targeting and creative quality.'}
                 </p>
               </div>

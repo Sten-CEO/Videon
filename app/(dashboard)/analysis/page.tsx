@@ -1,57 +1,84 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui'
 import { type PerformanceStatus } from '@/lib/types'
 
-// Mock recent campaigns for analysis
-const MOCK_CAMPAIGNS = [
+// Storage key
+const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
+
+// Campaign type for this page
+type CampaignListItem = {
+  id: string
+  name: string
+  folder_name: string
+  performance: PerformanceStatus
+  leads: number
+  clients: number
+  revenue: number
+  total_cost: number
+  impressions: number
+  clicks: number
+  updated_at?: string
+}
+
+// Default campaigns for demo
+const DEFAULT_CAMPAIGNS: CampaignListItem[] = [
   {
     id: '1',
     name: 'January Brand Awareness',
     folder_name: 'Meta Ads Q1 2025',
-    performance: 'improving' as PerformanceStatus,
-    ctr: 3.0,
-    conversions: 120,
+    performance: 'improving',
+    leads: 120,
+    clients: 18,
+    revenue: 27000,
     total_cost: 4800,
-    cpa: 40,
+    impressions: 150000,
+    clicks: 4500,
     updated_at: '2025-01-15',
   },
   {
     id: '2',
     name: 'December Retargeting',
     folder_name: 'Meta Ads Q1 2025',
-    performance: 'stable' as PerformanceStatus,
-    ctr: 2.5,
-    conversions: 45,
+    performance: 'stable',
+    leads: 65,
+    clients: 12,
+    revenue: 15000,
     total_cost: 2900,
-    cpa: 64,
+    impressions: 80000,
+    clicks: 2000,
     updated_at: '2024-12-31',
   },
-  {
-    id: '3',
-    name: 'Cold Email Batch 12',
-    folder_name: 'Cold Email Outreach',
-    performance: 'declining' as PerformanceStatus,
-    ctr: 1.2,
-    conversions: 8,
-    total_cost: 200,
-    cpa: 25,
-    updated_at: '2025-01-10',
-  },
-  {
-    id: '4',
-    name: 'Google Search - Brand',
-    folder_name: 'Google Ads - Brand',
-    performance: 'improving' as PerformanceStatus,
-    ctr: 5.2,
-    conversions: 89,
-    total_cost: 1500,
-    cpa: 17,
-    updated_at: '2025-01-12',
-  },
 ]
+
+// Load campaigns from localStorage
+function loadCampaigns(): CampaignListItem[] {
+  if (typeof window === 'undefined') return DEFAULT_CAMPAIGNS
+  try {
+    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    if (saved) {
+      const campaigns = JSON.parse(saved)
+      return campaigns.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        folder_name: c.folder_name || 'Unknown Folder',
+        performance: c.performance || 'stable',
+        leads: c.leads || 0,
+        clients: c.clients || 0,
+        revenue: c.revenue || 0,
+        total_cost: c.total_cost || 0,
+        impressions: c.impressions || 0,
+        clicks: c.clicks || 0,
+        updated_at: c.updated_at || c.end_date,
+      }))
+    }
+    return DEFAULT_CAMPAIGNS
+  } catch {
+    return DEFAULT_CAMPAIGNS
+  }
+}
 
 // Performance badge component
 function PerformanceBadge({ status }: { status: PerformanceStatus }) {
@@ -71,13 +98,35 @@ function PerformanceBadge({ status }: { status: PerformanceStatus }) {
 }
 
 export default function AnalysisPage() {
+  const [campaigns, setCampaigns] = useState<CampaignListItem[]>([])
   const [filter, setFilter] = useState<PerformanceStatus | 'all'>('all')
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // Load campaigns on mount
+  useEffect(() => {
+    const loaded = loadCampaigns()
+    setCampaigns(loaded.length > 0 ? loaded : DEFAULT_CAMPAIGNS)
+    setIsLoaded(true)
+  }, [])
 
   const filteredCampaigns = filter === 'all'
-    ? MOCK_CAMPAIGNS
-    : MOCK_CAMPAIGNS.filter(c => c.performance === filter)
+    ? campaigns
+    : campaigns.filter(c => c.performance === filter)
 
   const formatCurrency = (value: number) => `$${value.toLocaleString()}`
+
+  // Calculate metrics
+  const getCtr = (c: CampaignListItem) => c.impressions > 0 ? (c.clicks / c.impressions) * 100 : 0
+  const getCpl = (c: CampaignListItem) => c.leads > 0 ? c.total_cost / c.leads : 0
+  const getRoas = (c: CampaignListItem) => c.total_cost > 0 ? c.revenue / c.total_cost : 0
+
+  if (!isLoaded) {
+    return (
+      <div className="max-w-6xl flex items-center justify-center py-20">
+        <div className="animate-pulse text-[#A1A1AA]">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl">
@@ -124,15 +173,15 @@ export default function AnalysisPage() {
                 <div className="flex items-center gap-8">
                   <div className="text-right">
                     <div className="text-sm text-[#A1A1AA]">CTR</div>
-                    <div className="font-semibold text-[#18181B]">{campaign.ctr.toFixed(1)}%</div>
+                    <div className="font-semibold text-[#18181B]">{getCtr(campaign).toFixed(1)}%</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-[#A1A1AA]">Conversions</div>
-                    <div className="font-semibold text-[#18181B]">{campaign.conversions}</div>
+                    <div className="text-sm text-[#A1A1AA]">Leads</div>
+                    <div className="font-semibold text-[#18181B]">{campaign.leads}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-[#A1A1AA]">CPA</div>
-                    <div className="font-semibold text-[#18181B]">{formatCurrency(campaign.cpa)}</div>
+                    <div className="text-sm text-[#A1A1AA]">ROAS</div>
+                    <div className="font-semibold text-[#18181B]">{getRoas(campaign).toFixed(2)}x</div>
                   </div>
                   <svg className="w-5 h-5 text-[#A1A1AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -146,7 +195,21 @@ export default function AnalysisPage() {
 
       {filteredCampaigns.length === 0 && (
         <Card variant="elevated" padding="xl" className="text-center">
-          <p className="text-[#52525B]">No campaigns match this filter.</p>
+          <div className="max-w-sm mx-auto">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#F0FDFA] to-[#FFF7ED] flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-[#18181B] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+              {filter === 'all' ? 'No campaigns yet' : 'No matching campaigns'}
+            </h3>
+            <p className="text-[#52525B]">
+              {filter === 'all'
+                ? 'Add campaigns from the Folders page to see them here for analysis.'
+                : 'No campaigns match this filter.'}
+            </p>
+          </div>
         </Card>
       )}
     </div>

@@ -1,85 +1,38 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Button, Card, Input } from '@/components/ui'
-import { CHANNEL_LABELS, type ChannelType, type Campaign, type Folder } from '@/lib/types'
+import { CHANNEL_LABELS, type ChannelType } from '@/lib/types'
 
-// Mock upcoming campaigns
-const MOCK_UPCOMING_CAMPAIGNS: (Campaign & { folder_name: string; channel_type: ChannelType })[] = [
-  {
-    id: '1',
-    folder_id: '1',
-    user_id: '1',
-    name: 'February Brand Push',
-    status: 'upcoming',
-    budget: 3000,
-    impressions: null,
-    clicks: null,
-    conversions: null,
-    total_cost: null,
-    description: 'Focus on brand awareness for new product launch',
-    start_date: '2025-02-01',
-    end_date: '2025-02-15',
-    created_at: '2025-01-15',
-    updated_at: '2025-01-15',
-    folder_name: 'Meta Ads Q1 2025',
-    channel_type: 'meta_ads',
-  },
-  {
-    id: '2',
-    folder_id: '2',
-    user_id: '1',
-    name: 'Search Campaign - Competitors',
-    status: 'upcoming',
-    budget: 5000,
-    impressions: null,
-    clicks: null,
-    conversions: null,
-    total_cost: null,
-    description: 'Target competitor keywords',
-    start_date: '2025-02-10',
-    end_date: '2025-03-10',
-    created_at: '2025-01-10',
-    updated_at: '2025-01-10',
-    folder_name: 'Google Ads - Brand',
-    channel_type: 'google_ads',
-  },
-  {
-    id: '3',
-    folder_id: '3',
-    user_id: '1',
-    name: 'Spring Outreach Wave',
-    status: 'upcoming',
-    budget: 500,
-    impressions: null,
-    clicks: null,
-    conversions: null,
-    total_cost: null,
-    description: '1000 targeted emails for spring campaign',
-    start_date: '2025-03-01',
-    end_date: '2025-03-31',
-    created_at: '2025-01-05',
-    updated_at: '2025-01-05',
-    folder_name: 'Cold Email Outreach',
-    channel_type: 'cold_email',
-  },
-]
+// Storage key
+const UPCOMING_STORAGE_KEY = 'claritymetrics_upcoming'
 
-// Mock AI warnings based on past campaign performance
-const MOCK_AI_WARNINGS: Record<string, { type: 'warning' | 'tip' | 'success'; message: string }[]> = {
-  '1': [
-    { type: 'warning', message: 'Your last Meta Ads campaign had a 2.5% CTR. Consider testing new creatives to improve engagement.' },
-    { type: 'tip', message: 'February is historically a strong month for your audience. Good timing!' },
-  ],
-  '2': [
-    { type: 'warning', message: 'Competitor keywords typically cost 40% more. Your $5k budget may yield fewer clicks than expected.' },
-    { type: 'tip', message: 'Your last Google campaign had a $64 CPA. Set conversion targets accordingly.' },
-  ],
-  '3': [
-    { type: 'success', message: 'Cold email has been your best-performing channel with 3.2% reply rate.' },
-    { type: 'tip', message: 'Consider segmenting your list based on past engagement data.' },
-  ],
+// Upcoming campaign type
+type UpcomingCampaign = {
+  id: string
+  name: string
+  channel_type: ChannelType
+  budget: number | null
+  start_date: string | null
+  end_date: string | null
+  notes: string
+  created_at: string
+}
+
+// Load upcoming campaigns from localStorage
+function loadUpcoming(): UpcomingCampaign[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const saved = localStorage.getItem(UPCOMING_STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  } catch {
+    return []
+  }
+}
+
+// Save upcoming campaigns to localStorage
+function saveUpcoming(campaigns: UpcomingCampaign[]) {
+  localStorage.setItem(UPCOMING_STORAGE_KEY, JSON.stringify(campaigns))
 }
 
 // Channel icon component
@@ -139,160 +92,84 @@ function ChannelIcon({ type, className = '' }: { type: ChannelType; className?: 
   return icons[type] || icons.other
 }
 
-// AI Insight component for warnings
-function AIInsight({ insight }: { insight: { type: 'warning' | 'tip' | 'success'; message: string } }) {
-  const config = {
-    warning: {
-      icon: (
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-      ),
-      bgColor: 'bg-[#FEF3C7]',
-      iconColor: 'text-[#D97706]',
-      borderColor: 'border-[#F59E0B]/20',
-    },
-    tip: {
-      icon: (
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-        </svg>
-      ),
-      bgColor: 'bg-[#EEF2FF]',
-      iconColor: 'text-[#6366F1]',
-      borderColor: 'border-[#6366F1]/20',
-    },
-    success: {
-      icon: (
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-      ),
-      bgColor: 'bg-[#D1FAE5]',
-      iconColor: 'text-[#059669]',
-      borderColor: 'border-[#10B981]/20',
-    },
+export default function UpcomingPage() {
+  const [campaigns, setCampaigns] = useState<UpcomingCampaign[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+
+  // Form state
+  const [name, setName] = useState('')
+  const [channelType, setChannelType] = useState<ChannelType>('meta_ads')
+  const [budget, setBudget] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [notes, setNotes] = useState('')
+
+  // Load campaigns on mount
+  useEffect(() => {
+    setCampaigns(loadUpcoming())
+    setIsLoaded(true)
+  }, [])
+
+  // Reset form
+  const resetForm = () => {
+    setName('')
+    setChannelType('meta_ads')
+    setBudget('')
+    setStartDate('')
+    setEndDate('')
+    setNotes('')
   }
 
-  const { icon, bgColor, iconColor, borderColor } = config[insight.type]
+  // Add new campaign
+  const handleAdd = () => {
+    if (!name.trim()) return
 
-  return (
-    <div className={`flex items-start gap-2 p-3 rounded-lg ${bgColor} border ${borderColor}`}>
-      <div className={`flex-shrink-0 mt-0.5 ${iconColor}`}>
-        {icon}
-      </div>
-      <p className="text-sm text-[#52525B]">{insight.message}</p>
-    </div>
-  )
-}
+    const newCampaign: UpcomingCampaign = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      channel_type: channelType,
+      budget: budget ? parseFloat(budget) : null,
+      start_date: startDate || null,
+      end_date: endDate || null,
+      notes: notes.trim(),
+      created_at: new Date().toISOString(),
+    }
 
-// Upcoming campaign card
-function UpcomingCampaignCard({
-  campaign,
-  warnings,
-}: {
-  campaign: Campaign & { folder_name: string; channel_type: ChannelType }
-  warnings: { type: 'warning' | 'tip' | 'success'; message: string }[]
-}) {
-  const [showWarnings, setShowWarnings] = useState(false)
-  const daysUntilStart = campaign.start_date
-    ? Math.ceil((new Date(campaign.start_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-    : null
+    const updated = [...campaigns, newCampaign]
+    setCampaigns(updated)
+    saveUpcoming(updated)
+    resetForm()
+    setShowModal(false)
+  }
 
-  return (
-    <Card variant="elevated" padding="lg">
-      <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-xl bg-[#F0FDFA] flex items-center justify-center text-[#0D9488] flex-shrink-0">
-          <ChannelIcon type={campaign.channel_type} className="w-6 h-6" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <div>
-              <h3 className="font-semibold text-[#18181B] truncate mb-1">{campaign.name}</h3>
-              <p className="text-sm text-[#52525B]">{campaign.folder_name}</p>
-            </div>
-            {daysUntilStart !== null && (
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
-                daysUntilStart <= 7
-                  ? 'bg-[#FEF3C7] text-[#D97706]'
-                  : 'bg-[#F0FDFA] text-[#0D9488]'
-              }`}>
-                {daysUntilStart <= 0 ? 'Starting soon' : `${daysUntilStart} days`}
-              </span>
-            )}
-          </div>
-
-          {/* Campaign details */}
-          <div className="flex flex-wrap gap-4 text-sm text-[#52525B] mb-4">
-            {campaign.budget && (
-              <div className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-[#A1A1AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Budget: ${campaign.budget.toLocaleString()}
-              </div>
-            )}
-            {campaign.start_date && (
-              <div className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-[#A1A1AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                {new Date(campaign.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                {campaign.end_date && ` - ${new Date(campaign.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-              </div>
-            )}
-          </div>
-
-          {campaign.description && (
-            <p className="text-sm text-[#A1A1AA] mb-4">{campaign.description}</p>
-          )}
-
-          {/* AI Warnings toggle */}
-          {warnings.length > 0 && (
-            <div>
-              <button
-                onClick={() => setShowWarnings(!showWarnings)}
-                className="flex items-center gap-2 text-sm font-medium text-[#0D9488] hover:text-[#0F766E] transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                AI Insights ({warnings.length})
-                <svg className={`w-4 h-4 transition-transform ${showWarnings ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {showWarnings && (
-                <div className="mt-3 space-y-2">
-                  {warnings.map((warning, index) => (
-                    <AIInsight key={index} insight={warning} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </Card>
-  )
-}
-
-export default function UpcomingPage() {
-  const [campaigns, setCampaigns] = useState(MOCK_UPCOMING_CAMPAIGNS)
-  const [searchQuery, setSearchQuery] = useState('')
-
-  const filteredCampaigns = campaigns.filter(campaign =>
-    campaign.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    campaign.folder_name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Delete campaign
+  const handleDelete = (id: string) => {
+    const updated = campaigns.filter(c => c.id !== id)
+    setCampaigns(updated)
+    saveUpcoming(updated)
+  }
 
   // Sort by start date (soonest first)
-  const sortedCampaigns = [...filteredCampaigns].sort((a, b) => {
+  const sortedCampaigns = [...campaigns].sort((a, b) => {
     if (!a.start_date) return 1
     if (!b.start_date) return -1
     return new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
   })
+
+  // Calculate days until start
+  const getDaysUntil = (date: string | null) => {
+    if (!date) return null
+    return Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="max-w-4xl flex items-center justify-center py-20">
+        <div className="animate-pulse text-[#A1A1AA]">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl">
@@ -303,64 +180,107 @@ export default function UpcomingPage() {
             Upcoming Campaigns
           </h1>
           <p className="text-[#52525B]">
-            Planned campaigns with AI-powered predictions.
+            Plan and organize your future campaigns.
           </p>
         </div>
-        <Link href="/folders">
-          <Button variant="primary">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Plan Campaign
-          </Button>
-        </Link>
-      </div>
-
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#A1A1AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        <Button variant="primary" onClick={() => setShowModal(true)}>
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search upcoming campaigns..."
-            className="pl-10"
-          />
-        </div>
+          Add Campaign
+        </Button>
       </div>
 
       {/* Summary Card */}
-      <Card variant="gradient" padding="lg" className="mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#0D9488]/10 flex items-center justify-center">
-            <svg className="w-6 h-6 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+      {campaigns.length > 0 && (
+        <Card variant="gradient" padding="lg" className="mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#0D9488]/10 flex items-center justify-center">
+              <svg className="w-6 h-6 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h2 className="font-semibold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
+                {campaigns.length} Planned Campaign{campaigns.length !== 1 ? 's' : ''}
+              </h2>
+              <p className="text-sm text-[#52525B]">
+                Total planned budget: $
+                {campaigns.reduce((sum, c) => sum + (c.budget || 0), 0).toLocaleString()}
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h2 className="font-semibold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
-              {sortedCampaigns.length} Planned Campaign{sortedCampaigns.length !== 1 ? 's' : ''}
-            </h2>
-            <p className="text-sm text-[#52525B]">
-              Total planned budget: $
-              {sortedCampaigns.reduce((sum, c) => sum + (c.budget || 0), 0).toLocaleString()}
-            </p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {/* Campaigns List */}
       {sortedCampaigns.length > 0 ? (
         <div className="space-y-4">
-          {sortedCampaigns.map(campaign => (
-            <UpcomingCampaignCard
-              key={campaign.id}
-              campaign={campaign}
-              warnings={MOCK_AI_WARNINGS[campaign.id] || []}
-            />
-          ))}
+          {sortedCampaigns.map(campaign => {
+            const daysUntil = getDaysUntil(campaign.start_date)
+            return (
+              <Card key={campaign.id} variant="elevated" padding="lg">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#F0FDFA] flex items-center justify-center text-[#0D9488] flex-shrink-0">
+                    <ChannelIcon type={campaign.channel_type} className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-4 mb-2">
+                      <div>
+                        <h3 className="font-semibold text-[#18181B] mb-1">{campaign.name}</h3>
+                        <p className="text-sm text-[#52525B]">{CHANNEL_LABELS[campaign.channel_type]}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {daysUntil !== null && (
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                            daysUntil <= 7
+                              ? 'bg-[#FEF3C7] text-[#D97706]'
+                              : 'bg-[#F0FDFA] text-[#0D9488]'
+                          }`}>
+                            {daysUntil <= 0 ? 'Starting soon' : `${daysUntil} days`}
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleDelete(campaign.id)}
+                          className="p-1.5 text-[#A1A1AA] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Campaign details */}
+                    <div className="flex flex-wrap gap-4 text-sm text-[#52525B]">
+                      {campaign.budget && (
+                        <div className="flex items-center gap-1.5">
+                          <svg className="w-4 h-4 text-[#A1A1AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Budget: ${campaign.budget.toLocaleString()}
+                        </div>
+                      )}
+                      {campaign.start_date && (
+                        <div className="flex items-center gap-1.5">
+                          <svg className="w-4 h-4 text-[#A1A1AA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {new Date(campaign.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          {campaign.end_date && ` - ${new Date(campaign.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                        </div>
+                      )}
+                    </div>
+
+                    {campaign.notes && (
+                      <p className="text-sm text-[#71717A] mt-3 bg-[#FAFAFA] p-3 rounded-lg">{campaign.notes}</p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )
+          })}
         </div>
       ) : (
         <Card variant="elevated" padding="xl" className="text-center">
@@ -371,25 +291,141 @@ export default function UpcomingPage() {
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-[#18181B] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              {searchQuery ? 'No campaigns found' : 'No upcoming campaigns'}
+              No upcoming campaigns
             </h3>
             <p className="text-[#52525B] mb-6">
-              {searchQuery
-                ? 'Try a different search term.'
-                : 'Plan your next campaign to get AI-powered predictions.'}
+              Start planning your next marketing campaign.
             </p>
-            {!searchQuery && (
-              <Link href="/folders">
-                <Button variant="primary">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Plan your first campaign
-                </Button>
-              </Link>
-            )}
+            <Button variant="primary" onClick={() => setShowModal(true)}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Plan your first campaign
+            </Button>
           </div>
         </Card>
+      )}
+
+      {/* Add Campaign Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-[#E4E4E7]">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-[#18181B]" style={{ fontFamily: 'var(--font-display)' }}>
+                  Plan New Campaign
+                </h2>
+                <button
+                  onClick={() => { setShowModal(false); resetForm() }}
+                  className="p-2 text-[#A1A1AA] hover:text-[#52525B] hover:bg-[#F4F4F5] rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-[#52525B] mb-1.5">
+                  Campaign Name *
+                </label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g., February Brand Push"
+                />
+              </div>
+
+              {/* Channel */}
+              <div>
+                <label className="block text-sm font-medium text-[#52525B] mb-1.5">
+                  Channel
+                </label>
+                <select
+                  value={channelType}
+                  onChange={(e) => setChannelType(e.target.value as ChannelType)}
+                  className="w-full px-3 py-2 rounded-xl border border-[#E4E4E7] bg-white text-[#18181B] focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 outline-none transition-all"
+                >
+                  {Object.entries(CHANNEL_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Budget */}
+              <div>
+                <label className="block text-sm font-medium text-[#52525B] mb-1.5">
+                  Budget
+                </label>
+                <Input
+                  type="number"
+                  value={budget}
+                  onChange={(e) => setBudget(e.target.value)}
+                  placeholder="e.g., 5000"
+                />
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1.5">
+                    Start Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#52525B] mb-1.5">
+                    End Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium text-[#52525B] mb-1.5">
+                  Notes
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Campaign goals, target audience, ideas..."
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-xl border border-[#E4E4E7] bg-white text-[#18181B] focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20 outline-none transition-all resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-[#E4E4E7] flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setShowModal(false); resetForm() }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                className="flex-1"
+                onClick={handleAdd}
+                disabled={!name.trim()}
+              >
+                Add Campaign
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
