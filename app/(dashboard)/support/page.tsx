@@ -31,50 +31,6 @@ const FAQ_ITEMS = [
   },
 ]
 
-// Help categories
-const HELP_CATEGORIES = [
-  {
-    title: 'Getting Started',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
-    description: 'Learn the basics of ClarityMetrics',
-    articles: ['Creating your first folder', 'Adding campaigns', 'Understanding metrics'],
-  },
-  {
-    title: 'AI Analysis',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-      </svg>
-    ),
-    description: 'Get the most from AI insights',
-    articles: ['How AI analysis works', 'Adding campaign vision', 'Interpreting results'],
-  },
-  {
-    title: 'Billing & Plans',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-      </svg>
-    ),
-    description: 'Manage your subscription',
-    articles: ['Plan comparison', 'Upgrading your plan', 'Billing FAQ'],
-  },
-  {
-    title: 'Data & Privacy',
-    icon: (
-      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
-    ),
-    description: 'Your data security',
-    articles: ['Data storage', 'Privacy policy', 'Exporting data'],
-  },
-]
-
 export default function SupportPage() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
   const [contactForm, setContactForm] = useState({
@@ -111,26 +67,6 @@ export default function SupportPage() {
         <p className="text-[#52525B]">
           Find answers, learn features, and get in touch with our team.
         </p>
-      </div>
-
-      {/* Quick Help Categories */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {HELP_CATEGORIES.map((category, idx) => (
-          <Card key={idx} variant="elevated" padding="lg" hover className="cursor-pointer">
-            <div className="w-10 h-10 rounded-xl bg-[#F0FDFA] flex items-center justify-center text-[#0D9488] mb-3">
-              {category.icon}
-            </div>
-            <h3 className="font-semibold text-[#18181B] mb-1">{category.title}</h3>
-            <p className="text-xs text-[#71717A] mb-3">{category.description}</p>
-            <ul className="space-y-1">
-              {category.articles.map((article, articleIdx) => (
-                <li key={articleIdx} className="text-xs text-[#0D9488] hover:text-[#0F766E] cursor-pointer">
-                  {article}
-                </li>
-              ))}
-            </ul>
-          </Card>
-        ))}
       </div>
 
       {/* FAQ Section */}
