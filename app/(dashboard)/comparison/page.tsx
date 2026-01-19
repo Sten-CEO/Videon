@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui'
 import { CHANNEL_LABELS, type ChannelType, type PerformanceStatus } from '@/lib/types'
+import { useUser, getUserStorageKey } from '@/contexts/UserContext'
 
-// Storage key for campaigns
+// Base storage key for campaigns
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 
 // Type for comparison campaigns
@@ -80,11 +81,12 @@ const DEFAULT_CAMPAIGNS: ComparisonCampaign[] = [
   },
 ]
 
-// Load campaigns from localStorage
-function loadCampaigns(): ComparisonCampaign[] {
+// Load campaigns from localStorage with user-specific key
+function loadCampaigns(userId: string | null): ComparisonCampaign[] {
   if (typeof window === 'undefined') return DEFAULT_CAMPAIGNS
   try {
-    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     if (saved) {
       const campaigns = JSON.parse(saved)
       return campaigns.map((c: any) => {
@@ -297,6 +299,7 @@ function CampaignSelector({
 }
 
 export default function ComparisonPage() {
+  const { userId } = useUser()
   const [campaigns, setCampaigns] = useState<ComparisonCampaign[]>([])
   const [campaignAId, setCampaignAId] = useState<string | null>(null)
   const [campaignBId, setCampaignBId] = useState<string | null>(null)
@@ -304,10 +307,10 @@ export default function ComparisonPage() {
 
   // Load campaigns from localStorage on mount
   useEffect(() => {
-    const loaded = loadCampaigns()
+    const loaded = loadCampaigns(userId)
     setCampaigns(loaded.length > 0 ? loaded : DEFAULT_CAMPAIGNS)
     setIsLoaded(true)
-  }, [])
+  }, [userId])
 
   const campaignA = campaigns.find(c => c.id === campaignAId)
   const campaignB = campaigns.find(c => c.id === campaignBId)

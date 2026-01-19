@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { type PerformanceStatus } from '@/lib/types'
+import { useUser, getUserStorageKey } from '@/contexts/UserContext'
 
-// Storage key
+// Base storage key
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 
 // Campaign type for this page
@@ -22,11 +23,12 @@ type CampaignListItem = {
   updated_at?: string
 }
 
-// Load campaigns from localStorage
-function loadCampaigns(): CampaignListItem[] {
+// Load campaigns from localStorage with user-specific key
+function loadCampaigns(userId: string | null): CampaignListItem[] {
   if (typeof window === 'undefined') return []
   try {
-    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     if (saved) {
       const campaigns = JSON.parse(saved)
       return campaigns.map((c: any) => ({
@@ -104,15 +106,16 @@ function RankingIndicator({ rank, total }: { rank: number, total: number }) {
 }
 
 export default function AnalysisPage() {
+  const { userId } = useUser()
   const [campaigns, setCampaigns] = useState<CampaignListItem[]>([])
   const [filter, setFilter] = useState<PerformanceStatus | 'all'>('all')
   const [isLoaded, setIsLoaded] = useState(false)
 
   // Load campaigns on mount
   useEffect(() => {
-    setCampaigns(loadCampaigns())
+    setCampaigns(loadCampaigns(userId))
     setIsLoaded(true)
-  }, [])
+  }, [userId])
 
   const filteredCampaigns = filter === 'all'
     ? campaigns

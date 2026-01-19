@@ -5,37 +5,41 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { Button, Card, Input } from '@/components/ui'
 import { CHANNEL_LABELS, type ChannelType, type CampaignStatus, type PerformanceStatus } from '@/lib/types'
+import { useUser, getUserStorageKey } from '@/contexts/UserContext'
 
-// Storage keys
+// Base storage keys
 const CAMPAIGNS_STORAGE_KEY = 'claritymetrics_campaigns'
 const FOLDERS_STORAGE_KEY = 'claritymetrics_folders'
 
-// Helper to load campaigns from localStorage
-function loadCampaigns() {
+// Helper to load campaigns from localStorage with user-specific key
+function loadCampaigns(userId: string | null) {
   if (typeof window === 'undefined') return []
   try {
-    const saved = localStorage.getItem(CAMPAIGNS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     return saved ? JSON.parse(saved) : []
   } catch {
     return []
   }
 }
 
-// Helper to save campaigns to localStorage
-function saveCampaigns(campaigns: any[]) {
+// Helper to save campaigns to localStorage with user-specific key
+function saveCampaigns(campaigns: any[], userId: string | null) {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(CAMPAIGNS_STORAGE_KEY, JSON.stringify(campaigns))
+    const storageKey = getUserStorageKey(CAMPAIGNS_STORAGE_KEY, userId)
+    localStorage.setItem(storageKey, JSON.stringify(campaigns))
   } catch {
     // Ignore storage errors
   }
 }
 
-// Helper to load folder from localStorage
-function loadFolder(folderId: string) {
+// Helper to load folder from localStorage with user-specific key
+function loadFolder(folderId: string, userId: string | null) {
   if (typeof window === 'undefined') return null
   try {
-    const saved = localStorage.getItem(FOLDERS_STORAGE_KEY)
+    const storageKey = getUserStorageKey(FOLDERS_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     if (saved) {
       const folders = JSON.parse(saved)
       return folders.find((f: any) => f.id === folderId) || null
@@ -482,6 +486,7 @@ function AddCampaignModal({
 
 export default function FolderDetailPage() {
   const params = useParams()
+  const { userId } = useUser()
   const folderId = params.id as string
   const [campaigns, setCampaigns] = useState<CampaignItem[]>([])
   const [folder, setFolder] = useState<{ id: string; name: string; channel_type: ChannelType } | null>(null)
@@ -492,7 +497,7 @@ export default function FolderDetailPage() {
   // Load folder and campaigns from localStorage on mount
   useEffect(() => {
     // Load folder
-    const savedFolder = loadFolder(folderId)
+    const savedFolder = loadFolder(folderId, userId)
     if (savedFolder) {
       setFolder(savedFolder)
     } else {
@@ -500,22 +505,22 @@ export default function FolderDetailPage() {
     }
 
     // Load campaigns for this folder
-    const allCampaigns = loadCampaigns()
+    const allCampaigns = loadCampaigns(userId)
     const folderCampaigns = allCampaigns.filter((c: any) => c.folder_id === folderId)
     setCampaigns(folderCampaigns)
 
     setIsLoaded(true)
-  }, [folderId])
+  }, [folderId, userId])
 
   // Save campaigns to localStorage only when user makes changes
   useEffect(() => {
     if (isLoaded && hasUserChanges) {
       // Get all campaigns, filter out this folder's campaigns, then add updated ones
-      const allCampaigns = loadCampaigns()
+      const allCampaigns = loadCampaigns(userId)
       const otherCampaigns = allCampaigns.filter((c: any) => c.folder_id !== folderId)
-      saveCampaigns([...otherCampaigns, ...campaigns])
+      saveCampaigns([...otherCampaigns, ...campaigns], userId)
     }
-  }, [campaigns, isLoaded, folderId, hasUserChanges])
+  }, [campaigns, isLoaded, folderId, hasUserChanges, userId])
 
   const handleAddCampaign = (data: any) => {
     const newCampaign: CampaignItem = {

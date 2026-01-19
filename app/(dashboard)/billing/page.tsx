@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button, Card } from '@/components/ui'
+import { useUser, getUserStorageKey } from '@/contexts/UserContext'
 
 // Plan types
 type PlanId = 'free' | 'pro' | 'business'
@@ -70,29 +71,32 @@ const PLANS: Plan[] = [
   },
 ]
 
-// Storage key for billing preferences
+// Base storage key for billing preferences
 const BILLING_STORAGE_KEY = 'claritymetrics_billing'
 
-function loadBillingData() {
+function loadBillingData(userId: string | null) {
   if (typeof window === 'undefined') return { plan: 'free', billingCycle: 'monthly' }
   try {
-    const saved = localStorage.getItem(BILLING_STORAGE_KEY)
+    const storageKey = getUserStorageKey(BILLING_STORAGE_KEY, userId)
+    const saved = localStorage.getItem(storageKey)
     return saved ? JSON.parse(saved) : { plan: 'free', billingCycle: 'monthly' }
   } catch {
     return { plan: 'free', billingCycle: 'monthly' }
   }
 }
 
-function saveBillingData(data: { plan: PlanId; billingCycle: 'monthly' | 'yearly' }) {
+function saveBillingData(data: { plan: PlanId; billingCycle: 'monthly' | 'yearly' }, userId: string | null) {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(BILLING_STORAGE_KEY, JSON.stringify(data))
+    const storageKey = getUserStorageKey(BILLING_STORAGE_KEY, userId)
+    localStorage.setItem(storageKey, JSON.stringify(data))
   } catch {
     // Ignore storage errors
   }
 }
 
 export default function BillingPage() {
+  const { userId } = useUser()
   const [billingData, setBillingData] = useState({ plan: 'free', billingCycle: 'monthly' })
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -101,11 +105,11 @@ export default function BillingPage() {
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    const data = loadBillingData()
+    const data = loadBillingData(userId)
     setBillingData(data)
     setBillingCycle(data.billingCycle)
     setIsLoaded(true)
-  }, [])
+  }, [userId])
 
   const currentPlan = billingData.plan as PlanId
 
@@ -128,7 +132,7 @@ export default function BillingPage() {
 
     const newData = { plan: selectedPlan.id, billingCycle }
     setBillingData(newData)
-    saveBillingData(newData)
+    saveBillingData(newData, userId)
     setIsProcessing(false)
     setShowConfirmModal(false)
     setSelectedPlan(null)
@@ -140,7 +144,7 @@ export default function BillingPage() {
     await new Promise(resolve => setTimeout(resolve, 1000))
     const newData = { plan: 'free' as PlanId, billingCycle }
     setBillingData(newData)
-    saveBillingData(newData)
+    saveBillingData(newData, userId)
     setIsProcessing(false)
   }
 
